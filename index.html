@@ -347,6 +347,7 @@
 const LS_TXNS = 'ledger.transactions.v1';
 const LS_CLIENT_ID = 'ledger.googleClientId.v1';
 const LS_DRIVE_FILE_ID = 'ledger.driveFileId.v1';
+const LS_TOKEN_EXPIRY = 'ledger.tokenExpiry.v1';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const DRIVE_FILENAME = 'ledger-data.json';
 
@@ -697,6 +698,10 @@ document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
   const clientId = document.getElementById('fClientId').value.trim();
   if(!clientId){ showToast('Paste your Google OAuth Client ID first'); return; }
   localStorage.setItem(LS_CLIENT_ID, clientId);
+  connectDrive(clientId, 'consent');
+});
+
+function connectDrive(clientId, prompt){
   if(typeof google === 'undefined' || !google.accounts){
     showToast('Google sign-in script not loaded — check your connection');
     return;
@@ -705,18 +710,43 @@ document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
     client_id: clientId,
     scope: DRIVE_SCOPE,
     callback: async (resp) => {
-      if(resp.error){ showToast('Sign-in failed: ' + resp.error); return; }
+      if(resp.error){
+        if(prompt === '') return; // silent attempt failed quietly, user can tap Connect manually
+        showToast('Sign-in failed: ' + resp.error);
+        return;
+      }
       accessToken = resp.access_token;
+      const expiresAt = Date.now() + (resp.expires_in ? resp.expires_in*1000 : 3500*1000);
+      localStorage.setItem(LS_TOKEN_EXPIRY, String(expiresAt));
       updateSyncUI(true);
-      showToast('Connected to Google Drive');
+      if(prompt !== '') showToast('Connected to Google Drive');
       await driveSyncOnConnect();
     }
   });
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-});
+  tokenClient.requestAccessToken({ prompt });
+}
+
+// Try to silently reconnect on load if we've connected before
+function attemptSilentReconnect(){
+  const clientId = localStorage.getItem(LS_CLIENT_ID);
+  if(!clientId) return;
+  const tryConnect = () => connectDrive(clientId, '');
+  if(typeof google !== 'undefined' && google.accounts){
+    tryConnect();
+  } else {
+    // GIS script may still be loading — wait for it
+    let attempts = 0;
+    const iv = setInterval(()=>{
+      attempts++;
+      if(typeof google !== 'undefined' && google.accounts){ clearInterval(iv); tryConnect(); }
+      else if(attempts > 20){ clearInterval(iv); }
+    }, 250);
+  }
+}
 
 document.getElementById('disconnectBtn').addEventListener('click', ()=>{
   accessToken = null;
+  localStorage.removeItem(LS_TOKEN_EXPIRY);
   updateSyncUI(false);
   showToast('Disconnected from Drive');
 });
@@ -806,6 +836,8 @@ if('serviceWorker' in navigator){
   populateFilterSelects();
   refreshAll();
   updateSyncUI(false);
+  // Try to reconnect to Drive automatically if we've connected in this browser before
+  attemptSilentReconnect();
 })();
 </script>
 </body>
