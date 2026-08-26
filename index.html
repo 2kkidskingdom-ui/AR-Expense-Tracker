@@ -210,7 +210,7 @@
 <body>
 <div id="authGate">
   <div class="gate-card">
-    <h1>Ledger</h1>
+    <h1>AR Expenses Tracker</h1>
     <p class="gate-sub">Private household ledger</p>
     <div id="gateClientIdStep">
       <p class="gate-hint">Enter the Google OAuth Client ID once to enable sign-in.</p>
@@ -229,19 +229,15 @@
   <header>
     <div class="brand">
       <div>
-        <h1>Ledger</h1>
+        <h1>AR Expenses Tracker</h1>
         <div class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span> · <button class="settings-icon" id="openSettings" title="Settings">⚙</button></div>
-      </div>
-      <div class="stamp" id="netStamp">
-        <div class="lbl">Net</div>
-        <div class="amt" id="netStampVal">—</div>
       </div>
     </div>
     <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
   </header>
 
   <nav class="tabs">
-    <button class="tab-btn active" data-tab="dash">Overview</button>
+    <button class="tab-btn active" data-tab="dash">Dashboard</button>
     <button class="tab-btn" data-tab="ledger">Ledger</button>
     <button class="tab-btn" data-tab="analysis">Analysis</button>
   </nav>
@@ -380,7 +376,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate2</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate3</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -488,8 +484,6 @@ function netWorth(){ return TXNS.reduce((s,t)=>s+t.amount,0); }
 // ---------- Rendering ----------
 function renderNetStamp(){
   const net = netWorth();
-  document.getElementById('netStampVal').textContent = fmtMoneyShort(net);
-  document.getElementById('netStamp').classList.toggle('neg', net<0);
   const tb = document.getElementById('totalBalanceFull');
   if(tb) tb.textContent = fmtMoney(net);
 }
