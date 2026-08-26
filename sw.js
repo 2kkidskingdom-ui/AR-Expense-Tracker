@@ -1,7 +1,5 @@
-const CACHE = 'ledger-v1';
+const CACHE = 'ledger-v2';
 const ASSETS = [
-  './',
-  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
@@ -28,6 +26,22 @@ self.addEventListener('fetch', (e) => {
   if (url.hostname.includes('google') || url.hostname.includes('gstatic')) {
     return;
   }
+
+  // Network-first for the page itself (HTML) so updates always show immediately.
+  // Falls back to cache only if there's no internet.
+  const isPage = e.request.mode === 'navigate' || url.pathname.endsWith('index.html') || url.pathname.endsWith('/');
+  if (isPage) {
+    e.respondWith(
+      fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Cache-first for static assets (icons, manifest) — these rarely change.
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
