@@ -47,6 +47,20 @@
     position:fixed; top:0; bottom:0; left:34px; width:1px;
     background:rgba(155,59,43,0.28); z-index:0; pointer-events:none;
   }
+  #authGate{
+    position:fixed; inset:0; background:var(--paper); z-index:100;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .gate-card{
+    max-width:340px; width:100%; text-align:center;
+    background:var(--card); border:1px solid var(--line); border-radius:8px; padding:30px 24px;
+    box-shadow:0 4px 24px rgba(43,38,32,0.12);
+  }
+  .gate-card h1{ font-family:'Fraunces', serif; font-weight:600; font-size:28px; margin:0 0 2px; color:var(--green-dark); }
+  .gate-sub{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin:0 0 22px; }
+  .gate-hint{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 12px; }
+  .gate-error{ font-size:12.5px; color:var(--red); margin-top:12px; }
+  #gateClientId{ width:100%; margin-bottom:10px; }
   .wrap{max-width:640px; margin:0 auto; position:relative; padding:0 16px;}
 
   header{ padding:22px 20px 16px 40px; position:relative; }
@@ -188,6 +202,22 @@
 </style>
 </head>
 <body>
+<div id="authGate">
+  <div class="gate-card">
+    <h1>Ledger</h1>
+    <p class="gate-sub">Private household ledger</p>
+    <div id="gateClientIdStep">
+      <p class="gate-hint">Enter the Google OAuth Client ID once to enable sign-in.</p>
+      <input type="text" id="gateClientId" placeholder="xxxxxxxx.apps.googleusercontent.com">
+      <button class="save-btn" id="gateClientIdSave">Continue</button>
+    </div>
+    <div id="gateSignInStep" style="display:none;">
+      <p class="gate-hint">Sign in with the authorized Google account to continue.</p>
+      <div id="gsiButtonContainer" style="display:flex; justify-content:center; margin-top:14px;"></div>
+      <p class="gate-error" id="gateError" style="display:none;">That account isn't authorized for this app.</p>
+    </div>
+  </div>
+</div>
 <div class="margin-rule"></div>
 <div class="wrap">
   <header>
@@ -337,6 +367,7 @@
     <button class="ghost-btn" id="backupBtn" style="display:none;">Back up now → Drive</button>
     <button class="ghost-btn" id="restoreBtn" style="display:none;">Restore from Drive</button>
     <button class="ghost-btn" id="disconnectBtn" style="display:none;">Disconnect</button>
+    <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
@@ -346,6 +377,8 @@
 <script>
 // ---------- Constants ----------
 const LS_TXNS = 'ledger.transactions.v1';
+const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
+const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
 const LS_CLIENT_ID = 'ledger.googleClientId.v1';
 const LS_DRIVE_FILE_ID = 'ledger.driveFileId.v1';
 const LS_TOKEN_EXPIRY = 'ledger.tokenExpiry.v1';
@@ -755,6 +788,10 @@ document.getElementById('disconnectBtn').addEventListener('click', ()=>{
 
 document.getElementById('backupBtn').addEventListener('click', ()=> driveBackup(false));
 document.getElementById('restoreBtn').addEventListener('click', ()=> driveRestore());
+document.getElementById('lockAppBtn').addEventListener('click', ()=>{
+  localStorage.removeItem(LS_AUTH_EMAIL);
+  location.reload();
+});
 
 async function driveApiFetch(url, opts={}){
   opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + accessToken });
@@ -831,6 +868,67 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+// ---------- Access Gate ----------
+function decodeJwt(token){
+  try{
+    const payload = token.split('.')[1];
+    const json = decodeURIComponent(atob(payload.replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>
+      '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(json);
+  }catch(e){ return null; }
+}
+
+function hideGate(){ document.getElementById('authGate').style.display = 'none'; }
+
+function initGSISignIn(clientId){
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.id){
+    setTimeout(()=>initGSISignIn(clientId), 300);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      const payload = decodeJwt(response.credential);
+      const email = payload && payload.email;
+      if(email === ALLOWED_EMAIL){
+        localStorage.setItem(LS_AUTH_EMAIL, email);
+        hideGate();
+      } else {
+        document.getElementById('gateError').style.display = 'block';
+        google.accounts.id.disableAutoSelect();
+      }
+    }
+  });
+  google.accounts.id.renderButton(document.getElementById('gsiButtonContainer'), { theme:'outline', size:'large', text:'signin_with' });
+}
+
+function initAuthGate(){
+  const authedEmail = localStorage.getItem(LS_AUTH_EMAIL);
+  if(authedEmail === ALLOWED_EMAIL){ hideGate(); return; }
+
+  const savedClientId = localStorage.getItem(LS_CLIENT_ID);
+  const step1 = document.getElementById('gateClientIdStep');
+  const step2 = document.getElementById('gateSignInStep');
+
+  function goToSignIn(clientId){
+    step1.style.display = 'none';
+    step2.style.display = 'block';
+    initGSISignIn(clientId);
+  }
+
+  if(savedClientId){
+    goToSignIn(savedClientId);
+  } else {
+    document.getElementById('gateClientIdSave').addEventListener('click', ()=>{
+      const cid = document.getElementById('gateClientId').value.trim();
+      if(!cid) return;
+      localStorage.setItem(LS_CLIENT_ID, cid);
+      goToSignIn(cid);
+    });
+  }
+}
+initAuthGate();
 
 // ---------- Init ----------
 (function init(){
