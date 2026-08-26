@@ -201,6 +201,7 @@
         <div class="amt" id="netStampVal">—</div>
       </div>
     </div>
+    <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
   </header>
 
   <nav class="tabs">
@@ -692,6 +693,7 @@ function updateSyncUI(connected){
   document.getElementById('backupBtn').style.display = connected ? 'block' : 'none';
   document.getElementById('restoreBtn').style.display = connected ? 'block' : 'none';
   document.getElementById('disconnectBtn').style.display = connected ? 'block' : 'none';
+  if(connected) document.getElementById('resumeSyncBtn').style.display = 'none';
 }
 
 document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
@@ -711,7 +713,11 @@ function connectDrive(clientId, prompt){
     scope: DRIVE_SCOPE,
     callback: async (resp) => {
       if(resp.error){
-        if(prompt === '') return; // silent attempt failed quietly, user can tap Connect manually
+        if(prompt === '') {
+          const btn = document.getElementById('resumeSyncBtn');
+          btn.textContent = '↻ Tap to resume Google Drive sync';
+          return;
+        }
         showToast('Sign-in failed: ' + resp.error);
         return;
       }
@@ -726,23 +732,19 @@ function connectDrive(clientId, prompt){
   tokenClient.requestAccessToken({ prompt });
 }
 
-// Try to silently reconnect on load if we've connected before
+// Show a "resume sync" banner if we've connected before in this browser — actual
+// reconnect only fires on tap, since mobile browsers block auto-triggered sign-in popups.
 function attemptSilentReconnect(){
   const clientId = localStorage.getItem(LS_CLIENT_ID);
   if(!clientId) return;
-  const tryConnect = () => connectDrive(clientId, '');
-  if(typeof google !== 'undefined' && google.accounts){
-    tryConnect();
-  } else {
-    // GIS script may still be loading — wait for it
-    let attempts = 0;
-    const iv = setInterval(()=>{
-      attempts++;
-      if(typeof google !== 'undefined' && google.accounts){ clearInterval(iv); tryConnect(); }
-      else if(attempts > 20){ clearInterval(iv); }
-    }, 250);
-  }
+  document.getElementById('resumeSyncBtn').style.display = 'block';
 }
+document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
+  const clientId = localStorage.getItem(LS_CLIENT_ID);
+  if(!clientId) return;
+  document.getElementById('resumeSyncBtn').textContent = 'Connecting…';
+  connectDrive(clientId, '');
+});
 
 document.getElementById('disconnectBtn').addEventListener('click', ()=>{
   accessToken = null;
