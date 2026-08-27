@@ -407,7 +407,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate9</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate10</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -533,14 +533,14 @@ function renderTrendChart(){
     const txns = TXNS.filter(t=> reportMonth(t)===ym && t.category!=='Account Transfer');
     const income = txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
     const expense = txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
-    return { label: d.toLocaleDateString('en-IN',{month:'short'}), income, expense };
+    return { ym, label: d.toLocaleDateString('en-IN',{month:'short'}), income, expense };
   });
   const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense)));
 
-  const width = 320, height = 150, padding = 6, bottomPad = 22;
+  const width = 320, height = 168, padding = 6, bottomPad = 22, topPad = 16;
   const groupW = (width - padding*2) / data.length;
   const barW = groupW * 0.3;
-  const chartH = height - bottomPad - 8;
+  const chartH = height - bottomPad - topPad;
 
   let svg = '';
   data.forEach((d,i)=>{
@@ -548,12 +548,35 @@ function renderTrendChart(){
     const incomeH = (d.income/max) * chartH;
     const expenseH = (d.expense/max) * chartH;
     const baseY = height - bottomPad;
-    svg += `<rect x="${gx + groupW*0.12}" y="${baseY-incomeH}" width="${barW}" height="${incomeH}" fill="#1F4A3D" rx="2"/>`;
-    svg += `<rect x="${gx + groupW*0.52}" y="${baseY-expenseH}" width="${barW}" height="${expenseH}" fill="#9B3B2B" rx="2"/>`;
+    const ix = gx + groupW*0.12, ex = gx + groupW*0.52;
+    if(d.income > 0){
+      svg += `<text x="${ix+barW/2}" y="${baseY-incomeH-3}" font-size="8" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoneyShort(d.income)}</text>`;
+    }
+    if(d.expense > 0){
+      svg += `<text x="${ex+barW/2}" y="${baseY-expenseH-3}" font-size="8" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoneyShort(d.expense)}</text>`;
+    }
+    svg += `<rect class="trend-bar" data-ym="${d.ym}" x="${ix}" y="${baseY-incomeH}" width="${barW}" height="${Math.max(incomeH,1)}" fill="#1F4A3D" rx="2" style="cursor:pointer;"/>`;
+    svg += `<rect class="trend-bar" data-ym="${d.ym}" x="${ex}" y="${baseY-expenseH}" width="${barW}" height="${Math.max(expenseH,1)}" fill="#9B3B2B" rx="2" style="cursor:pointer;"/>`;
+    svg += `<rect class="trend-hit" data-ym="${d.ym}" x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer;"/>`;
     svg += `<text x="${gx+groupW/2}" y="${height-6}" font-size="9" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
   });
-  document.getElementById('trendChartSvg').innerHTML =
-    `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${svg}</svg>`;
+  const el = document.getElementById('trendChartSvg');
+  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${svg}</svg>`;
+  el.querySelectorAll('[data-ym]').forEach(node=>{
+    node.addEventListener('click', ()=> drillIntoMonth(node.dataset.ym));
+  });
+}
+
+function drillIntoMonth(ym){
+  const from = `${ym}-01`;
+  const [y,m] = ym.split('-').map(Number);
+  const lastDay = new Date(y, m, 0).getDate();
+  const to = `${ym}-${String(lastDay).padStart(2,'0')}`;
+  document.getElementById('customFrom').value = from;
+  document.getElementById('customTo').value = to;
+  document.getElementById('customRangeRow').style.display = 'flex';
+  document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.range==='custom'));
+  renderAnalysis('custom');
 }
 
 function renderDashboard(){
@@ -667,11 +690,19 @@ function renderAnalysis(range){
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const max = sorted.length ? sorted[0][1] : 1;
   document.getElementById('analysisCats').innerHTML = sorted.map(([cat,amt])=>`
-    <div class="cat-row">
+    <div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;">
       <div class="cname">${escapeHtml(cat)}</div>
       <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/max*100))}%"></div></div>
       <div class="cat-amt">${fmtMoneyShort(amt)}</div>
     </div>`).join('') || `<div class="empty-note">Nothing to analyze in this range.</div>`;
+  document.querySelectorAll('#analysisCats .cat-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      document.getElementById('filterCategory').value = row.dataset.cat;
+      document.getElementById('filterAccount').value = '';
+      switchTab('ledger');
+      renderLedger();
+    });
+  });
 }
 
 function switchTab(tab){
