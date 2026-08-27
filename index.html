@@ -281,8 +281,8 @@
         <input type="date" id="customTo">
       </div>
       <div class="totals-strip">
-        <div class="tstat"><div class="l">In</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
-        <div class="tstat"><div class="l">Out</div><div class="v" id="statOut" style="color:var(--red)">—</div></div>
+        <div class="tstat"><div class="l">Income</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
+        <div class="tstat"><div class="l">Expenses</div><div class="v" id="statOut" style="color:var(--red)">—</div></div>
         <div class="tstat"><div class="l">Net</div><div class="v" id="statNet">—</div></div>
       </div>
 
@@ -407,7 +407,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate10</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate11</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -599,7 +599,7 @@ function renderDashboard(){
 
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
-  const monthTxns = TXNS.filter(t=> reportMonth(t)===ym && t.amount<0 && t.category!=='Account Transfer');
+  const monthTxns = TXNS.filter(t=> reportMonth(t)===ym && t.amount<0 && t.category!=='Account Transfer' && t.category!=='Income');
   const byCat = {};
   monthTxns.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + Math.abs(t.amount); });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,6);
@@ -686,7 +686,7 @@ function renderAnalysis(range){
   netEl.textContent = fmtMoneyShort(net);
   netEl.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
   const byCat = {};
-  list.filter(t=>t.amount<0 && t.category!=='Account Transfer').forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
+  list.filter(t=>t.amount<0 && t.category!=='Account Transfer' && t.category!=='Income').forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const max = sorted.length ? sorted[0][1] : 1;
   document.getElementById('analysisCats').innerHTML = sorted.map(([cat,amt])=>`
