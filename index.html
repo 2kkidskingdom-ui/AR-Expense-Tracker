@@ -398,7 +398,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate7</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate8</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -759,7 +759,7 @@ function openEditSheet(id){
   fCategory.value = t.category || ''; populateSubcatFor(t.category);
   fSubcategory.value = t.subcategory || ''; fDesc.value = t.description || '';
   fPayee.value = t.payee || ''; fPaymentMethod.value = t.paymentMethod || ''; fRef.value = t.ref || '';
-  fApplicableMonth.value = (t.date || new Date().toISOString().slice(0,10)).slice(0,7);
+  fApplicableMonth.value = t.appliedMonth || (t.date || new Date().toISOString().slice(0,10)).slice(0,7);
   fSpanMonths.value = 1;
   currentStatus = t.status || 'Uncleared';
   document.querySelectorAll('.status-btn').forEach(b=> b.classList.toggle('active', b.dataset.status===currentStatus));
