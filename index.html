@@ -376,7 +376,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate3</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate4</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -384,6 +384,7 @@
 <script>
 // ---------- Constants ----------
 const LS_TXNS = 'ledger.transactions.v1';
+const LS_LAST_MODIFIED = 'ledger.lastModified.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -453,6 +454,7 @@ function ensurePurseAccount(){
 }
 function saveData(){
   localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   if(accessToken) debouncedBackup();
 }
 let backupTimer = null;
@@ -845,8 +847,15 @@ async function driveSyncOnConnect(){
   try{
     const existing = await driveFindFile();
     if(existing){
-      showToast('Found a backup in Drive — pulling latest');
-      await driveRestore(true);
+      const remoteTime = existing.modifiedTime ? new Date(existing.modifiedTime).getTime() : 0;
+      const localTime = parseInt(localStorage.getItem(LS_LAST_MODIFIED) || '0', 10);
+      if(remoteTime > localTime){
+        showToast('Drive has newer data — pulling latest');
+        await driveRestore(true);
+      } else {
+        showToast('This device has newer data — backing up to Drive');
+        await driveBackup(true);
+      }
     } else {
       await driveBackup(true);
     }
@@ -888,6 +897,7 @@ async function driveRestore(silent){
     if(data.transactions){
       TXNS = data.transactions;
       localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
+      localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
       refreshAll();
       if(!silent) showToast('Restored from Drive');
     }
