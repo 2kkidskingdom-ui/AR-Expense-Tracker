@@ -398,7 +398,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate6</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate7</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -433,6 +433,7 @@ let tokenClient = null;
 let driveFileId = localStorage.getItem(LS_DRIVE_FILE_ID) || null;
 
 function uid(){ return 't'+Date.now()+Math.random().toString(36).slice(2,7); }
+function reportMonth(t){ return t.appliedMonth || (t.date ? t.date.slice(0,7) : ''); }
 function fmtMoney(n){
   const abs = Math.abs(n);
   const s = abs.toLocaleString('en-IN', {minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits:2});
@@ -520,7 +521,7 @@ function renderTrendChart(){
   }
   const data = months.map(d=>{
     const ym = d.toISOString().slice(0,7);
-    const txns = TXNS.filter(t=> t.date && t.date.slice(0,7)===ym && t.category!=='Account Transfer');
+    const txns = TXNS.filter(t=> reportMonth(t)===ym && t.category!=='Account Transfer');
     const income = txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
     const expense = txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
     return { label: d.toLocaleDateString('en-IN',{month:'short'}), income, expense };
@@ -568,7 +569,7 @@ function renderDashboard(){
 
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
-  const monthTxns = TXNS.filter(t=> t.date && t.date.slice(0,7)===ym && t.amount<0 && t.category!=='Account Transfer');
+  const monthTxns = TXNS.filter(t=> reportMonth(t)===ym && t.amount<0 && t.category!=='Account Transfer');
   const byCat = {};
   monthTxns.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + Math.abs(t.amount); });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,6);
@@ -611,7 +612,7 @@ function renderLedger(){
         <div class="dot ${pos?'pos':'neg'}"></div>
         <div class="mid">
           <div class="cat">${escapeHtml(t.category||'Uncategorized')}${t.subcategory?' · '+escapeHtml(t.subcategory):''}</div>
-          <div class="meta">${escapeHtml(t.account||'')}${t.payee?' · '+escapeHtml(t.payee):''}${t.description?' — '+escapeHtml(t.description):''}${t.paidOn?' (paid '+escapeHtml(t.paidOn)+')':''}</div>
+          <div class="meta">${escapeHtml(t.account||'')}${t.payee?' · '+escapeHtml(t.payee):''}${t.description?' — '+escapeHtml(t.description):''}${t.appliedMonth?' · applies to '+escapeHtml(t.appliedMonth):''}</div>
         </div>
         <div class="amt" style="color:${pos?'var(--green)':'var(--red)'}">${fmtMoney(t.amount)}</div>
       </div>`;
@@ -630,10 +631,17 @@ function formatDateLabel(d){
 
 function renderAnalysis(range){
   const now = new Date();
-  let cutoff = null;
-  if(range==='month') cutoff = now.toISOString().slice(0,7)+'-01';
-  else if(range==='30'){ const d = new Date(now); d.setDate(d.getDate()-30); cutoff = d.toISOString().slice(0,10); }
-  let list = TXNS.filter(t=> t.date && (!cutoff || t.date >= cutoff));
+  const curYM = now.toISOString().slice(0,7);
+  let list;
+  if(range==='month'){
+    list = TXNS.filter(t=> reportMonth(t)===curYM);
+  } else if(range==='30'){
+    const d = new Date(now); d.setDate(d.getDate()-30);
+    const cutoff = d.toISOString().slice(0,10);
+    list = TXNS.filter(t=> t.date && t.date >= cutoff);
+  } else {
+    list = TXNS.filter(t=> t.date);
+  }
   const income = list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
   const expense = list.filter(t=>t.amount<0 && t.category!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
   document.getElementById('statIn').textContent = fmtMoneyShort(income);
@@ -798,12 +806,11 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     if(editingId){ TXNS = TXNS.filter(t=>t.id!==editingId); }
 
     if(spanMonths <= 1){
-      const entryDate = applicableStart === date.slice(0,7) ? date : `${applicableStart}-${day}`;
       const signedAmt = currentType==='income' ? Math.abs(amt) : -Math.abs(amt);
       TXNS.push({
-        id: uid(), date: entryDate, amount: signedAmt, category, subcategory, account: acct,
+        id: uid(), date, amount: signedAmt, category, subcategory, account: acct,
         description: baseDesc, payee, paymentMethod, ref, status: currentStatus,
-        paidOn: entryDate !== date ? date : undefined
+        appliedMonth: applicableStart !== date.slice(0,7) ? applicableStart : undefined
       });
     } else {
       const per = Math.round((amt/spanMonths)*100)/100;
@@ -813,12 +820,11 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
         const share = isLast ? Math.round((amt-allocated)*100)/100 : per;
         allocated += share;
         const ym = addMonths(applicableStart, i);
-        const entryDate = `${ym}-${day}`;
         const signedShare = currentType==='income' ? Math.abs(share) : -Math.abs(share);
         TXNS.push({
-          id: uid(), date: entryDate, amount: signedShare, category, subcategory, account: acct,
+          id: uid(), date, amount: signedShare, category, subcategory, account: acct,
           description: baseDesc ? `${baseDesc} (${i+1}/${spanMonths})` : `(${i+1}/${spanMonths})`,
-          payee, paymentMethod, ref, status: currentStatus, paidOn: date
+          payee, paymentMethod, ref, status: currentStatus, appliedMonth: ym
         });
       }
     }
