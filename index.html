@@ -114,6 +114,20 @@
   .chart-legend{ font-size:11.5px; color:var(--muted); margin-bottom:4px; }
   .legend-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle; }
   .trend-chart{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px 4px 2px; margin-top:6px; }
+  .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .cal-nav button{ background:var(--card); border:1px solid var(--line-strong); border-radius:6px; width:34px; height:34px; font-size:18px; color:var(--green-dark); cursor:pointer; }
+  .cal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:var(--green-dark); }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
+  .cal-dow{ background:var(--paper-deep); font-size:9px; text-align:center; padding:4px 0; color:var(--muted); font-weight:600; text-transform:uppercase; }
+  .cal-day{ background:var(--card); min-height:56px; padding:3px 2px; font-size:8.5px; line-height:1.25; }
+  .cal-day.empty{ background:var(--paper-deep); }
+  .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10px; color:var(--ink); }
+  .cal-in{ color:var(--green); font-family:'IBM Plex Mono',monospace; }
+  .cal-out{ color:var(--red); font-family:'IBM Plex Mono',monospace; }
+  .cal-bal{ color:var(--muted); font-family:'IBM Plex Mono',monospace; }
+  .cal-footer{ display:flex; gap:8px; margin-top:8px; }
+  .cal-footer .tstat{ padding:8px 10px; }
 
   .cat-row{ display:flex; align-items:center; gap:10px; padding:7px 0; font-size:13px; }
   .cat-row .cname{ width:118px; flex:none; color:var(--ink); font-weight:500; }
@@ -244,7 +258,7 @@
   <nav class="tabs">
     <button class="tab-btn active" data-tab="dash">Dashboard</button>
     <button class="tab-btn" data-tab="ledger">Ledger</button>
-    <button class="tab-btn" data-tab="analysis">Analysis</button>
+    <button class="tab-btn" data-tab="analysis">Summary</button>
   </nav>
 
   <main>
@@ -292,6 +306,19 @@
         <span class="legend-dot" style="background:#9B3B2B; margin-left:14px;"></span> Expenses
       </div>
       <div id="trendChartSvg" class="trend-chart"></div>
+
+      <div class="section-title">Daily calendar</div>
+      <select id="calAccountFilter" style="width:100%; margin-bottom:8px;"><option value="">All accounts</option></select>
+      <div class="cal-nav">
+        <button id="calPrev">‹</button>
+        <div class="cal-title" id="calTitle">—</div>
+        <button id="calNext">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="cal-footer" id="calFooter"></div>
+
+      <div class="section-title">Income by category</div>
+      <div id="analysisIncomeCats"></div>
 
       <div class="section-title">Spending by category</div>
       <div id="analysisCats"></div>
@@ -407,7 +434,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate11</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate13</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -522,11 +549,17 @@ function renderNetStamp(){
   if(tb) tb.textContent = fmtMoney(net);
 }
 
-function renderTrendChart(){
-  const now = new Date();
+function renderTrendChart(anchorYM){
+  let anchorY, anchorM;
+  if(anchorYM){
+    [anchorY, anchorM] = anchorYM.split('-').map(Number);
+  } else {
+    const now = new Date();
+    anchorY = now.getFullYear(); anchorM = now.getMonth()+1;
+  }
   const months = [];
   for(let i=5;i>=0;i--){
-    months.push(new Date(now.getFullYear(), now.getMonth()-i, 1));
+    months.push(new Date(anchorY, (anchorM-1)-i, 1));
   }
   const data = months.map(d=>{
     const ym = d.toISOString().slice(0,7);
@@ -659,10 +692,79 @@ function formatDateLabel(d){
   return dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
 }
 
+let calMonth = new Date().getFullYear();
+let calYear = new Date().getFullYear();
+let calMon = new Date().getMonth(); // 0-indexed
+
+function populateCalAccountFilter(){
+  const sel = document.getElementById('calAccountFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All accounts</option>' + getAccounts().map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+  sel.value = cur;
+}
+
+function renderCalendar(){
+  const acct = document.getElementById('calAccountFilter').value;
+  const filtered = acct ? TXNS.filter(t=>t.account===acct) : TXNS;
+
+  document.getElementById('calTitle').textContent = new Date(calYear, calMon, 1).toLocaleDateString('en-IN', {month:'long', year:'numeric'});
+
+  const firstDow = new Date(calYear, calMon, 1).getDay();
+  const daysInMonth = new Date(calYear, calMon+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  // running balance up to end of each day
+  const sortedDates = [...filtered].filter(t=>t.date).sort((a,b)=>a.date.localeCompare(b.date));
+  function balanceThrough(dateStr){
+    let bal = 0;
+    for(const t of sortedDates){ if(t.date <= dateStr) bal += t.amount; else break; }
+    return bal;
+  }
+
+  const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<firstDow;i++) html += `<div class="cal-day empty"></div>`;
+
+  let monthIncome = 0, monthExpense = 0;
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${calYear}-${String(calMon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayTxns = filtered.filter(t=>t.date===dateStr);
+    const inAmt = dayTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+    const outAmt = dayTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+    monthIncome += inAmt; monthExpense += outAmt;
+    const bal = balanceThrough(dateStr);
+    const isToday = dateStr === todayStr;
+    html += `<div class="cal-day${isToday?' today':''}">
+      <div class="cal-daynum">${day}</div>
+      ${inAmt>0?`<div class="cal-in">${fmtMoneyShort(inAmt)}</div>`:''}
+      ${outAmt>0?`<div class="cal-out">${fmtMoneyShort(outAmt)}</div>`:''}
+      <div class="cal-bal">${fmtMoneyShort(bal)}</div>
+    </div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+
+  const net = monthIncome - monthExpense;
+  document.getElementById('calFooter').innerHTML = `
+    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoneyShort(monthIncome)}</div></div>
+    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoneyShort(monthExpense)}</div></div>
+    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoneyShort(net)}</div></div>
+  `;
+}
+
+document.getElementById('calPrev').addEventListener('click', ()=>{
+  calMon--; if(calMon<0){ calMon=11; calYear--; }
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', ()=>{
+  calMon++; if(calMon>11){ calMon=0; calYear++; }
+  renderCalendar();
+});
+document.getElementById('calAccountFilter').addEventListener('change', renderCalendar);
+
 function renderAnalysis(range){
   const now = new Date();
   const curYM = now.toISOString().slice(0,7);
-  let list;
+  let list, anchorYM = curYM;
   if(range==='month'){
     list = TXNS.filter(t=> reportMonth(t)===curYM);
   } else if(range==='30'){
@@ -673,10 +775,14 @@ function renderAnalysis(range){
     const from = document.getElementById('customFrom').value;
     const to = document.getElementById('customTo').value;
     list = TXNS.filter(t=> t.date && (!from || t.date >= from) && (!to || t.date <= to));
+    if(to) anchorYM = to.slice(0,7);
+    else if(from) anchorYM = from.slice(0,7);
   } else {
     list = TXNS.filter(t=> t.date);
   }
-  renderTrendChart();
+  renderTrendChart(anchorYM);
+  populateCalAccountFilter();
+  renderCalendar();
   const income = list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
   const expense = list.filter(t=>t.amount<0 && t.category!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
   document.getElementById('statIn').textContent = fmtMoneyShort(income);
@@ -703,6 +809,20 @@ function renderAnalysis(range){
       renderLedger();
     });
   });
+
+  const byIncomeSrc = {};
+  list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer' && t.subcategory!=='Initial Balance').forEach(t=>{
+    const key = t.subcategory || t.category || 'Other';
+    byIncomeSrc[key] = (byIncomeSrc[key]||0) + t.amount;
+  });
+  const sortedIncome = Object.entries(byIncomeSrc).sort((a,b)=>b[1]-a[1]);
+  const maxIncome = sortedIncome.length ? sortedIncome[0][1] : 1;
+  document.getElementById('analysisIncomeCats').innerHTML = sortedIncome.map(([src,amt])=>`
+    <div class="cat-row">
+      <div class="cname">${escapeHtml(src)}</div>
+      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/maxIncome*100))}%; background:var(--green);"></div></div>
+      <div class="cat-amt">${fmtMoneyShort(amt)}</div>
+    </div>`).join('') || `<div class="empty-note">No income recorded in this range.</div>`;
 }
 
 function switchTab(tab){
