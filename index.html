@@ -117,17 +117,17 @@
   .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .cal-nav button{ background:var(--card); border:1px solid var(--line-strong); border-radius:6px; width:34px; height:34px; font-size:18px; color:var(--green-dark); cursor:pointer; }
   .cal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:var(--green-dark); }
-  .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; }
-  .cal-dow{ background:var(--paper-deep); font-size:9px; text-align:center; padding:4px 0; color:var(--muted); font-weight:600; text-transform:uppercase; }
-  .cal-day{ background:var(--card); min-height:56px; padding:3px 2px; font-size:8.5px; line-height:1.25; }
+  .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; max-width:100%; }
+  .cal-dow{ background:var(--paper-deep); font-size:8px; text-align:center; padding:4px 0; color:var(--muted); font-weight:600; text-transform:uppercase; }
+  .cal-day{ background:var(--card); min-height:60px; min-width:0; padding:2px 1px; font-size:7.2px; line-height:1.2; overflow-wrap:break-word; word-break:break-all; }
   .cal-day.empty{ background:var(--paper-deep); }
   .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
-  .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10px; color:var(--ink); }
-  .cal-in{ color:var(--green); font-family:'IBM Plex Mono',monospace; }
-  .cal-out{ color:var(--red); font-family:'IBM Plex Mono',monospace; }
-  .cal-bal{ color:var(--muted); font-family:'IBM Plex Mono',monospace; }
-  .cal-footer{ display:flex; gap:8px; margin-top:8px; }
-  .cal-footer .tstat{ padding:8px 10px; }
+  .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:9px; color:var(--ink); }
+  .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; overflow-wrap:break-word; word-break:break-all; }
+  .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; overflow-wrap:break-word; word-break:break-all; }
+  .cal-bal{ color:var(--muted); font-family:'IBM Plex Mono',monospace; overflow-wrap:break-word; word-break:break-all; }
+  .cal-footer{ display:flex; gap:5px; margin-top:8px; }
+  .cal-footer .tstat{ padding:8px 5px; }
 
   .cat-row{ display:flex; align-items:center; gap:10px; padding:7px 0; font-size:13px; }
   .cat-row .cname{ width:118px; flex:none; color:var(--ink); font-weight:500; }
@@ -142,6 +142,12 @@
   }
   select:focus, input:focus{outline:2px solid var(--gold); outline-offset:1px;}
   .filters select{flex:1; min-width:110px;}
+  .day-filter-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--gold-soft); border:1px solid var(--gold); border-radius:6px;
+    padding:8px 12px; margin-top:10px; font-size:12.5px; color:var(--green-dark); font-weight:600;
+  }
+  .day-filter-banner button{ background:none; border:none; color:var(--green-dark); font-weight:700; cursor:pointer; font-size:13px; }
 
   .ledger-list{ margin-top:14px; }
   .day-group{ margin-bottom:6px; }
@@ -169,10 +175,10 @@
   .range-btns button.active{ background:var(--green); color:#fff; border-color:var(--green); }
   .custom-range-row{ display:flex; align-items:center; gap:8px; margin-top:10px; }
   .custom-range-row input[type=date]{ flex:1; }
-  .totals-strip{ display:flex; gap:8px; margin-top:14px; }
-  .tstat{ flex:1; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:10px 12px; }
-  .tstat .l{font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);}
-  .tstat .v{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:15px; margin-top:2px;}
+  .totals-strip{ display:flex; gap:5px; margin-top:14px; }
+  .tstat{ flex:1; min-width:0; background:var(--card); border:1px solid var(--line); border-radius:3px; padding:8px 5px; overflow:hidden; }
+  .tstat .l{font-size:9px; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .tstat .v{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:clamp(8.5px, 3.2vw, 13px); margin-top:2px; white-space:nowrap; letter-spacing:-0.03em;}
 
   .fab{
     position:fixed; right:20px; bottom:22px; width:56px; height:56px; border-radius:50%;
@@ -259,6 +265,7 @@
     <button class="tab-btn active" data-tab="dash">Dashboard</button>
     <button class="tab-btn" data-tab="ledger">Ledger</button>
     <button class="tab-btn" data-tab="analysis">Summary</button>
+    <button class="tab-btn" data-tab="calendar">Calendar</button>
   </nav>
 
   <main>
@@ -269,9 +276,6 @@
       </div>
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
-
-      <div class="section-title">Top categories · this month</div>
-      <div id="dashCats"></div>
     </section>
 
     <section id="ledger">
@@ -279,13 +283,14 @@
         <select id="filterAccount"><option value="">All accounts</option></select>
         <select id="filterCategory"><option value="">All categories</option></select>
       </div>
+      <div id="dayFilterBanner" style="display:none;"></div>
       <div class="ledger-list" id="ledgerList"></div>
     </section>
 
     <section id="analysis">
       <div class="range-btns" id="rangeBtns">
-        <button data-range="month" class="active">This month</button>
-        <button data-range="30">Last 30d</button>
+        <button data-range="today" class="active">Today</button>
+        <button data-range="month">This month</button>
         <button data-range="all">All time</button>
         <button data-range="custom">Custom</button>
       </div>
@@ -300,14 +305,22 @@
         <div class="tstat"><div class="l">Net</div><div class="v" id="statNet">—</div></div>
       </div>
 
-      <div class="section-title">Income vs Expenses · last 6 months</div>
+      <div class="section-title">Income vs Expenses</div>
       <div class="chart-legend">
         <span class="legend-dot" style="background:#1F4A3D;"></span> Income
         <span class="legend-dot" style="background:#9B3B2B; margin-left:14px;"></span> Expenses
       </div>
       <div id="trendChartSvg" class="trend-chart"></div>
 
-      <div class="section-title">Daily calendar</div>
+      <div class="section-title">Income by category</div>
+      <div id="analysisIncomeCats"></div>
+
+      <div class="section-title">Spending by category</div>
+      <div id="analysisCats"></div>
+    </section>
+
+    <section id="calendar">
+      <div class="section-title">Calendar</div>
       <select id="calAccountFilter" style="width:100%; margin-bottom:8px;"><option value="">All accounts</option></select>
       <div class="cal-nav">
         <button id="calPrev">‹</button>
@@ -316,12 +329,6 @@
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-footer" id="calFooter"></div>
-
-      <div class="section-title">Income by category</div>
-      <div id="analysisIncomeCats"></div>
-
-      <div class="section-title">Spending by category</div>
-      <div id="analysisCats"></div>
     </section>
   </main>
 </div>
@@ -462,6 +469,8 @@ SEED.forEach(t=>{
 });
 
 let TXNS = [];
+let ledgerFilterDate = null;
+let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
 let currentType = 'expense';
 let accessToken = null;
@@ -473,14 +482,6 @@ function reportMonth(t){ return t.appliedMonth || (t.date ? t.date.slice(0,7) : 
 function fmtMoney(n){
   const abs = Math.abs(n);
   const s = abs.toLocaleString('en-IN', {minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits:2});
-  return (n<0?'−':'') + '₹' + s;
-}
-function fmtMoneyShort(n){
-  const abs = Math.abs(n);
-  let s;
-  if(abs >= 100000) s = (abs/100000).toFixed(1)+'L';
-  else if(abs >= 1000) s = (abs/1000).toFixed(1)+'k';
-  else s = abs.toFixed(0);
   return (n<0?'−':'') + '₹' + s;
 }
 function escapeHtml(s){
@@ -549,31 +550,76 @@ function renderNetStamp(){
   if(tb) tb.textContent = fmtMoney(net);
 }
 
-function renderTrendChart(anchorYM){
-  let anchorY, anchorM;
-  if(anchorYM){
-    [anchorY, anchorM] = anchorYM.split('-').map(Number);
-  } else {
+function buildChartBuckets(range, list, curYM, customFrom, customTo){
+  const buckets = [];
+  if(range==='month'){
+    const [y,m] = curYM.split('-').map(Number);
+    const daysInMonth = new Date(y,m,0).getDate();
+    for(let d=1; d<=daysInMonth; d++){
+      const dayTx = list.filter(t=> parseInt((t.date||'0').slice(8,10),10) === d);
+      const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+      const expense = dayTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+      buckets.push({ label:String(d), income, expense, date:`${curYM}-${String(d).padStart(2,'0')}` });
+    }
+  } else if(range==='today'){
     const now = new Date();
-    anchorY = now.getFullYear(); anchorM = now.getMonth()+1;
+    const ds = now.toISOString().slice(0,10);
+    const income = list.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+    const expense = list.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+    buckets.push({ label:'Today', income, expense, date: ds });
+  } else if(range==='custom' && customFrom && customTo){
+    const fromD = new Date(customFrom+'T00:00:00'), toD = new Date(customTo+'T00:00:00');
+    const spanDays = Math.round((toD-fromD)/86400000)+1;
+    if(spanDays>0 && spanDays<=31){
+      for(let i=0;i<spanDays;i++){
+        const d = new Date(fromD); d.setDate(d.getDate()+i);
+        const ds = d.toISOString().slice(0,10);
+        const dayTx = list.filter(t=>t.date===ds);
+        const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+        const expense = dayTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+        buckets.push({ label:String(d.getDate()), income, expense, date: ds });
+      }
+    } else if(spanDays>0){
+      let cy=fromD.getFullYear(), cm=fromD.getMonth();
+      const endY=toD.getFullYear(), endM=toD.getMonth();
+      let guard = 0;
+      while((cy<endY || (cy===endY && cm<=endM)) && guard<60){
+        guard++;
+        const ym = `${cy}-${String(cm+1).padStart(2,'0')}`;
+        const monthTx = list.filter(t=> reportMonth(t)===ym);
+        const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+        const expense = monthTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+        buckets.push({ label:new Date(cy,cm,1).toLocaleDateString('en-IN',{month:'short'}), income, expense, ym });
+        cm++; if(cm>11){cm=0;cy++;}
+      }
+    }
+  } else {
+    const monthsSet = new Set(TXNS.filter(t=>t.date).map(t=>reportMonth(t)));
+    const monthsSorted = [...monthsSet].filter(Boolean).sort();
+    monthsSorted.forEach(ym=>{
+      const monthTx = TXNS.filter(t=> reportMonth(t)===ym && t.category!=='Account Transfer');
+      const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+      const expense = monthTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+      const [y,m] = ym.split('-').map(Number);
+      buckets.push({ label:new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}), income, expense, ym });
+    });
   }
-  const months = [];
-  for(let i=5;i>=0;i--){
-    months.push(new Date(anchorY, (anchorM-1)-i, 1));
+  return buckets;
+}
+
+function renderTrendChart(range, list, curYM, customFrom, customTo){
+  const data = buildChartBuckets(range, list, curYM, customFrom, customTo);
+  if(!data.length){
+    document.getElementById('trendChartSvg').innerHTML = `<div class="empty-note">Nothing to chart in this range.</div>`;
+    return;
   }
-  const data = months.map(d=>{
-    const ym = d.toISOString().slice(0,7);
-    const txns = TXNS.filter(t=> reportMonth(t)===ym && t.category!=='Account Transfer');
-    const income = txns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const expense = txns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
-    return { ym, label: d.toLocaleDateString('en-IN',{month:'short'}), income, expense };
-  });
   const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense)));
 
-  const width = 320, height = 168, padding = 6, bottomPad = 22, topPad = 16;
+  const width = Math.max(320, data.length*24), height = 168, padding = 6, bottomPad = 22, topPad = 16;
   const groupW = (width - padding*2) / data.length;
   const barW = groupW * 0.3;
   const chartH = height - bottomPad - topPad;
+  const showLabels = data.length <= 20;
 
   let svg = '';
   data.forEach((d,i)=>{
@@ -582,21 +628,25 @@ function renderTrendChart(anchorYM){
     const expenseH = (d.expense/max) * chartH;
     const baseY = height - bottomPad;
     const ix = gx + groupW*0.12, ex = gx + groupW*0.52;
-    if(d.income > 0){
-      svg += `<text x="${ix+barW/2}" y="${baseY-incomeH-3}" font-size="8" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoneyShort(d.income)}</text>`;
+    if(showLabels && d.income > 0){
+      svg += `<text x="${ix+barW/2}" y="${baseY-incomeH-3}" font-size="8" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoney(d.income)}</text>`;
     }
-    if(d.expense > 0){
-      svg += `<text x="${ex+barW/2}" y="${baseY-expenseH-3}" font-size="8" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoneyShort(d.expense)}</text>`;
+    if(showLabels && d.expense > 0){
+      svg += `<text x="${ex+barW/2}" y="${baseY-expenseH-3}" font-size="8" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoney(d.expense)}</text>`;
     }
-    svg += `<rect class="trend-bar" data-ym="${d.ym}" x="${ix}" y="${baseY-incomeH}" width="${barW}" height="${Math.max(incomeH,1)}" fill="#1F4A3D" rx="2" style="cursor:pointer;"/>`;
-    svg += `<rect class="trend-bar" data-ym="${d.ym}" x="${ex}" y="${baseY-expenseH}" width="${barW}" height="${Math.max(expenseH,1)}" fill="#9B3B2B" rx="2" style="cursor:pointer;"/>`;
-    svg += `<rect class="trend-hit" data-ym="${d.ym}" x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer;"/>`;
+    const dataAttr = d.ym ? `data-ym="${d.ym}"` : `data-date="${d.date}"`;
+    svg += `<rect class="trend-bar" ${dataAttr} x="${ix}" y="${baseY-incomeH}" width="${barW}" height="${Math.max(incomeH,1)}" fill="#1F4A3D" rx="2" style="cursor:pointer;"/>`;
+    svg += `<rect class="trend-bar" ${dataAttr} x="${ex}" y="${baseY-expenseH}" width="${barW}" height="${Math.max(expenseH,1)}" fill="#9B3B2B" rx="2" style="cursor:pointer;"/>`;
+    svg += `<rect class="trend-hit" ${dataAttr} x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer;"/>`;
     svg += `<text x="${gx+groupW/2}" y="${height-6}" font-size="9" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
   });
   const el = document.getElementById('trendChartSvg');
   el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${svg}</svg>`;
   el.querySelectorAll('[data-ym]').forEach(node=>{
     node.addEventListener('click', ()=> drillIntoMonth(node.dataset.ym));
+  });
+  el.querySelectorAll('[data-date]').forEach(node=>{
+    node.addEventListener('click', ()=> drillIntoDay(node.dataset.date));
   });
 }
 
@@ -610,6 +660,42 @@ function drillIntoMonth(ym){
   document.getElementById('customRangeRow').style.display = 'flex';
   document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.range==='custom'));
   renderAnalysis('custom');
+}
+
+function drillIntoDay(dateStr){
+  document.getElementById('customFrom').value = dateStr;
+  document.getElementById('customTo').value = dateStr;
+  document.getElementById('customRangeRow').style.display = 'flex';
+  document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.range==='custom'));
+  renderAnalysis('custom');
+}
+
+function drillIntoDayType(dateStr, type){
+  const calAcct = document.getElementById('calAccountFilter').value;
+  document.getElementById('filterAccount').value = calAcct || '';
+  document.getElementById('filterCategory').value = '';
+  ledgerFilterDate = dateStr;
+  ledgerFilterType = type;
+  switchTab('ledger');
+  renderLedger();
+}
+
+function clearDayFilter(){
+  ledgerFilterDate = null;
+  ledgerFilterType = null;
+  renderLedger();
+}
+
+function renderDayFilterBanner(){
+  const el = document.getElementById('dayFilterBanner');
+  if(!ledgerFilterDate){ el.style.display = 'none'; return; }
+  const dt = new Date(ledgerFilterDate+'T00:00:00');
+  const label = dt.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+  const typeLabel = ledgerFilterType === 'income' ? 'Income' : ledgerFilterType === 'expense' ? 'Expenses' : 'All';
+  el.style.display = 'flex';
+  el.innerHTML = `<span>${label} · ${typeLabel}</span><button id="clearDayFilterBtn">Clear ×</button>`;
+  document.getElementById('clearDayFilterBtn').addEventListener('click', clearDayFilter);
+  el.className = 'day-filter-banner';
 }
 
 function renderDashboard(){
@@ -629,20 +715,6 @@ function renderDashboard(){
       switchTab('ledger'); renderLedger();
     });
   });
-
-  const now = new Date();
-  const ym = now.toISOString().slice(0,7);
-  const monthTxns = TXNS.filter(t=> reportMonth(t)===ym && t.amount<0 && t.category!=='Account Transfer' && t.category!=='Income');
-  const byCat = {};
-  monthTxns.forEach(t=>{ byCat[t.category] = (byCat[t.category]||0) + Math.abs(t.amount); });
-  const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const max = sorted.length ? sorted[0][1] : 1;
-  document.getElementById('dashCats').innerHTML = sorted.map(([cat,amt])=>`
-    <div class="cat-row">
-      <div class="cname">${escapeHtml(cat)}</div>
-      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/max*100))}%"></div></div>
-      <div class="cat-amt">${fmtMoneyShort(amt)}</div>
-    </div>`).join('') || `<div class="empty-note">Nothing recorded this month yet.</div>`;
 }
 
 function populateFilterSelects(){
@@ -660,8 +732,12 @@ function renderLedger(){
   let list = TXNS.filter(t=>{
     if(accFilter && t.account!==accFilter) return false;
     if(catFilter && t.category!==catFilter) return false;
+    if(ledgerFilterDate && t.date!==ledgerFilterDate) return false;
+    if(ledgerFilterType==='income' && !(t.amount>0)) return false;
+    if(ledgerFilterType==='expense' && !(t.amount<0)) return false;
     return true;
   });
+  renderDayFilterBanner();
   list.sort((a,b)=> (b.date||'').localeCompare(a.date||'') || 0);
   const groups = {};
   list.forEach(t=>{ const d = t.date || 'No date'; (groups[d] = groups[d]||[]).push(t); });
@@ -736,18 +812,21 @@ function renderCalendar(){
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}">
       <div class="cal-daynum">${day}</div>
-      ${inAmt>0?`<div class="cal-in">${fmtMoneyShort(inAmt)}</div>`:''}
-      ${outAmt>0?`<div class="cal-out">${fmtMoneyShort(outAmt)}</div>`:''}
-      <div class="cal-bal">${fmtMoneyShort(bal)}</div>
+      ${inAmt>0?`<div class="cal-in" data-date="${dateStr}" data-type="income">${fmtMoney(inAmt)}</div>`:''}
+      ${outAmt>0?`<div class="cal-out" data-date="${dateStr}" data-type="expense">${fmtMoney(outAmt)}</div>`:''}
+      <div class="cal-bal">${fmtMoney(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
+  document.querySelectorAll('.cal-in, .cal-out').forEach(el=>{
+    el.addEventListener('click', ()=> drillIntoDayType(el.dataset.date, el.dataset.type));
+  });
 
   const net = monthIncome - monthExpense;
   document.getElementById('calFooter').innerHTML = `
-    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoneyShort(monthIncome)}</div></div>
-    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoneyShort(monthExpense)}</div></div>
-    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoneyShort(net)}</div></div>
+    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div></div>
+    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div></div>
+    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div></div>
   `;
 }
 
@@ -764,32 +843,27 @@ document.getElementById('calAccountFilter').addEventListener('change', renderCal
 function renderAnalysis(range){
   const now = new Date();
   const curYM = now.toISOString().slice(0,7);
-  let list, anchorYM = curYM;
-  if(range==='month'){
+  const todayStr = now.toISOString().slice(0,10);
+  let list, customFrom = null, customTo = null;
+  if(range==='today'){
+    list = TXNS.filter(t=> t.date === todayStr);
+  } else if(range==='month'){
     list = TXNS.filter(t=> reportMonth(t)===curYM);
-  } else if(range==='30'){
-    const d = new Date(now); d.setDate(d.getDate()-30);
-    const cutoff = d.toISOString().slice(0,10);
-    list = TXNS.filter(t=> t.date && t.date >= cutoff);
   } else if(range==='custom'){
-    const from = document.getElementById('customFrom').value;
-    const to = document.getElementById('customTo').value;
-    list = TXNS.filter(t=> t.date && (!from || t.date >= from) && (!to || t.date <= to));
-    if(to) anchorYM = to.slice(0,7);
-    else if(from) anchorYM = from.slice(0,7);
+    customFrom = document.getElementById('customFrom').value;
+    customTo = document.getElementById('customTo').value;
+    list = TXNS.filter(t=> t.date && (!customFrom || t.date >= customFrom) && (!customTo || t.date <= customTo));
   } else {
     list = TXNS.filter(t=> t.date);
   }
-  renderTrendChart(anchorYM);
-  populateCalAccountFilter();
-  renderCalendar();
+  renderTrendChart(range, list, curYM, customFrom, customTo);
   const income = list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
   const expense = list.filter(t=>t.amount<0 && t.category!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
-  document.getElementById('statIn').textContent = fmtMoneyShort(income);
-  document.getElementById('statOut').textContent = fmtMoneyShort(Math.abs(expense));
+  document.getElementById('statIn').textContent = fmtMoney(income);
+  document.getElementById('statOut').textContent = fmtMoney(Math.abs(expense));
   const net = income+expense;
   const netEl = document.getElementById('statNet');
-  netEl.textContent = fmtMoneyShort(net);
+  netEl.textContent = fmtMoney(net);
   netEl.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
   const byCat = {};
   list.filter(t=>t.amount<0 && t.category!=='Account Transfer' && t.category!=='Income').forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
@@ -799,7 +873,7 @@ function renderAnalysis(range){
     <div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;">
       <div class="cname">${escapeHtml(cat)}</div>
       <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/max*100))}%"></div></div>
-      <div class="cat-amt">${fmtMoneyShort(amt)}</div>
+      <div class="cat-amt">${fmtMoney(amt)}</div>
     </div>`).join('') || `<div class="empty-note">Nothing to analyze in this range.</div>`;
   document.querySelectorAll('#analysisCats .cat-row').forEach(row=>{
     row.addEventListener('click', ()=>{
@@ -821,7 +895,7 @@ function renderAnalysis(range){
     <div class="cat-row">
       <div class="cname">${escapeHtml(src)}</div>
       <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/maxIncome*100))}%; background:var(--green);"></div></div>
-      <div class="cat-amt">${fmtMoneyShort(amt)}</div>
+      <div class="cat-amt">${fmtMoney(amt)}</div>
     </div>`).join('') || `<div class="empty-note">No income recorded in this range.</div>`;
 }
 
@@ -833,6 +907,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
   b.addEventListener('click', ()=>{
     switchTab(b.dataset.tab);
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
+    if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
   });
 });
 document.getElementById('rangeBtns').addEventListener('click', (e)=>{
