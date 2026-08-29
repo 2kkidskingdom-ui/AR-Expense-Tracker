@@ -44,7 +44,7 @@
     padding-bottom:90px;
   }
   .margin-rule{
-    position:fixed; top:0; bottom:0; left:34px; width:1px;
+    position:fixed; top:0; bottom:0; left:16px; width:1px;
     background:rgba(155,59,43,0.28); z-index:0; pointer-events:none;
   }
   #authGate{
@@ -61,9 +61,9 @@
   .gate-hint{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0 0 12px; }
   .gate-error{ font-size:12.5px; color:var(--red); margin-top:12px; }
   #gateClientId{ width:100%; margin-bottom:10px; }
-  .wrap{max-width:640px; margin:0 auto; position:relative; padding:0 16px;}
+  .wrap{max-width:640px; margin:0 auto; position:relative; padding:0 6px;}
 
-  header{ padding:22px 20px 16px 40px; position:relative; }
+  header{ padding:22px 6px 16px 16px; position:relative; }
   .brand{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .brand h1{ font-family:'Fraunces', serif; font-weight:600; font-size:26px; margin:0; letter-spacing:-0.01em; color:var(--green-dark); }
   .brand .sub{ font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:6px; }
@@ -80,14 +80,14 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ display:flex; gap:2px; margin:14px 20px 0 40px; border-bottom:1px solid var(--line-strong); }
+  nav.tabs{ display:flex; gap:2px; margin:14px 6px 0 16px; border-bottom:1px solid var(--line-strong); }
   nav.tabs button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:13px; background:none; border:none; cursor:pointer;
     padding:10px 4px 12px; margin-right:18px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
   }
   nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
 
-  main{padding:16px 20px 0 40px;}
+  main{padding:16px 6px 0 16px;}
   section{display:none;}
   section.active{display:block;}
 
@@ -119,13 +119,13 @@
   .cal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:var(--green-dark); }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; max-width:100%; }
   .cal-dow{ background:var(--paper-deep); font-size:8px; text-align:center; padding:4px 0; color:var(--muted); font-weight:600; text-transform:uppercase; }
-  .cal-day{ background:var(--card); min-height:68px; min-width:0; padding:3px 1px; font-size:7.2px; line-height:1.2; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; }
+  .cal-day{ background:var(--card); min-height:74px; min-width:0; padding:3px 2px; font-size:7.2px; line-height:1.2; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; }
   .cal-day.empty{ background:var(--paper-deep); }
   .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
-  .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:9px; color:var(--ink); }
-  .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
-  .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
-  .cal-bal{ font-family:'IBM Plex Mono',monospace; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; color:var(--ink); }
+  .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-bal{ font-family:'IBM Plex Mono',monospace; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
   .cal-bal.pos{ color:#1B9E56; }
   .cal-bal.neg{ color:#E0392B; }
   .cal-footer{ display:flex; gap:5px; margin-top:8px; }
@@ -788,9 +788,9 @@ function populateCalAccountFilter(){
 
 function fitCalendarText(){
   document.querySelectorAll('#calGrid .cal-in, #calGrid .cal-out, #calGrid .cal-bal').forEach(el=>{
-    let size = 8.5;
+    let size = 9.5;
     el.style.fontSize = size+'px';
-    while(el.scrollWidth > el.clientWidth && size > 5){
+    while(el.scrollWidth > el.clientWidth && size > 5.5){
       size -= 0.5;
       el.style.fontSize = size+'px';
     }
