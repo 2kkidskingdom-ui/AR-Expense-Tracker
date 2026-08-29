@@ -119,13 +119,15 @@
   .cal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:var(--green-dark); }
   .cal-grid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:4px; overflow:hidden; max-width:100%; }
   .cal-dow{ background:var(--paper-deep); font-size:8px; text-align:center; padding:4px 0; color:var(--muted); font-weight:600; text-transform:uppercase; }
-  .cal-day{ background:var(--card); min-height:60px; min-width:0; padding:2px 1px; font-size:7.2px; line-height:1.2; overflow-wrap:break-word; word-break:break-all; }
+  .cal-day{ background:var(--card); min-height:68px; min-width:0; padding:3px 1px; font-size:7.2px; line-height:1.2; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; }
   .cal-day.empty{ background:var(--paper-deep); }
   .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
   .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:9px; color:var(--ink); }
-  .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; overflow-wrap:break-word; word-break:break-all; }
-  .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; overflow-wrap:break-word; word-break:break-all; }
-  .cal-bal{ color:var(--muted); font-family:'IBM Plex Mono',monospace; overflow-wrap:break-word; word-break:break-all; }
+  .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-bal{ font-family:'IBM Plex Mono',monospace; white-space:nowrap; font-size:8.5px; letter-spacing:-0.03em; overflow:hidden; text-overflow:clip; display:block; }
+  .cal-bal.pos{ color:#1B9E56; }
+  .cal-bal.neg{ color:#E0392B; }
   .cal-footer{ display:flex; gap:5px; margin-top:8px; }
   .cal-footer .tstat{ padding:8px 5px; }
 
@@ -441,7 +443,7 @@
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-08-26-gate13</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-08-28-final</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -482,6 +484,11 @@ function reportMonth(t){ return t.appliedMonth || (t.date ? t.date.slice(0,7) : 
 function fmtMoney(n){
   const abs = Math.abs(n);
   const s = abs.toLocaleString('en-IN', {minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits:2});
+  return (n<0?'−':'') + '₹' + s;
+}
+function fmtMoneyWhole(n){
+  const abs = Math.round(Math.abs(n));
+  const s = abs.toLocaleString('en-IN');
   return (n<0?'−':'') + '₹' + s;
 }
 function escapeHtml(s){
@@ -779,6 +786,17 @@ function populateCalAccountFilter(){
   sel.value = cur;
 }
 
+function fitCalendarText(){
+  document.querySelectorAll('#calGrid .cal-in, #calGrid .cal-out, #calGrid .cal-bal').forEach(el=>{
+    let size = 8.5;
+    el.style.fontSize = size+'px';
+    while(el.scrollWidth > el.clientWidth && size > 5){
+      size -= 0.5;
+      el.style.fontSize = size+'px';
+    }
+  });
+}
+
 function renderCalendar(){
   const acct = document.getElementById('calAccountFilter').value;
   const filtered = acct ? TXNS.filter(t=>t.account===acct) : TXNS;
@@ -812,12 +830,13 @@ function renderCalendar(){
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}">
       <div class="cal-daynum">${day}</div>
-      ${inAmt>0?`<div class="cal-in" data-date="${dateStr}" data-type="income">${fmtMoney(inAmt)}</div>`:''}
-      ${outAmt>0?`<div class="cal-out" data-date="${dateStr}" data-type="expense">${fmtMoney(outAmt)}</div>`:''}
-      <div class="cal-bal">${fmtMoney(bal)}</div>
+      ${inAmt>0?`<div class="cal-in" data-date="${dateStr}" data-type="income">${fmtMoneyWhole(inAmt)}</div>`:''}
+      ${outAmt>0?`<div class="cal-out" data-date="${dateStr}" data-type="expense">${fmtMoneyWhole(outAmt)}</div>`:''}
+      <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
+  fitCalendarText();
   document.querySelectorAll('.cal-in, .cal-out').forEach(el=>{
     el.addEventListener('click', ()=> drillIntoDayType(el.dataset.date, el.dataset.type));
   });
