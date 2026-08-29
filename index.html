@@ -830,14 +830,15 @@ function renderCalendar(){
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}">
       <div class="cal-daynum">${day}</div>
-      ${inAmt>0?`<div class="cal-in" data-date="${dateStr}" data-type="income">${fmtMoneyWhole(inAmt)}</div>`:''}
-      ${outAmt>0?`<div class="cal-out" data-date="${dateStr}" data-type="expense">${fmtMoneyWhole(outAmt)}</div>`:''}
+      <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoneyWhole(inAmt):'&nbsp;'}</div>
+      <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoneyWhole(outAmt):'&nbsp;'}</div>
       <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
   fitCalendarText();
   document.querySelectorAll('.cal-in, .cal-out').forEach(el=>{
+    if(el.textContent.trim() === '') return;
     el.addEventListener('click', ()=> drillIntoDayType(el.dataset.date, el.dataset.type));
   });
 
