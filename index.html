@@ -343,6 +343,10 @@
       <div class="section-title">Projections</div>
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Plan a future income or expense here — it'll show as a projection on the Calendar from tomorrow onward, without affecting your real balances until it actually happens.</p>
       <div class="plan-form">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong id="planFormTitle" style="font-family:'Fraunces',serif; color:var(--green-dark); font-size:15px;">Add planned entry</strong>
+          <button type="button" id="planCancelBtn" style="display:none; background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline;">Cancel edit</button>
+        </div>
         <div class="field-row">
           <div class="field"><label>Date</label><input type="date" id="planDate"></div>
           <div class="field">
@@ -355,11 +359,18 @@
         </div>
         <div class="field-row">
           <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="planAmount" class="amt-input" placeholder="0.00"></div>
-          <div class="field"><label>Description</label><input type="text" id="planDesc" placeholder="e.g. hdfc loan"></div>
+          <div class="field">
+            <label>Account</label>
+            <input list="planAccountList" id="planAccount" placeholder="Select or type">
+            <datalist id="planAccountList"></datalist>
+          </div>
         </div>
+        <div class="field"><label>Description</label><input type="text" id="planDesc" placeholder="e.g. hdfc loan"></div>
         <button class="save-btn" id="planAddBtn">Add planned entry</button>
+        <button class="del-btn" id="planDeleteBtn" style="display:none;">Delete planned entry</button>
       </div>
       <div class="section-title">Planned entries</div>
+      <p class="gate-hint" style="text-align:left; margin:0 0 6px;">Tap any entry below to edit it.</p>
       <div id="planList"></div>
     </section>
   </main>
@@ -848,6 +859,12 @@ function fitCalendarText(){
   });
 }
 
+let editingPlanId = null;
+
+function populatePlanAccountList(){
+  document.getElementById('planAccountList').innerHTML = getAccounts().map(a=>`<option value="${escapeHtml(a)}">`).join('');
+}
+
 function renderPlanList(){
   const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   const el = document.getElementById('planList');
@@ -858,45 +875,90 @@ function renderPlanList(){
       <div class="dot ${isCredit?'pos':'neg'}"></div>
       <div class="mid">
         <div class="cat">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
-        <div class="meta">${escapeHtml(p.date||'')}</div>
+        <div class="meta">${escapeHtml(p.account||'No account')} · ${escapeHtml(p.date||'')}</div>
       </div>
       <div class="amt" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
     </div>`;
   }).join('') || `<div class="empty-note">No planned entries yet — add one above.</div>`;
   el.querySelectorAll('.txn').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      if(!confirm('Delete this planned entry?')) return;
-      PLANS = PLANS.filter(p=>p.id !== row.dataset.id);
-      savePlans();
-      renderPlanList();
-    });
+    row.addEventListener('click', ()=> openPlanForEdit(row.dataset.id));
   });
 }
 
+function openPlanForEdit(id){
+  const p = PLANS.find(x=>x.id===id);
+  if(!p) return;
+  editingPlanId = id;
+  populatePlanAccountList();
+  document.getElementById('planDate').value = p.date || '';
+  const isCredit = p.credit > 0;
+  document.getElementById('planAmount').value = isCredit ? p.credit : p.debit;
+  document.getElementById('planAccount').value = p.account || '';
+  document.getElementById('planDesc').value = p.description || '';
+  setPlanType(isCredit ? 'credit' : 'debit');
+  document.getElementById('planFormTitle').textContent = 'Edit planned entry';
+  document.getElementById('planAddBtn').textContent = 'Save changes';
+  document.getElementById('planDeleteBtn').style.display = 'block';
+  document.getElementById('planCancelBtn').style.display = 'block';
+  document.querySelector('.plan-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function resetPlanForm(){
+  editingPlanId = null;
+  document.getElementById('planDate').value = '';
+  document.getElementById('planAmount').value = '';
+  document.getElementById('planAccount').value = '';
+  document.getElementById('planDesc').value = '';
+  setPlanType('debit');
+  document.getElementById('planFormTitle').textContent = 'Add planned entry';
+  document.getElementById('planAddBtn').textContent = 'Add planned entry';
+  document.getElementById('planDeleteBtn').style.display = 'none';
+  document.getElementById('planCancelBtn').style.display = 'none';
+}
+
 let currentPlanType = 'debit';
+function setPlanType(type){
+  currentPlanType = type;
+  document.querySelectorAll('#plan .type-btn').forEach(x=>x.classList.toggle('active', x.dataset.ptype===type));
+}
 document.querySelectorAll('#plan .type-btn').forEach(b=>{
-  b.addEventListener('click', ()=>{
-    currentPlanType = b.dataset.ptype;
-    document.querySelectorAll('#plan .type-btn').forEach(x=>x.classList.toggle('active', x===b));
-  });
+  b.addEventListener('click', ()=> setPlanType(b.dataset.ptype));
+});
+document.getElementById('planCancelBtn').addEventListener('click', resetPlanForm);
+document.getElementById('planDeleteBtn').addEventListener('click', ()=>{
+  if(!editingPlanId) return;
+  if(!confirm('Delete this planned entry?')) return;
+  PLANS = PLANS.filter(p=>p.id !== editingPlanId);
+  savePlans();
+  resetPlanForm();
+  renderPlanList();
+  showToast('Planned entry deleted');
 });
 document.getElementById('planAddBtn').addEventListener('click', ()=>{
   const date = document.getElementById('planDate').value;
   const amt = parseFloat(document.getElementById('planAmount').value);
+  const account = document.getElementById('planAccount').value.trim();
   const desc = document.getElementById('planDesc').value.trim();
   if(!date){ showToast('Pick a date'); return; }
   if(isNaN(amt) || amt<=0){ showToast('Enter a valid amount'); return; }
-  PLANS.push({
-    id: uid(), date,
+  if(!account){ showToast('Pick or type an account'); return; }
+  const entry = {
+    id: editingPlanId || uid(), date, account,
     debit: currentPlanType==='debit' ? amt : 0,
     credit: currentPlanType==='credit' ? amt : 0,
     description: desc
-  });
+  };
+  if(editingPlanId){
+    const idx = PLANS.findIndex(p=>p.id===editingPlanId);
+    if(idx>=0) PLANS[idx] = entry;
+  } else {
+    PLANS.push(entry);
+  }
   savePlans();
-  document.getElementById('planAmount').value = '';
-  document.getElementById('planDesc').value = '';
+  const wasEditing = !!editingPlanId;
+  resetPlanForm();
   renderPlanList();
-  showToast('Planned entry added');
+  showToast(wasEditing ? 'Planned entry updated' : 'Planned entry added');
 });
 
 function renderCalendar(){
@@ -917,7 +979,7 @@ function renderCalendar(){
     return bal;
   }
   // planned entries only make sense against the combined view — a single account can't be attributed
-  const sortedPlans = acct ? [] : [...PLANS].filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const sortedPlans = (acct ? PLANS.filter(p=>p.account===acct) : PLANS).filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
   const todayRealBalance = balanceThrough(todayStr);
   function projectedBalanceThrough(dateStr){
     let extra = 0;
@@ -1049,7 +1111,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     switchTab(b.dataset.tab);
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
-    if(b.dataset.tab==='plan'){ renderPlanList(); }
+    if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); }
   });
 });
 document.getElementById('rangeBtns').addEventListener('click', (e)=>{
