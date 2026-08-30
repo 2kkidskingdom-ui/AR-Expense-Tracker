@@ -113,7 +113,7 @@
   .tb-amount{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:26px; color:#fff; margin-top:4px; }
   .chart-legend{ font-size:11.5px; color:var(--muted); margin-bottom:4px; }
   .legend-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle; }
-  .trend-chart{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px 4px 2px; margin-top:6px; }
+  .trend-chart{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px 4px 2px; margin-top:6px; overflow-x:auto; }
   .cal-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .cal-nav button{ background:var(--card); border:1px solid var(--line-strong); border-radius:6px; width:34px; height:34px; font-size:18px; color:var(--green-dark); cursor:pointer; }
   .cal-title{ font-family:'Fraunces', serif; font-weight:600; font-size:15px; color:var(--green-dark); }
@@ -557,22 +557,33 @@ function renderNetStamp(){
   if(tb) tb.textContent = fmtMoney(net);
 }
 
+function isRealFlow(t){
+  return t.category!=='Account Transfer' && t.subcategory!=='Account Transfer' && t.subcategory!=='Initial Balance';
+}
+function isRealExpense(t){
+  return t.amount<0 && isRealFlow(t) && t.category!=='Income';
+}
+function isRealIncome(t){
+  return t.amount>0 && isRealFlow(t);
+}
+
 function buildChartBuckets(range, list, curYM, customFrom, customTo){
   const buckets = [];
   if(range==='month'){
     const [y,m] = curYM.split('-').map(Number);
     const daysInMonth = new Date(y,m,0).getDate();
     for(let d=1; d<=daysInMonth; d++){
-      const dayTx = list.filter(t=> parseInt((t.date||'0').slice(8,10),10) === d);
+      const dayTx = list.filter(t=> parseInt((t.date||'0').slice(8,10),10) === d && isRealFlow(t));
       const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-      const expense = dayTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+      const expense = dayTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
       buckets.push({ label:String(d), income, expense, date:`${curYM}-${String(d).padStart(2,'0')}` });
     }
   } else if(range==='today'){
     const now = new Date();
     const ds = now.toISOString().slice(0,10);
-    const income = list.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const expense = list.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+    const flow = list.filter(isRealFlow);
+    const income = flow.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+    const expense = flow.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
     buckets.push({ label:'Today', income, expense, date: ds });
   } else if(range==='custom' && customFrom && customTo){
     const fromD = new Date(customFrom+'T00:00:00'), toD = new Date(customTo+'T00:00:00');
@@ -581,9 +592,9 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
       for(let i=0;i<spanDays;i++){
         const d = new Date(fromD); d.setDate(d.getDate()+i);
         const ds = d.toISOString().slice(0,10);
-        const dayTx = list.filter(t=>t.date===ds);
+        const dayTx = list.filter(t=>t.date===ds && isRealFlow(t));
         const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-        const expense = dayTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+        const expense = dayTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
         buckets.push({ label:String(d.getDate()), income, expense, date: ds });
       }
     } else if(spanDays>0){
@@ -593,9 +604,9 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
       while((cy<endY || (cy===endY && cm<=endM)) && guard<60){
         guard++;
         const ym = `${cy}-${String(cm+1).padStart(2,'0')}`;
-        const monthTx = list.filter(t=> reportMonth(t)===ym);
+        const monthTx = list.filter(t=> reportMonth(t)===ym && isRealFlow(t));
         const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-        const expense = monthTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+        const expense = monthTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
         buckets.push({ label:new Date(cy,cm,1).toLocaleDateString('en-IN',{month:'short'}), income, expense, ym });
         cm++; if(cm>11){cm=0;cy++;}
       }
@@ -604,9 +615,9 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
     const monthsSet = new Set(TXNS.filter(t=>t.date).map(t=>reportMonth(t)));
     const monthsSorted = [...monthsSet].filter(Boolean).sort();
     monthsSorted.forEach(ym=>{
-      const monthTx = TXNS.filter(t=> reportMonth(t)===ym && t.category!=='Account Transfer');
+      const monthTx = TXNS.filter(t=> reportMonth(t)===ym && isRealFlow(t));
       const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-      const expense = monthTx.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+      const expense = monthTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
       const [y,m] = ym.split('-').map(Number);
       buckets.push({ label:new Date(y,m-1,1).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}), income, expense, ym });
     });
@@ -622,11 +633,11 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
   }
   const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense)));
 
-  const width = Math.max(320, data.length*24), height = 168, padding = 6, bottomPad = 22, topPad = 16;
+  const width = Math.max(320, data.length*56), height = 168, padding = 6, bottomPad = 22, topPad = 16;
   const groupW = (width - padding*2) / data.length;
   const barW = groupW * 0.3;
   const chartH = height - bottomPad - topPad;
-  const showLabels = data.length <= 20;
+  const showLabels = data.length <= 31;
 
   let svg = '';
   data.forEach((d,i)=>{
@@ -648,7 +659,7 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     svg += `<text x="${gx+groupW/2}" y="${height-6}" font-size="9" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
   });
   const el = document.getElementById('trendChartSvg');
-  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; display:block;">${svg}</svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:${width}px; height:${height}px; display:block;">${svg}</svg>`;
   el.querySelectorAll('[data-ym]').forEach(node=>{
     node.addEventListener('click', ()=> drillIntoMonth(node.dataset.ym));
   });
@@ -822,9 +833,9 @@ function renderCalendar(){
   let monthIncome = 0, monthExpense = 0;
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = `${calYear}-${String(calMon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const dayTxns = filtered.filter(t=>t.date===dateStr);
+    const dayTxns = filtered.filter(t=>t.date===dateStr && isRealFlow(t));
     const inAmt = dayTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const outAmt = dayTxns.filter(t=>t.amount<0).reduce((s,t)=>s+Math.abs(t.amount),0);
+    const outAmt = dayTxns.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
     monthIncome += inAmt; monthExpense += outAmt;
     const bal = balanceThrough(dateStr);
     const isToday = dateStr === todayStr;
@@ -877,8 +888,8 @@ function renderAnalysis(range){
     list = TXNS.filter(t=> t.date);
   }
   renderTrendChart(range, list, curYM, customFrom, customTo);
-  const income = list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
-  const expense = list.filter(t=>t.amount<0 && t.category!=='Account Transfer').reduce((s,t)=>s+t.amount,0);
+  const income = list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
+  const expense = list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
   document.getElementById('statIn').textContent = fmtMoney(income);
   document.getElementById('statOut').textContent = fmtMoney(Math.abs(expense));
   const net = income+expense;
@@ -886,7 +897,7 @@ function renderAnalysis(range){
   netEl.textContent = fmtMoney(net);
   netEl.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
   const byCat = {};
-  list.filter(t=>t.amount<0 && t.category!=='Account Transfer' && t.category!=='Income').forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
+  list.filter(isRealExpense).forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
   const max = sorted.length ? sorted[0][1] : 1;
   document.getElementById('analysisCats').innerHTML = sorted.map(([cat,amt])=>`
@@ -905,7 +916,7 @@ function renderAnalysis(range){
   });
 
   const byIncomeSrc = {};
-  list.filter(t=>t.amount>0 && t.category!=='Account Transfer' && t.subcategory!=='Account Transfer' && t.subcategory!=='Initial Balance').forEach(t=>{
+  list.filter(isRealIncome).forEach(t=>{
     const key = t.subcategory || t.category || 'Other';
     byIncomeSrc[key] = (byIncomeSrc[key]||0) + t.amount;
   });
