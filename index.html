@@ -32,7 +32,7 @@
     --shadow: 0 1px 0 rgba(43,38,32,0.06);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;overflow-x:hidden;}
   body{
     background:
       repeating-linear-gradient(180deg, transparent, transparent 27px, rgba(183,170,124,0.35) 28px),
@@ -80,10 +80,12 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ display:flex; gap:2px; margin:14px 6px 0 16px; border-bottom:1px solid var(--line-strong); }
+  nav.tabs{ display:flex; gap:2px; margin:14px 0 0 0; padding:0 6px 0 16px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
-    font-family:'Inter',sans-serif; font-weight:600; font-size:13px; background:none; border:none; cursor:pointer;
-    padding:10px 4px 12px; margin-right:18px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;
+    padding:10px 4px 12px; margin-right:14px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
+    white-space:nowrap; flex:none;
   }
   nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
 
@@ -122,6 +124,8 @@
   .cal-day{ background:var(--card); min-height:74px; min-width:0; padding:3px 2px; font-size:7.2px; line-height:1.2; overflow:hidden; display:flex; flex-direction:column; justify-content:space-evenly; }
   .cal-day.empty{ background:var(--paper-deep); }
   .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .cal-day.projected{ background:repeating-linear-gradient(135deg, var(--card), var(--card) 6px, var(--paper-deep) 6px, var(--paper-deep) 7px); border:1px dashed var(--line-strong); }
+  .plan-form{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px; margin-top:10px; }
   .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; color:var(--ink); }
   .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
   .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
@@ -207,11 +211,11 @@
   .type-switch button.active.expense{background:var(--red-soft); border-color:var(--red); color:var(--red);}
   .type-switch button.active.income{background:var(--green-soft); border-color:var(--green); color:var(--green);}
   .type-switch button.active.transfer{background:var(--gold-soft); border-color:var(--gold); color:var(--gold);}
-  .field{ margin-bottom:12px; }
+  .field{ margin-bottom:12px; min-width:0; }
   .field label{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:4px; }
   .field input, .field select{ width:100%; }
-  .field-row{ display:flex; gap:10px; }
-  .field-row .field{ flex:1; }
+  .field-row{ display:flex; gap:10px; min-width:0; }
+  .field-row .field{ flex:1; min-width:0; }
   .amt-input{ font-family:'IBM Plex Mono', monospace; font-size:20px !important; font-weight:600; padding:10px !important; }
   .status-toggle{ display:flex; gap:6px; }
   .status-btn{
@@ -267,6 +271,7 @@
     <button class="tab-btn active" data-tab="dash">Dashboard</button>
     <button class="tab-btn" data-tab="ledger">Ledger</button>
     <button class="tab-btn" data-tab="analysis">Summary</button>
+    <button class="tab-btn" data-tab="plan">Projections</button>
     <button class="tab-btn" data-tab="calendar">Calendar</button>
   </nav>
 
@@ -331,6 +336,31 @@
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-footer" id="calFooter"></div>
+      <p class="gate-hint" style="text-align:left; margin-top:10px;">Days up to today show actual recorded activity. Days after today show projected figures from your Projections plan (dashed border).</p>
+    </section>
+
+    <section id="plan">
+      <div class="section-title">Projections</div>
+      <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Plan a future income or expense here — it'll show as a projection on the Calendar from tomorrow onward, without affecting your real balances until it actually happens.</p>
+      <div class="plan-form">
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="planDate"></div>
+          <div class="field">
+            <label>Type</label>
+            <div class="type-switch">
+              <button type="button" class="type-btn active expense" data-ptype="debit">Debit</button>
+              <button type="button" class="type-btn income" data-ptype="credit">Credit</button>
+            </div>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="planAmount" class="amt-input" placeholder="0.00"></div>
+          <div class="field"><label>Description</label><input type="text" id="planDesc" placeholder="e.g. hdfc loan"></div>
+        </div>
+        <button class="save-btn" id="planAddBtn">Add planned entry</button>
+      </div>
+      <div class="section-title">Planned entries</div>
+      <div id="planList"></div>
     </section>
   </main>
 </div>
@@ -452,6 +482,7 @@
 // ---------- Constants ----------
 const LS_TXNS = 'ledger.transactions.v1';
 const LS_LAST_MODIFIED = 'ledger.lastModified.v1';
+const LS_PLANS = 'ledger.plans.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -471,6 +502,7 @@ SEED.forEach(t=>{
 });
 
 let TXNS = [];
+let PLANS = [];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
@@ -523,6 +555,14 @@ function saveData(){
   localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   if(accessToken) debouncedBackup();
+}
+function loadPlans(){
+  const raw = localStorage.getItem(LS_PLANS);
+  if(raw){ try{ PLANS = JSON.parse(raw); }catch(e){ PLANS = []; } }
+  else { PLANS = []; }
+}
+function savePlans(){
+  localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
 }
 let backupTimer = null;
 function debouncedBackup(){
@@ -808,6 +848,57 @@ function fitCalendarText(){
   });
 }
 
+function renderPlanList(){
+  const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  const el = document.getElementById('planList');
+  el.innerHTML = sorted.map(p=>{
+    const isCredit = p.credit > 0;
+    const amt = isCredit ? p.credit : p.debit;
+    return `<div class="txn" data-id="${p.id}" style="cursor:pointer;">
+      <div class="dot ${isCredit?'pos':'neg'}"></div>
+      <div class="mid">
+        <div class="cat">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
+        <div class="meta">${escapeHtml(p.date||'')}</div>
+      </div>
+      <div class="amt" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
+    </div>`;
+  }).join('') || `<div class="empty-note">No planned entries yet — add one above.</div>`;
+  el.querySelectorAll('.txn').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      if(!confirm('Delete this planned entry?')) return;
+      PLANS = PLANS.filter(p=>p.id !== row.dataset.id);
+      savePlans();
+      renderPlanList();
+    });
+  });
+}
+
+let currentPlanType = 'debit';
+document.querySelectorAll('#plan .type-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    currentPlanType = b.dataset.ptype;
+    document.querySelectorAll('#plan .type-btn').forEach(x=>x.classList.toggle('active', x===b));
+  });
+});
+document.getElementById('planAddBtn').addEventListener('click', ()=>{
+  const date = document.getElementById('planDate').value;
+  const amt = parseFloat(document.getElementById('planAmount').value);
+  const desc = document.getElementById('planDesc').value.trim();
+  if(!date){ showToast('Pick a date'); return; }
+  if(isNaN(amt) || amt<=0){ showToast('Enter a valid amount'); return; }
+  PLANS.push({
+    id: uid(), date,
+    debit: currentPlanType==='debit' ? amt : 0,
+    credit: currentPlanType==='credit' ? amt : 0,
+    description: desc
+  });
+  savePlans();
+  document.getElementById('planAmount').value = '';
+  document.getElementById('planDesc').value = '';
+  renderPlanList();
+  showToast('Planned entry added');
+});
+
 function renderCalendar(){
   const acct = document.getElementById('calAccountFilter').value;
   const filtered = acct ? TXNS.filter(t=>t.account===acct) : TXNS;
@@ -818,12 +909,20 @@ function renderCalendar(){
   const daysInMonth = new Date(calYear, calMon+1, 0).getDate();
   const todayStr = new Date().toISOString().slice(0,10);
 
-  // running balance up to end of each day
+  // running real balance up to end of each day
   const sortedDates = [...filtered].filter(t=>t.date).sort((a,b)=>a.date.localeCompare(b.date));
   function balanceThrough(dateStr){
     let bal = 0;
     for(const t of sortedDates){ if(t.date <= dateStr) bal += t.amount; else break; }
     return bal;
+  }
+  // planned entries only make sense against the combined view — a single account can't be attributed
+  const sortedPlans = acct ? [] : [...PLANS].filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const todayRealBalance = balanceThrough(todayStr);
+  function projectedBalanceThrough(dateStr){
+    let extra = 0;
+    for(const p of sortedPlans){ if(p.date > todayStr && p.date <= dateStr) extra += (p.credit||0) - (p.debit||0); }
+    return todayRealBalance + extra;
   }
 
   const dows = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -833,13 +932,22 @@ function renderCalendar(){
   let monthIncome = 0, monthExpense = 0;
   for(let day=1; day<=daysInMonth; day++){
     const dateStr = `${calYear}-${String(calMon+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const dayTxns = filtered.filter(t=>t.date===dateStr && isRealFlow(t));
-    const inAmt = dayTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const outAmt = dayTxns.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+    const isFuture = dateStr > todayStr;
+    let inAmt, outAmt, bal;
+    if(!isFuture){
+      const dayTxns = filtered.filter(t=>t.date===dateStr && isRealFlow(t));
+      inAmt = dayTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
+      outAmt = dayTxns.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+      bal = balanceThrough(dateStr);
+    } else {
+      const dayPlans = sortedPlans.filter(p=>p.date===dateStr);
+      inAmt = dayPlans.reduce((s,p)=>s+(p.credit||0),0);
+      outAmt = dayPlans.reduce((s,p)=>s+(p.debit||0),0);
+      bal = projectedBalanceThrough(dateStr);
+    }
     monthIncome += inAmt; monthExpense += outAmt;
-    const bal = balanceThrough(dateStr);
     const isToday = dateStr === todayStr;
-    html += `<div class="cal-day${isToday?' today':''}">
+    html += `<div class="cal-day${isToday?' today':''}${isFuture?' projected':''}">
       <div class="cal-daynum">${day}</div>
       <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoneyWhole(inAmt):'&nbsp;'}</div>
       <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoneyWhole(outAmt):'&nbsp;'}</div>
@@ -850,6 +958,7 @@ function renderCalendar(){
   fitCalendarText();
   document.querySelectorAll('.cal-in, .cal-out').forEach(el=>{
     if(el.textContent.trim() === '') return;
+    if(el.dataset.date > todayStr) return;
     el.addEventListener('click', ()=> drillIntoDayType(el.dataset.date, el.dataset.type));
   });
 
@@ -933,12 +1042,14 @@ function renderAnalysis(range){
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('main section').forEach(s=>s.classList.toggle('active', s.id===tab));
+  window.scrollTo(0,0);
 }
 document.querySelectorAll('.tab-btn').forEach(b=>{
   b.addEventListener('click', ()=>{
     switchTab(b.dataset.tab);
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
+    if(b.dataset.tab==='plan'){ renderPlanList(); }
   });
 });
 document.getElementById('rangeBtns').addEventListener('click', (e)=>{
@@ -1359,6 +1470,7 @@ initAuthGate();
 // ---------- Init ----------
 (function init(){
   loadData();
+  loadPlans();
   populateFilterSelects();
   refreshAll();
   updateSyncUI(false);
