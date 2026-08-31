@@ -80,8 +80,8 @@
   nav.tabs{ display:flex; gap:2px; margin:14px 0 0 0; padding:0 6px 0 6px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
-    font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;
-    padding:10px 4px 12px; margin-right:14px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:11px; background:none; border:none; cursor:pointer;
+    padding:8px 2px 10px; margin-right:8px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
     white-space:nowrap; flex:none;
   }
   nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
@@ -1083,12 +1083,22 @@ function renderAnalysis(range){
   renderTrendChart(range, list, curYM, customFrom, customTo);
   const income = list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
   const expense = list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
+  const expPct = income > 0 ? (Math.abs(expense)/income*100).toFixed(1)+'%' : '';
   document.getElementById('statIn').textContent = fmtMoney(income);
-  document.getElementById('statOut').textContent = fmtMoney(Math.abs(expense));
+  document.getElementById('statOut').textContent = fmtMoney(Math.abs(expense)) + (expPct?' ('+expPct+')':'');
   const net = income+expense;
+  const netPct = income > 0 ? (net/income*100).toFixed(1)+'%' : '';
   const netEl = document.getElementById('statNet');
-  netEl.textContent = fmtMoney(net);
+  netEl.textContent = fmtMoney(net) + (netPct?' ('+netPct+')':'');
   netEl.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
+  document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{
+    let size = 13;
+    el.style.fontSize = size+'px';
+    while(el.scrollWidth > el.clientWidth && size > 7){
+      size -= 0.5;
+      el.style.fontSize = size+'px';
+    }
+  });
   const byCat = {};
   list.filter(isRealExpense).forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
   const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
