@@ -43,10 +43,7 @@
     min-height:100vh;
     padding-bottom:90px;
   }
-  .margin-rule{
-    position:fixed; top:0; bottom:0; left:16px; width:1px;
-    background:rgba(155,59,43,0.28); z-index:0; pointer-events:none;
-  }
+  .margin-rule{ display:none; }
   #authGate{
     position:fixed; inset:0; background:var(--paper); z-index:100;
     display:flex; align-items:center; justify-content:center; padding:24px;
@@ -63,7 +60,7 @@
   #gateClientId{ width:100%; margin-bottom:10px; }
   .wrap{max-width:640px; margin:0 auto; position:relative; padding:0 6px;}
 
-  header{ padding:22px 6px 16px 16px; position:relative; }
+  header{ padding:22px 6px 16px 6px; position:relative; }
   .brand{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
   .brand h1{ font-family:'Fraunces', serif; font-weight:600; font-size:26px; margin:0; letter-spacing:-0.01em; color:var(--green-dark); }
   .brand .sub{ font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-top:2px; display:flex; align-items:center; gap:6px; }
@@ -80,7 +77,7 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ display:flex; gap:2px; margin:14px 0 0 0; padding:0 6px 0 16px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  nav.tabs{ display:flex; gap:2px; margin:14px 0 0 0; padding:0 6px 0 6px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; background:none; border:none; cursor:pointer;
@@ -89,7 +86,7 @@
   }
   nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
 
-  main{padding:16px 6px 0 16px;}
+  main{padding:16px 6px 0 6px;}
   section{display:none;}
   section.active{display:block;}
 
@@ -98,7 +95,7 @@
     background:var(--card); border:1px solid var(--line); border-radius:3px; padding:12px 14px;
     display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); cursor:pointer;
   }
-  .acct-card .name{font-weight:600; font-size:14.5px;}
+  .acct-card .name{font-weight:600; font-size:15.5px;}
   .acct-card .bal{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:15px;}
   .bal.pos{color:var(--green);} .bal.neg{color:var(--red);}
 
@@ -168,7 +165,7 @@
   .txn .dot{width:7px; height:7px; border-radius:50%; flex:none;}
   .dot.pos{background:var(--green);} .dot.neg{background:var(--red);}
   .txn .mid{flex:1; min-width:0;}
-  .txn .cat{font-weight:600; font-size:13.5px;}
+  .txn .cat{font-weight:600; font-size:14.5px;}
   .txn .meta{font-size:11px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .txn .amt{font-family:'IBM Plex Mono', monospace; font-weight:600; font-size:13.5px; flex:none;}
   .empty-note{ text-align:center; color:var(--muted); font-size:13px; padding:40px 20px; font-family:'Fraunces', serif; font-style:italic; }
@@ -258,10 +255,10 @@
 <div class="margin-rule"></div>
 <div class="wrap">
   <header>
-    <div class="brand">
-      <div>
-        <h1>AR Expenses Tracker</h1>
-        <div class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span> · <button class="settings-icon" id="openSettings" title="Settings">⚙</button></div>
+    <div class="brand" style="justify-content:center; text-align:center; flex-direction:column;">
+      <div style="width:100%;">
+        <h1 style="text-align:center;">AR Expenses Tracker</h1>
+        <div class="sub" style="justify-content:center;"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span> · <button class="settings-icon" id="openSettings" title="Settings">⚙</button></div>
       </div>
     </div>
     <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
@@ -483,6 +480,10 @@
     <button class="ghost-btn" id="disconnectBtn" style="display:none;">Disconnect</button>
     <button class="ghost-btn" id="lockAppBtn">🔒 Lock this app now</button>
 
+    <div class="section-title" style="margin-top:24px;">Total Balance settings</div>
+    <p class="hint">Untick an account to hide its value from the Total Current Balance on the Dashboard. The account and its own balance still show normally in your Accounts list.</p>
+    <div id="excludeAccountsList" style="margin-bottom:8px;"></div>
+
     <div class="section-title" style="margin-top:24px;">About this app</div>
     <p class="hint" style="opacity:0.6;">Version: 2026-08-28-final</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
@@ -600,10 +601,21 @@ function getCategories(){
 }
 function accountBalance(acct){ return TXNS.filter(t=>t.account===acct).reduce((s,t)=>s+t.amount,0); }
 function netWorth(){ return TXNS.reduce((s,t)=>s+t.amount,0); }
+const LS_EXCLUDED_ACCOUNTS = 'ledger.excludedAccounts.v1';
+function getExcludedAccounts(){
+  try{ return JSON.parse(localStorage.getItem(LS_EXCLUDED_ACCOUNTS) || '[]'); }catch(e){ return []; }
+}
+function setExcludedAccounts(list){
+  localStorage.setItem(LS_EXCLUDED_ACCOUNTS, JSON.stringify(list));
+}
+function totalBalanceForDisplay(){
+  const excluded = new Set(getExcludedAccounts());
+  return TXNS.filter(t=>!excluded.has(t.account)).reduce((s,t)=>s+t.amount,0);
+}
 
 // ---------- Rendering ----------
 function renderNetStamp(){
-  const net = netWorth();
+  const net = totalBalanceForDisplay();
   const tb = document.getElementById('totalBalanceFull');
   if(tb) tb.textContent = fmtMoney(net);
 }
@@ -1025,11 +1037,21 @@ function renderCalendar(){
   });
 
   const net = monthIncome - monthExpense;
+  const expensePct = monthIncome > 0 ? (monthExpense/monthIncome*100).toFixed(1)+'%' : '';
+  const netPct = monthIncome > 0 ? (net/monthIncome*100).toFixed(1)+'%' : '';
   document.getElementById('calFooter').innerHTML = `
     <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div></div>
-    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div></div>
-    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div></div>
+    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}${expensePct?' ('+expensePct+')':''}</div></div>
+    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}${netPct?' ('+netPct+')':''}</div></div>
   `;
+  document.querySelectorAll('#calFooter .v').forEach(el=>{
+    let size = 13;
+    el.style.fontSize = size+'px';
+    while(el.scrollWidth > el.clientWidth && size > 7){
+      size -= 0.5;
+      el.style.fontSize = size+'px';
+    }
+  });
 }
 
 document.getElementById('calPrev').addEventListener('click', ()=>{
@@ -1296,8 +1318,29 @@ function refreshAll(){
 
 // ---------- Settings / Google Drive ----------
 const settingsOverlay = document.getElementById('settingsOverlay');
+function renderExcludeAccountsList(){
+  const excluded = new Set(getExcludedAccounts());
+  const el = document.getElementById('excludeAccountsList');
+  el.innerHTML = getAccounts().map(a=>`
+    <label style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13px; cursor:pointer;">
+      <input type="checkbox" data-acct="${escapeHtml(a)}" ${excluded.has(a)?'':'checked'}>
+      ${escapeHtml(a)}
+    </label>`).join('') || `<div class="empty-note">No accounts yet.</div>`;
+  el.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      let excl = getExcludedAccounts();
+      const acct = cb.dataset.acct;
+      if(cb.checked){ excl = excl.filter(a=>a!==acct); }
+      else if(!excl.includes(acct)){ excl.push(acct); }
+      setExcludedAccounts(excl);
+      renderNetStamp();
+    });
+  });
+}
+
 document.getElementById('openSettings').addEventListener('click', ()=>{
   document.getElementById('fClientId').value = localStorage.getItem(LS_CLIENT_ID) || '';
+  renderExcludeAccountsList();
   settingsOverlay.classList.add('show');
 });
 document.getElementById('closeSettings').addEventListener('click', ()=> settingsOverlay.classList.remove('show'));
