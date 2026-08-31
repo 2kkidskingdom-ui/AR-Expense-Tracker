@@ -77,11 +77,11 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ display:flex; gap:2px; margin:14px 0 0 0; padding:0 6px 0 6px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  nav.tabs{ display:flex; justify-content:space-between; gap:2px; margin:14px 0 0 0; padding:0 4px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:11px; background:none; border:none; cursor:pointer;
-    padding:8px 2px 10px; margin-right:8px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
+    padding:8px 2px 10px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
     white-space:nowrap; flex:none;
   }
   nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
@@ -675,10 +675,12 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
       }
     }
   } else {
-    const monthsSet = new Set(TXNS.filter(t=>t.date).map(t=>reportMonth(t)));
+    const excluded = new Set(getExcludedAccounts());
+    const nonHidden = TXNS.filter(t=>!excluded.has(t.account));
+    const monthsSet = new Set(nonHidden.filter(t=>t.date).map(t=>reportMonth(t)));
     const monthsSorted = [...monthsSet].filter(Boolean).sort();
     monthsSorted.forEach(ym=>{
-      const monthTx = TXNS.filter(t=> reportMonth(t)===ym && isRealFlow(t));
+      const monthTx = nonHidden.filter(t=> reportMonth(t)===ym && isRealFlow(t));
       const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
       const expense = monthTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
       const [y,m] = ym.split('-').map(Number);
@@ -975,7 +977,8 @@ document.getElementById('planAddBtn').addEventListener('click', ()=>{
 
 function renderCalendar(){
   const acct = document.getElementById('calAccountFilter').value;
-  const filtered = acct ? TXNS.filter(t=>t.account===acct) : TXNS;
+  const excludedAccts = new Set(getExcludedAccounts());
+  const filtered = acct ? TXNS.filter(t=>t.account===acct) : TXNS.filter(t=>!excludedAccts.has(t.account));
 
   document.getElementById('calTitle').textContent = new Date(calYear, calMon, 1).toLocaleDateString('en-IN', {month:'long', year:'numeric'});
 
@@ -991,7 +994,7 @@ function renderCalendar(){
     return bal;
   }
   // planned entries only make sense against the combined view — a single account can't be attributed
-  const sortedPlans = (acct ? PLANS.filter(p=>p.account===acct) : PLANS).filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const sortedPlans = (acct ? PLANS.filter(p=>p.account===acct) : PLANS.filter(p=>!excludedAccts.has(p.account))).filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
   const todayRealBalance = balanceThrough(todayStr);
   function projectedBalanceThrough(dateStr){
     let extra = 0;
@@ -1068,6 +1071,7 @@ function renderAnalysis(range){
   const now = new Date();
   const curYM = now.toISOString().slice(0,7);
   const todayStr = now.toISOString().slice(0,10);
+  const excluded = new Set(getExcludedAccounts());
   let list, customFrom = null, customTo = null;
   if(range==='today'){
     list = TXNS.filter(t=> t.date === todayStr);
@@ -1080,6 +1084,7 @@ function renderAnalysis(range){
   } else {
     list = TXNS.filter(t=> t.date);
   }
+  list = list.filter(t=>!excluded.has(t.account));
   renderTrendChart(range, list, curYM, customFrom, customTo);
   const income = list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
   const expense = list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
