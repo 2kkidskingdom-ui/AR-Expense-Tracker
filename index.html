@@ -575,6 +575,8 @@ function loadPlans(){
 }
 function savePlans(){
   localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  if(accessToken) debouncedBackup();
 }
 let backupTimer = null;
 function debouncedBackup(){
@@ -1420,6 +1422,14 @@ function attemptSilentReconnect(){
   const clientId = localStorage.getItem(LS_CLIENT_ID);
   if(!clientId) return;
   document.getElementById('resumeSyncBtn').style.display = 'block';
+  // Browsers block sign-in popups fired with zero user interaction, but they allow it
+  // within a brief window after ANY real tap on the page. So instead of making you find
+  // and tap the banner specifically, we piggyback on your very first tap anywhere.
+  const autoTry = () => {
+    if(accessToken) return;
+    connectDrive(clientId, '');
+  };
+  document.addEventListener('pointerdown', autoTry, {once:true});
 }
 document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
   const clientId = localStorage.getItem(LS_CLIENT_ID);
@@ -1458,29 +1468,30 @@ async function driveFindFile(){
   return null;
 }
 
-async function driveSyncOnConnect(){
+async function driveSyncOnConnect(quiet){
   try{
     const existing = await driveFindFile();
     if(existing){
       const remoteTime = existing.modifiedTime ? new Date(existing.modifiedTime).getTime() : 0;
       const localTime = parseInt(localStorage.getItem(LS_LAST_MODIFIED) || '0', 10);
-      if(remoteTime > localTime){
-        showToast('Drive has newer data — pulling latest');
+      if(remoteTime > localTime + 2000){
+        if(!quiet) showToast('Drive has newer data — pulling latest');
         await driveRestore(true);
-      } else {
-        showToast('This device has newer data — backing up to Drive');
+      } else if(localTime > remoteTime + 2000){
+        if(!quiet) showToast('This device has newer data — backing up to Drive');
         await driveBackup(true);
       }
+      // otherwise already in sync — nothing to do, stay quiet
     } else {
       await driveBackup(true);
     }
-  }catch(e){ console.error(e); showToast('Drive sync check failed'); }
+  }catch(e){ console.error(e); if(!quiet) showToast('Drive sync check failed'); }
 }
 
 async function driveBackup(silent){
   if(!accessToken) return;
   try{
-    const content = JSON.stringify({ transactions: TXNS, savedAt: new Date().toISOString() });
+    const content = JSON.stringify({ transactions: TXNS, plans: PLANS, savedAt: new Date().toISOString() });
     const metadata = driveFileId
       ? { name: DRIVE_FILENAME }
       : { name: DRIVE_FILENAME, parents: ['appDataFolder'] };
@@ -1513,6 +1524,10 @@ async function driveRestore(silent){
       TXNS = data.transactions;
       localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
       localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+      if(Array.isArray(data.plans)){
+        PLANS = data.plans;
+        localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
+      }
       refreshAll();
       if(!silent) showToast('Restored from Drive');
     }
@@ -1596,6 +1611,10 @@ initAuthGate();
   updateSyncUI(false);
   // Try to reconnect to Drive automatically if we've connected in this browser before
   attemptSilentReconnect();
+  // While the app stays open, periodically check Drive for changes made on another device
+  setInterval(()=>{
+    if(accessToken) driveSyncOnConnect(true);
+  }, 120000);
 })();
 </script>
 </body>
