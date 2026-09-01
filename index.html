@@ -255,6 +255,7 @@
 <div class="margin-rule"></div>
 <div class="wrap">
   <header>
+    <div id="lastSavedLabel" style="position:absolute; top:4px; right:6px; font-size:9px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-align:right;"></div>
     <div class="brand" style="justify-content:center; text-align:center; flex-direction:column;">
       <div style="width:100%;">
         <h1 style="text-align:center;">AR Expenses Tracker</h1>
@@ -549,13 +550,17 @@ function showToast(msg){
 // ---------- Local storage ----------
 function loadData(){
   const raw = localStorage.getItem(LS_TXNS);
+  let changed = false;
   if(raw){
-    try{ TXNS = JSON.parse(raw); }catch(e){ TXNS = SEED.map(t=>({...t, id: uid()})); }
+    try{ TXNS = JSON.parse(raw); }catch(e){ TXNS = SEED.map(t=>({...t, id: uid()})); changed = true; }
   } else {
     TXNS = SEED.map(t=>({...t, id: uid()}));
+    changed = true;
   }
+  const hadPurse = TXNS.some(t=>t.account && t.account.toLowerCase()==='purse');
   ensurePurseAccount();
-  saveData();
+  if(!hadPurse) changed = true;
+  if(changed) saveData();
 }
 function ensurePurseAccount(){
   const hasPurse = TXNS.some(t=>t.account && t.account.toLowerCase()==='purse');
@@ -567,6 +572,7 @@ function saveData(){
   localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   if(accessToken) debouncedBackup();
+  updateLastSavedLabel();
 }
 function loadPlans(){
   const raw = localStorage.getItem(LS_PLANS);
@@ -577,6 +583,7 @@ function savePlans(){
   localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   if(accessToken) debouncedBackup();
+  updateLastSavedLabel();
 }
 let backupTimer = null;
 function debouncedBackup(){
@@ -1331,6 +1338,20 @@ delBtn.addEventListener('click', ()=>{
 function refreshAll(){
   renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger();
   renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
+  updateLastSavedLabel();
+}
+function updateLastSavedLabel(){
+  const el = document.getElementById('lastSavedLabel');
+  if(!el) return;
+  const ts = parseInt(localStorage.getItem(LS_LAST_MODIFIED) || '0', 10);
+  if(!ts){ el.textContent = ''; return; }
+  const d = new Date(ts);
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const timeStr = d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+  el.textContent = sameDay
+    ? 'Saved ' + timeStr
+    : 'Saved ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}) + ' ' + timeStr;
 }
 
 // ---------- Settings / Google Drive ----------
