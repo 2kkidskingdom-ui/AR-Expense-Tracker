@@ -214,12 +214,6 @@
   .field-row{ display:flex; gap:10px; min-width:0; }
   .field-row .field{ flex:1; min-width:0; }
   .amt-input{ font-family:'IBM Plex Mono', monospace; font-size:20px !important; font-weight:600; padding:10px !important; }
-  .status-toggle{ display:flex; gap:6px; }
-  .status-btn{
-    flex:1; padding:7px 6px; border-radius:3px; border:1px solid var(--line-strong); background:var(--card);
-    font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;
-  }
-  .status-btn.active{ background:var(--green-soft); border-color:var(--green); color:var(--green); }
   .save-btn{ width:100%; padding:13px; border:none; border-radius:6px; background:var(--green); color:#fff; font-weight:700; font-size:14px; cursor:pointer; margin-top:6px; }
   .del-btn{ width:100%; padding:11px; border:1px solid var(--red); border-radius:6px; background:none; color:var(--red); font-weight:600; font-size:13px; cursor:pointer; margin-top:8px; }
   .ghost-btn{ width:100%; padding:11px; border:1px solid var(--line-strong); border-radius:6px; background:var(--card); color:var(--ink); font-weight:600; font-size:13px; cursor:pointer; margin-top:8px; }
@@ -413,33 +407,6 @@
         <label>Subcategory</label>
         <input list="subcategoryList" id="fSubcategory" placeholder="e.g. Shop">
         <datalist id="subcategoryList"></datalist>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Payee / Payer</label>
-        <input type="text" id="fPayee" placeholder="Who paid or was paid">
-      </div>
-      <div class="field">
-        <label>Payment Method</label>
-        <input list="paymentMethodList" id="fPaymentMethod" placeholder="Cash, UPI, Card...">
-        <datalist id="paymentMethodList">
-          <option value="Cash"><option value="UPI"><option value="Card">
-          <option value="Bank Transfer"><option value="Cheque"><option value="Net Banking">
-        </datalist>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Ref / Cheque No</label>
-        <input type="text" id="fRef" placeholder="Optional">
-      </div>
-      <div class="field">
-        <label>Status</label>
-        <div class="status-toggle" id="statusToggle">
-          <button type="button" class="status-btn active" data-status="Uncleared">Uncleared</button>
-          <button type="button" class="status-btn" data-status="Cleared">Cleared</button>
-        </div>
       </div>
     </div>
     <div class="field"><label>Description</label><input type="text" id="fDesc" placeholder="Notes..."></div>
@@ -1150,6 +1117,7 @@ function renderAnalysis(range){
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('main section').forEach(s=>s.classList.toggle('active', s.id===tab));
+  document.getElementById('fabAdd').style.display = (tab==='ledger') ? 'flex' : 'none';
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tab-btn').forEach(b=>{
@@ -1188,18 +1156,9 @@ const fToAccount = document.getElementById('fToAccount');
 const fCategory = document.getElementById('fCategory');
 const fSubcategory = document.getElementById('fSubcategory');
 const fDesc = document.getElementById('fDesc');
-const fPayee = document.getElementById('fPayee');
-const fPaymentMethod = document.getElementById('fPaymentMethod');
-const fRef = document.getElementById('fRef');
 const fApplicableMonth = document.getElementById('fApplicableMonth');
 const fSpanMonths = document.getElementById('fSpanMonths');
 const fSpanWrap = document.getElementById('fSpanWrap');
-let currentStatus = 'Uncleared';
-document.getElementById('statusToggle').addEventListener('click', (e)=>{
-  if(e.target.tagName!=='BUTTON') return;
-  currentStatus = e.target.dataset.status;
-  document.querySelectorAll('.status-btn').forEach(b=> b.classList.toggle('active', b.dataset.status===currentStatus));
-});
 const fToAccountWrap = document.getElementById('fToAccountWrap');
 const fCatWrap = document.getElementById('fCatWrap');
 const fAccountLabel = document.getElementById('fAccountLabel');
@@ -1236,11 +1195,8 @@ function openAddSheet(){
   populateDatalists();
   fAmount.value = ''; fDate.value = new Date().toISOString().slice(0,10);
   fAccount.value=''; fToAccount.value=''; fCategory.value=''; fSubcategory.value=''; fDesc.value='';
-  fPayee.value=''; fPaymentMethod.value=''; fRef.value='';
   fApplicableMonth.value = new Date().toISOString().slice(0,7);
   fSpanMonths.value = 1;
-  currentStatus = 'Uncleared';
-  document.querySelectorAll('.status-btn').forEach(b=> b.classList.toggle('active', b.dataset.status==='Uncleared'));
   setType('expense');
   delBtn.style.display = 'none';
   overlay.classList.add('show');
@@ -1256,11 +1212,8 @@ function openEditSheet(id){
   fAccount.value = t.account || ''; fToAccount.value='';
   fCategory.value = t.category || ''; populateSubcatFor(t.category);
   fSubcategory.value = t.subcategory || ''; fDesc.value = t.description || '';
-  fPayee.value = t.payee || ''; fPaymentMethod.value = t.paymentMethod || ''; fRef.value = t.ref || '';
   fApplicableMonth.value = t.appliedMonth || (t.date || new Date().toISOString().slice(0,10)).slice(0,7);
   fSpanMonths.value = 1;
-  currentStatus = t.status || 'Uncleared';
-  document.querySelectorAll('.status-btn').forEach(b=> b.classList.toggle('active', b.dataset.status===currentStatus));
   setType(t.amount >= 0 ? 'income' : 'expense');
   delBtn.style.display = 'block';
   overlay.classList.add('show');
@@ -1291,15 +1244,14 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     const toAcct = fToAccount.value.trim();
     if(!toAcct || toAcct===acct){ fToAccount.focus(); return; }
     if(editingId) TXNS = TXNS.filter(t=>t.id!==editingId);
-    TXNS.push({id:uid(), date, amount:-Math.abs(amt), category:'Account Transfer', subcategory:'', account:acct, description: fDesc.value.trim(), payee:fPayee.value.trim(), paymentMethod:fPaymentMethod.value.trim(), ref:fRef.value.trim(), status:currentStatus});
-    TXNS.push({id:uid(), date, amount:Math.abs(amt), category:'Income', subcategory:'Account Transfer', account:toAcct, description: fDesc.value.trim(), payee:fPayee.value.trim(), paymentMethod:fPaymentMethod.value.trim(), ref:fRef.value.trim(), status:currentStatus});
+    TXNS.push({id:uid(), date, amount:-Math.abs(amt), category:'Account Transfer', subcategory:'', account:acct, description: fDesc.value.trim()});
+    TXNS.push({id:uid(), date, amount:Math.abs(amt), category:'Income', subcategory:'Account Transfer', account:toAcct, description: fDesc.value.trim()});
   } else {
     const spanMonths = Math.max(1, parseInt(fSpanMonths.value,10) || 1);
     const applicableStart = fApplicableMonth.value || date.slice(0,7);
     const baseDesc = fDesc.value.trim();
     const category = fCategory.value.trim() || (currentType==='income' ? 'Income' : 'Uncategorized');
     const subcategory = fSubcategory.value.trim();
-    const payee = fPayee.value.trim(), paymentMethod = fPaymentMethod.value.trim(), ref = fRef.value.trim();
 
     if(editingId){ TXNS = TXNS.filter(t=>t.id!==editingId); }
 
@@ -1307,7 +1259,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
       const signedAmt = currentType==='income' ? Math.abs(amt) : -Math.abs(amt);
       TXNS.push({
         id: uid(), date, amount: signedAmt, category, subcategory, account: acct,
-        description: baseDesc, payee, paymentMethod, ref, status: currentStatus,
+        description: baseDesc,
         appliedMonth: applicableStart !== date.slice(0,7) ? applicableStart : undefined
       });
     } else {
@@ -1322,7 +1274,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
         TXNS.push({
           id: uid(), date, amount: signedShare, category, subcategory, account: acct,
           description: baseDesc ? `${baseDesc} (${i+1}/${spanMonths})` : `(${i+1}/${spanMonths})`,
-          payee, paymentMethod, ref, status: currentStatus, appliedMonth: ym
+          appliedMonth: ym
         });
       }
     }
@@ -1630,6 +1582,7 @@ initAuthGate();
   populateFilterSelects();
   refreshAll();
   updateSyncUI(false);
+  document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
   // Try to reconnect to Drive automatically if we've connected in this browser before
   attemptSilentReconnect();
   // While the app stays open, periodically check Drive for changes made on another device
