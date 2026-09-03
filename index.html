@@ -486,12 +486,9 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-day.has-income:before{right:12px;background:#1B9E56;}
 .cal-day.has-expense:after{right:5px;background:#E0392B;}
 .cal-daynum{font-size:11px;margin-bottom:1px;}
-.cal-in,.cal-out,.cal-net,.cal-bal{font-size:9px;line-height:1.15;}
+.cal-in,.cal-out,.cal-bal{font-size:9px;line-height:1.15;}
 .cal-in{font-weight:600;}
 .cal-out{font-weight:600;}
-.cal-net{font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;letter-spacing:-.02em;}
-.cal-net.pos{color:#2878C8;}
-.cal-net.neg{color:#B53A2E;}
 .cal-bal{margin-top:auto;padding-top:3px;border-top:1px solid #EDF2EF;font-weight:600;}
 .cal-footer{gap:8px;margin-top:10px;}
 .cal-footer .tstat{padding:11px 9px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:0 3px 12px rgba(18,73,57,.05);}
@@ -507,7 +504,7 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-footer .cal-stat .sub{font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap;}
 @media(max-width:600px){
   .cal-day{min-height:82px;padding:5px 3px;gap:2px;}
-  .cal-in,.cal-out,.cal-net,.cal-bal{font-size:8.5px;}
+  .cal-in,.cal-out,.cal-bal{font-size:8.5px;}
   .cal-daynum{font-size:10.5px;}
   .cal-title{font-size:19px;}
   .cal-footer{gap:5px;}
@@ -697,7 +694,7 @@ main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-footer" id="calFooter"></div>
-      <p class="gate-hint" style="text-align:left; margin-top:10px;">Actual days show recorded income and expenses. Future days show planned projections with a dashed border. The small net figure shows that day’s movement; the bottom figure is the running balance.</p>
+      <p class="gate-hint" style="text-align:left; margin-top:10px;">Actual days show recorded income and expenses. Future days show planned projections with a dashed border. The bottom figure is the running balance.</p>
     </section>
 
     <section id="plan">
@@ -1812,7 +1809,7 @@ function renderCalendar(){
       <div class="cal-daynum">${day}</div>
       <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoneyWhole(inAmt):'&nbsp;'}</div>
       <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoneyWhole(outAmt):'&nbsp;'}</div>
-      <div class="cal-net ${inAmt-outAmt>=0?'pos':'neg'}">${(inAmt>0||outAmt>0)?((inAmt-outAmt>=0?'+':'−')+fmtMoneyWhole(Math.abs(inAmt-outAmt))):'&nbsp;'}</div><div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
+      <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
