@@ -496,6 +496,13 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-footer .tstat .l{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#68766F;}
 .cal-footer .tstat .v{font-size:13px;font-weight:700;margin-top:4px;white-space:nowrap;}
 #calendar .gate-hint{padding:10px 12px;background:#F2F7F4;border:1px solid #DCE8E2;border-radius:12px;font-size:12px;line-height:1.45;color:#68766F;}
+.cal-footer .cal-stat{display:flex;align-items:center;gap:8px;text-align:left;min-width:0;}
+.cal-footer .cal-stat .tstat-icon{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;line-height:1;color:#fff;}
+.cal-footer .cal-stat.income .tstat-icon{background:#12A96F;}
+.cal-footer .cal-stat.expense .tstat-icon{background:#F04455;}
+.cal-footer .cal-stat.net .tstat-icon{background:#2F80D0;font-size:13px;}
+.cal-footer .cal-stat .tstat-body{min-width:0;}
+.cal-footer .cal-stat .sub{font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap;}
 @media(max-width:600px){
   .cal-day{min-height:82px;padding:5px 3px;gap:2px;}
   .cal-in,.cal-out,.cal-net,.cal-bal{font-size:8.5px;}
@@ -1809,9 +1816,9 @@ function renderCalendar(){
   const expensePct = monthIncome > 0 ? (monthExpense / monthIncome * 100).toFixed(1) + '%' : '';
   const netPct = monthIncome > 0 ? (net / monthIncome * 100).toFixed(1) + '%' : '';
   document.getElementById('calFooter').innerHTML = `
-    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div><div class="sub">&nbsp;</div></div>
-    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div><div class="sub">${expensePct ? expensePct + ' of income' : '&nbsp;'}</div></div>
-    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div><div class="sub">${netPct ? netPct + ' of income' : '&nbsp;'}</div></div>
+    <div class="tstat cal-stat income"><div class="tstat-icon">↑</div><div class="tstat-body"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div></div></div>
+    <div class="tstat cal-stat expense"><div class="tstat-icon">↓</div><div class="tstat-body"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div><div class="sub">${expensePct ? expensePct + ' of income' : '&nbsp;'}</div></div></div>
+    <div class="tstat cal-stat net"><div class="tstat-icon">₹</div><div class="tstat-body"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div><div class="sub">${netPct ? netPct + ' of income' : '&nbsp;'}</div></div></div>
   `;
   document.querySelectorAll('#calFooter .v').forEach(el=>{
     let size = 13;
