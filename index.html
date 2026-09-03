@@ -367,6 +367,32 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .plan-form .field-row .field .type-switch button{flex:1;height:42px;min-height:42px;box-sizing:border-box;}
 #fDate{height:42px!important;min-height:42px!important;box-sizing:border-box;}
 .amt-input{font-size:22px!important;border-radius:12px!important;}
+/* Refined form controls: keep account/category/subcategory fields consistent with the rest of the sheet. */
+.field-row .field > input[list],
+.field-row .field > input[type=text],
+.field-row .field > select{
+  border:1px solid var(--line-strong)!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  padding:10px 12px!important;
+  font-size:15px!important;
+  font-family:'Inter',sans-serif!important;
+  box-shadow:inset 0 1px 2px rgba(21,55,43,.025)!important;
+  outline:none;
+  appearance:auto;
+  -webkit-appearance:auto;
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.field-row .field > input[list]::placeholder,
+.field-row .field > input[type=text]::placeholder{color:#8A958F;opacity:1;}
+.field-row .field > input[list]:focus,
+.field-row .field > input[type=text]:focus,
+.field-row .field > select:focus{
+  border-color:var(--green)!important;
+  box-shadow:0 0 0 3px rgba(11,143,98,.10)!important;
+}
+
 .save-btn{border-radius:12px;padding:13px;background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 7px 16px rgba(11,143,98,.16);}
 .del-btn,.ghost-btn{border-radius:12px;}
 #planList > *{border-radius:14px;}
@@ -479,6 +505,68 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   .cal-footer .tstat .v{font-size:12px;}
 }
 </style>
+
+<!-- Enhancements: consistent controls across all tabs -->
+
+<!-- Enhancements: consistent controls across all tabs -->
+<style>
+/* Consistent, polished form controls across Dashboard, Ledger, Summary, Projections, Calendar and Settings. */
+main input:not([type="checkbox"]):not([type="radio"]),
+main select,
+.sheet input:not([type="checkbox"]):not([type="radio"]),
+.sheet select,
+.sheet textarea{
+  box-sizing:border-box;
+  width:100%;
+  min-height:44px;
+  border:1px solid var(--line-strong)!important;
+  border-radius:12px!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  padding:10px 13px!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:14px!important;
+  line-height:20px;
+  box-shadow:inset 0 1px 2px rgba(21,55,43,.025)!important;
+  outline:none!important;
+  transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+main textarea,.sheet textarea{resize:vertical;}
+main input:not([type="checkbox"]):not([type="radio"]):focus,
+main select:focus,
+.sheet input:not([type="checkbox"]):not([type="radio"]):focus,
+.sheet select:focus,
+.sheet textarea:focus{
+  border-color:var(--green)!important;
+  box-shadow:0 0 0 3px rgba(11,143,98,.11)!important;
+}
+main input::placeholder,.sheet input::placeholder,.sheet textarea::placeholder{color:#8A958F;opacity:1;}
+main select,.sheet select{cursor:pointer;padding-right:36px!important;}
+main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
+/* Projection account selector: match the same polished controls as the rest of the form. */
+#planAccount{height:44px!important;min-height:44px!important;border:1px solid var(--line-strong)!important;border-radius:12px!important;background:#fff!important;padding:10px 13px!important;color:var(--ink)!important;font-family:'Inter',sans-serif!important;font-size:14px!important;box-shadow:inset 0 1px 2px rgba(21,55,43,.025)!important;appearance:none;-webkit-appearance:none;}
+#planAccount:focus{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(11,143,98,.11)!important;outline:none!important;}
+/* Preserve compact filter controls while keeping the same visual language. */
+.filters select,.range-btns select,.projection-tools select,#calAccountFilter{
+  min-height:44px!important;
+}
+/* Keep amount fields intentionally prominent. */
+.amt-input{min-height:52px!important;font-size:22px!important;border-radius:13px!important;}
+/* Make paired controls identical in height and alignment. */
+.field-row .field>input:not([type="checkbox"]):not([type="radio"]),
+.field-row .field>select,
+.field-row .field>textarea{height:44px;min-height:44px;}
+.plan-form .field-row .field .type-switch{height:44px;min-height:44px;}
+.plan-form .field-row .field .type-switch button{height:44px;min-height:44px;}
+/* Keep buttons inside forms rounded and visually consistent without changing their purpose. */
+.sheet .save-btn,.sheet .del-btn,.sheet .ghost-btn,
+.plan-form .save-btn,.plan-form .del-btn{border-radius:12px;}
+@media(max-width:520px){
+  main input:not([type="checkbox"]):not([type="radio"]),main select,
+  .sheet input:not([type="checkbox"]):not([type="radio"]),.sheet select,.sheet textarea{font-size:14px!important;min-height:44px;}
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -615,8 +703,8 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
           <div class="field">
             <label>Type</label>
             <div class="type-switch">
-              <button type="button" class="type-btn active expense" data-ptype="debit">Expense</button>
-              <button type="button" class="type-btn income" data-ptype="credit">Income</button>
+              <button type="button" class="type-btn active income" data-ptype="credit">Income</button>
+              <button type="button" class="type-btn expense" data-ptype="debit">Expense</button>
             </div>
           </div>
         </div>
@@ -662,8 +750,8 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   <div class="sheet">
     <h2 id="sheetTitle">Add entry <button class="x" id="closeSheet">×</button></h2>
     <div class="type-switch">
-      <button type="button" class="type-btn active expense" data-type="expense">Expense</button>
       <button type="button" class="type-btn income" data-type="income">Income</button>
+      <button type="button" class="type-btn active expense" data-type="expense">Expense</button>
       <button type="button" class="type-btn transfer" data-type="transfer">Transfer</button>
     </div>
     <div class="field">
