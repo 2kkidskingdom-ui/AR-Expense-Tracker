@@ -1710,15 +1710,17 @@ document.getElementById('closeSettings').addEventListener('click', ()=> settings
 settingsOverlay.addEventListener('click', (e)=>{ if(e.target===settingsOverlay) settingsOverlay.classList.remove('show'); });
 
 function updateSyncUI(connected){
-  document.getElementById('syncDot').classList.toggle('on', connected);
-  document.getElementById('syncLabel').textContent = connected ? 'Google Drive sync on' : 'Not connected';
-  document.getElementById('driveDot').classList.toggle('on', connected);
-  document.getElementById('driveStatusText').textContent = connected ? 'Google Drive connected' : 'Google Drive not connected';
-  document.getElementById('connectDriveBtn').style.display = connected ? 'none' : 'block';
-  document.getElementById('backupBtn').style.display = connected ? 'block' : 'none';
-  document.getElementById('restoreBtn').style.display = connected ? 'block' : 'none';
-  document.getElementById('disconnectBtn').style.display = connected ? 'block' : 'none';
-  if(connected) document.getElementById('resumeSyncBtn').style.display = 'none';
+  const connecting = connected === 'connecting';
+  const isConnected = connected === true;
+  document.getElementById('syncDot').classList.toggle('on', isConnected);
+  document.getElementById('syncLabel').textContent = connecting ? 'Reconnecting…' : (isConnected ? 'Google Drive sync on' : 'Not connected');
+  document.getElementById('driveDot').classList.toggle('on', isConnected);
+  document.getElementById('driveStatusText').textContent = connecting ? 'Reconnecting to Google Drive…' : (isConnected ? 'Google Drive connected' : 'Google Drive not connected');
+  document.getElementById('connectDriveBtn').style.display = (isConnected || connecting) ? 'none' : 'block';
+  document.getElementById('backupBtn').style.display = isConnected ? 'block' : 'none';
+  document.getElementById('restoreBtn').style.display = isConnected ? 'block' : 'none';
+  document.getElementById('disconnectBtn').style.display = isConnected ? 'block' : 'none';
+  if(isConnected) document.getElementById('resumeSyncBtn').style.display = 'none';
 }
 
 document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
@@ -1734,9 +1736,13 @@ document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
 });
 
 function connectDrive(clientId, prompt){
-  if(typeof google === 'undefined' || !google.accounts){
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
+    if(prompt === ''){
+      updateSyncUI('connecting');
+      return false;
+    }
     showToast('Google sign-in script not loaded — check your connection');
-    return;
+    return false;
   }
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: clientId,
@@ -1744,12 +1750,14 @@ function connectDrive(clientId, prompt){
     callback: async (resp) => {
       if(resp.error){
         if(prompt === '') {
-          const btn = document.getElementById('resumeSyncBtn');
-          btn.textContent = '↻ Tap to resume Google Drive sync';
-          return;
+          // Silent reconnect can temporarily fail while Google's GIS script/session
+          // is still initializing. Leave the app usable and let the startup retry
+          // attempt again without requiring the user to tap anything.
+          updateSyncUI(false);
+          return false;
         }
         showToast('Sign-in failed: ' + resp.error);
-        return;
+        return false;
       }
       accessToken = resp.access_token;
       const expiresAt = Date.now() + (resp.expires_in ? resp.expires_in*1000 : 3500*1000);
@@ -1760,20 +1768,31 @@ function connectDrive(clientId, prompt){
     }
   });
   tokenClient.requestAccessToken({ prompt });
+  return true;
 }
 
-// Show a "resume sync" banner if we've connected before in this browser — actual
-// reconnect only fires on tap, since mobile browsers block auto-triggered sign-in popups.
-function attemptSilentReconnect(){
+// Reconnect automatically after a page reload. Google Identity Services loads
+// asynchronously, so retry for a short period instead of treating the app as
+// disconnected when the script simply has not loaded yet. No user interaction
+// is required when Google has already granted this app Drive access.
+function attemptSilentReconnect(attempt = 0){
   const clientId = localStorage.getItem(LS_CLIENT_ID);
   if(!clientId || accessToken) return;
-  // Ask Google for a token silently. When the same Google account has already
-  // granted access, this completes without a sign-in prompt or a manual sync tap.
+  if(attempt === 0) updateSyncUI('connecting');
+  if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
+    if(attempt < 30) setTimeout(()=>attemptSilentReconnect(attempt + 1), 300);
+    else updateSyncUI(false);
+    return;
+  }
   try{
-    connectDrive(clientId, '');
+    const started = connectDrive(clientId, '');
+    if(started === false && attempt < 30){
+      setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
+    }
   }catch(e){
     console.error(e);
-    document.getElementById('resumeSyncBtn').style.display = 'block';
+    if(attempt < 30) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
+    else updateSyncUI(false);
   }
 }
 document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
