@@ -469,8 +469,10 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 #calendar > .section-title{font-size:21px;margin-bottom:12px;}
 #calAccountFilter{height:44px;border:1px solid var(--line-strong);border-radius:14px;background:#fff;padding:0 14px;font-size:14px;color:var(--ink);box-shadow:0 2px 10px rgba(18,73,57,.05);}
 #calAccountFilter:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(11,143,98,.10);}
-.cal-nav{margin:12px 0 12px;padding:0 2px;}
+.cal-nav{display:grid;grid-template-columns:44px minmax(0,1fr) 44px auto;align-items:center;gap:8px;margin:12px 0 12px;padding:0 2px;}
 .cal-nav button{width:44px;height:44px;border-radius:14px;font-size:24px;line-height:1;background:#fff;border:1px solid var(--line-strong);box-shadow:0 3px 12px rgba(18,73,57,.07);transition:transform .15s,background .15s;}
+.cal-nav .cal-today-btn{width:auto;min-width:76px;padding:0 12px;font-size:12px;font-weight:700;white-space:nowrap;color:var(--green-dark);}
+@media(max-width:420px){.cal-nav{grid-template-columns:40px minmax(0,1fr) 40px auto;gap:5px}.cal-nav button{width:40px;height:40px}.cal-nav .cal-today-btn{min-width:66px;padding:0 8px;font-size:11px;}}
 .cal-nav button:active{transform:scale(.95);background:#F2F8F5;}
 .cal-title{font-size:20px;letter-spacing:.01em;}
 .cal-grid{gap:2px;border:1px solid #DCE8E2;border-radius:16px;background:#DCE8E2;box-shadow:0 6px 18px rgba(18,73,57,.07);}
@@ -688,9 +690,10 @@ main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
       <div class="section-title">Calendar</div>
       <select id="calAccountFilter" style="width:100%; margin-bottom:8px;"><option value="">All accounts</option></select>
       <div class="cal-nav">
-        <button id="calPrev">‹</button>
+        <button id="calPrev" aria-label="Previous month">‹</button>
         <div class="cal-title" id="calTitle">—</div>
-        <button id="calNext">›</button>
+        <button id="calNext" aria-label="Next month">›</button>
+        <button id="calToday" class="cal-today-btn" type="button">📅 Today</button>
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-footer" id="calFooter"></div>
@@ -710,8 +713,8 @@ main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
           <div class="field">
             <label>Type</label>
             <div class="type-switch">
-              <button type="button" class="type-btn active income" data-ptype="credit">Income</button>
-              <button type="button" class="type-btn expense" data-ptype="debit">Expense</button>
+              <button type="button" class="type-btn income" data-ptype="credit">Income</button>
+              <button type="button" class="type-btn active expense" data-ptype="debit">Expense</button>
             </div>
           </div>
         </div>
@@ -939,6 +942,14 @@ function displayToIsoDate(value){
   if(d.getFullYear()!==year || d.getMonth()!==month-1 || d.getDate()!==day) return '';
   return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 }
+// Date-only values must use the user's local calendar date, not UTC.
+// This matters in India (and other positive UTC offsets), especially around midnight.
+function localDateIso(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+function localMonthIso(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
+}
 function bindDateTextInput(id, initialIso=''){
   const el = document.getElementById(id);
   if(!el) return;
@@ -968,7 +979,7 @@ function bindDateTextInput(id, initialIso=''){
 
   const openCalendar = (e) => {
     if(e) e.preventDefault();
-    picker.value = displayToIsoDate(el.value) || new Date().toISOString().slice(0,10);
+    picker.value = displayToIsoDate(el.value) || localDateIso();
     try {
       if(typeof picker.showPicker === 'function') picker.showPicker();
       else picker.click();
@@ -1031,7 +1042,7 @@ function loadData(){
 function ensurePurseAccount(){
   const hasPurse = TXNS.some(t=>t.account && t.account.toLowerCase()==='purse');
   if(!hasPurse){
-    TXNS.push({id:uid(), date: TXNS[0]?.date || new Date().toISOString().slice(0,10), amount:0, category:'Income', subcategory:'Initial Balance', account:'Purse', description:'', payee:''});
+    TXNS.push({id:uid(), date: TXNS[0]?.date || localDateIso(), amount:0, category:'Income', subcategory:'Initial Balance', account:'Purse', description:'', payee:''});
   }
 }
 function getSyncMeta(){
@@ -1285,7 +1296,7 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
     }
   } else if(range==='today'){
     const now = new Date();
-    const ds = now.toISOString().slice(0,10);
+    const ds = localDateIso(now);
     const flow = list.filter(isRealFlow);
     const income = flow.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
     const expense = flow.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
@@ -1296,7 +1307,7 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
     if(spanDays>0 && spanDays<=31){
       for(let i=0;i<spanDays;i++){
         const d = new Date(fromD); d.setDate(d.getDate()+i);
-        const ds = d.toISOString().slice(0,10);
+        const ds = localDateIso(d);
         const dayTx = list.filter(t=>t.date===ds && isRealFlow(t));
         const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
         const expense = dayTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
@@ -1458,7 +1469,7 @@ function renderDashboard(){
     <div class="dashboard-stat expense"><div class="label">This month expenses</div><div class="value">${fmtMoney(expense)}</div><div class="hint">Recorded</div></div>
     <div class="dashboard-stat saving"><div class="label">Monthly savings</div><div class="value">${fmtMoney(savings)}</div><div class="hint">Income − expenses</div></div>`;
 
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localDateIso();
   const horizon=new Date(); horizon.setDate(horizon.getDate()+90);
   const horizonStr=horizon.toISOString().slice(0,10);
   const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
@@ -1639,7 +1650,7 @@ function openPlanForEdit(id){
 
 function resetPlanForm(){
   editingPlanId = null;
-  document.getElementById('planDate').value = isoToDisplayDate(new Date().toISOString().slice(0,10));
+  document.getElementById('planDate').value = isoToDisplayDate(localDateIso());
   document.getElementById('planAmount').value = '';
   document.getElementById('planAccount').value = '';
   document.getElementById('planDesc').value = '';
@@ -1682,7 +1693,7 @@ document.getElementById('planDeleteBtn').addEventListener('click', ()=>{
   showToast('Planned entry deleted');
 });
 document.getElementById('planAddBtn').addEventListener('click', ()=>{
-  const date = displayToIsoDate(document.getElementById('planDate').value) || new Date().toISOString().slice(0,10);
+  const date = displayToIsoDate(document.getElementById('planDate').value) || localDateIso();
   if(!displayToIsoDate(document.getElementById('planDate').value) && document.getElementById('planDate').value.trim()){ document.getElementById('planDate').focus(); return; }
   const amt = parseFloat(document.getElementById('planAmount').value);
   const account = document.getElementById('planAccount').value.trim();
@@ -1720,8 +1731,8 @@ function renderProjectionGraph(){
   const el=document.getElementById('projectionChart'); if(!el) return;
   const months=Number(document.getElementById('projectionRange')?.value||6);
   const start=new Date(); start.setHours(0,0,0,0);
-  const startStr=start.toISOString().slice(0,10);
-  const end=new Date(start.getFullYear(),start.getMonth()+months+1,0); const endStr=end.toISOString().slice(0,10);
+  const startStr=localDateIso(start);
+  const end=new Date(start.getFullYear(),start.getMonth()+months+1,0); const endStr=localDateIso(end);
   const occurrences=PLANS.flatMap(p=>expandPlanOccurrences(p,startStr,endStr));
   const points=[]; let balance=totalBalanceForDisplay();
   for(let i=0;i<=months;i++){
@@ -1751,7 +1762,7 @@ function renderCalendar(){
 
   const firstDow = new Date(calYear, calMon, 1).getDay();
   const daysInMonth = new Date(calYear, calMon+1, 0).getDate();
-  const todayStr = new Date().toISOString().slice(0,10);
+  const todayStr = localDateIso();
 
   // running real balance up to end of each day
   const sortedDates = [...filtered].filter(t=>t.date).sort((a,b)=>a.date.localeCompare(b.date));
@@ -1838,10 +1849,16 @@ document.getElementById('calNext').addEventListener('click', ()=>{
   calMon++; if(calMon>11){ calMon=0; calYear++; }
   renderCalendar();
 });
+document.getElementById('calToday').addEventListener('click', ()=>{
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMon = now.getMonth();
+  renderCalendar();
+});
 document.getElementById('calAccountFilter').addEventListener('change', renderCalendar);
 
 function renderAnalysis(range){
-  const now=new Date(), curYM=now.toISOString().slice(0,7), todayStr=now.toISOString().slice(0,10), excluded=new Set(getExcludedAccounts());
+  const now=new Date(), curYM=localMonthIso(now), todayStr=localDateIso(now), excluded=new Set(getExcludedAccounts());
   let list,customFrom=null,customTo=null;
   if(range==='today') list=TXNS.filter(t=>t.date===todayStr);
   else if(range==='month') list=TXNS.filter(t=>reportMonth(t)===curYM);
@@ -1938,7 +1955,7 @@ document.getElementById('rangeBtns').addEventListener('click', (e)=>{
     const from = document.getElementById('customFrom');
     const to = document.getElementById('customTo');
     if(!displayToIsoDate(from.value)) from.value = isoToDisplayDate(new Date().toISOString().slice(0,8)+'01');
-    if(!displayToIsoDate(to.value)) to.value = isoToDisplayDate(new Date().toISOString().slice(0,10));
+    if(!displayToIsoDate(to.value)) to.value = isoToDisplayDate(localDateIso());
   }
   renderAnalysis(range);
 });
@@ -2025,7 +2042,7 @@ function openAddSheet(){
   editingId = null;
   sheetTitle.innerHTML = 'Add entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = ''; fDate.value = isoToDisplayDate(new Date().toISOString().slice(0,10));
+  fAmount.value = ''; fDate.value = isoToDisplayDate(localDateIso());
   fAccount.value=''; fToAccount.value=''; fCategory.value=''; fSubcategory.value=''; fDesc.value='';
   fApplicableMonth.value = new Date().toISOString().slice(0,7);
   fSpanMonths.value = 1;
@@ -2045,7 +2062,7 @@ function openEditSheet(id){
   fCategory.value = '';
   fSubcategory.value = '';
   fDesc.value = t.description || '';
-  fApplicableMonth.value = t.appliedMonth || (t.date || new Date().toISOString().slice(0,10)).slice(0,7);
+  fApplicableMonth.value = t.appliedMonth || (t.date || localDateIso()).slice(0,7);
   fSpanMonths.value = 1;
   setType(t.amount >= 0 ? 'income' : 'expense');
   fCategory.value = t.category || '';
@@ -2071,7 +2088,7 @@ function addMonths(ym, n){
 document.getElementById('saveBtn').addEventListener('click', ()=>{
   const amt = parseFloat(fAmount.value);
   if(isNaN(amt) || amt===0){ fAmount.focus(); return; }
-  const date = displayToIsoDate(fDate.value) || new Date().toISOString().slice(0,10);
+  const date = displayToIsoDate(fDate.value) || localDateIso();
   if(!displayToIsoDate(fDate.value) && fDate.value.trim()){ fDate.focus(); return; }
   const day = date.slice(8,10);
   const acct = fAccount.value.trim();
