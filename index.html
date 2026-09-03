@@ -122,7 +122,34 @@
   .cal-day.empty{ background:var(--paper-deep); }
   .cal-day.today{ outline:2px solid var(--gold); outline-offset:-2px; }
   .cal-day.projected{ background:repeating-linear-gradient(135deg, var(--card), var(--card) 6px, var(--paper-deep) 6px, var(--paper-deep) 7px); border:1px dashed var(--line-strong); }
-  .plan-form{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px; margin-top:10px; }
+  /* Summary chart improvements */
+.summary-trend-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;}
+.summary-chart-toggle{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+.summary-chart-toggle button{border:0;background:#fff;padding:7px 10px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;}
+.summary-chart-toggle button.active{background:var(--green);color:#fff;}
+.summary-legend{display:flex;gap:14px;flex-wrap:wrap;margin:5px 2px 7px;}
+.summary-legend>span{display:inline-flex;align-items:center;gap:5px;}
+.summary-two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.summary-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px 12px;box-shadow:var(--shadow);min-width:0;}
+.summary-card-title{font-family:'Fraunces',serif;color:var(--green-dark);font-size:15px;font-weight:700;margin-bottom:10px;}
+.summary-income-card{margin-top:12px;}
+.expense-donut-wrap{min-height:205px;display:flex;align-items:center;justify-content:center;}
+.expense-donut-wrap svg{width:100%;max-width:300px;height:auto;}
+.summary-table{background:#fff;border:1px solid var(--line);border-radius:16px;padding:8px 10px;box-shadow:var(--shadow);overflow:auto;}
+.summary-table table{width:100%;border-collapse:collapse;font-size:11.5px;}
+.summary-table th,.summary-table td{padding:8px 5px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;}
+.summary-table th:first-child,.summary-table td:first-child{text-align:left;}
+.summary-table tr:last-child td{border-bottom:0;}
+.summary-table .net-pos{color:var(--green);font-weight:700;}
+.summary-table .net-neg{color:var(--red);font-weight:700;}
+.summary-top-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);}
+.summary-top-row:last-child{border-bottom:0;}
+.summary-top-name{font-size:11.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.summary-top-meta{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:2px;}
+.summary-top-bar{height:6px;background:#EDF3F0;border-radius:6px;margin-top:5px;overflow:hidden;}
+.summary-top-fill{height:100%;background:linear-gradient(90deg,#0B8F62,#53B992);border-radius:6px;}
+@media(max-width:700px){.summary-two-col{grid-template-columns:1fr;}.summary-trend-head{align-items:flex-end;}.summary-chart-toggle button{padding:7px 9px;}}
+.plan-form{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:14px; margin-top:10px; }
   .cal-daynum{ font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10.5px; color:var(--ink); }
   .cal-in{ color:#1B9E56; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
   .cal-out{ color:#E0392B; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; font-size:9.5px; letter-spacing:-0.02em; overflow:hidden; text-overflow:clip; display:block; }
@@ -326,6 +353,19 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .type-switch button.active.income{background:var(--green-soft)!important;border-color:#A7DCC7!important;color:var(--green)!important;box-shadow:0 4px 12px rgba(11,143,98,.08);}
 .type-switch button.active.transfer{background:#F4ECFF!important;border-color:#D8C1F5!important;color:#7A45C5!important;box-shadow:0 4px 12px rgba(122,69,197,.08);}
 .field label{font-size:10.5px;font-weight:600;letter-spacing:.08em;color:#718078;}
+/* Keep paired form fields perfectly aligned on mobile and desktop. */
+.field-row{align-items:flex-start;}
+.field-row .field{min-width:0;}
+.field-row .field > input:not(.amt-input),
+.field-row .field > select{box-sizing:border-box;width:100%;height:42px;min-height:42px;line-height:20px;}
+.field-row .field > input[list]{appearance:none;-webkit-appearance:none;}
+/* Keep Projections paired fields aligned exactly like Add/Edit Entry. */
+.plan-form .field-row .field > input:not(.amt-input),
+.plan-form .field-row .field > select,
+.plan-form .field-row .field .type-switch{box-sizing:border-box;width:100%;min-height:42px;height:42px;}
+.plan-form .field-row .field .type-switch{display:flex;align-items:stretch;}
+.plan-form .field-row .field .type-switch button{flex:1;height:42px;min-height:42px;box-sizing:border-box;}
+#fDate{height:42px!important;min-height:42px!important;box-sizing:border-box;}
 .amt-input{font-size:22px!important;border-radius:12px!important;}
 .save-btn{border-radius:12px;padding:13px;background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 7px 16px rgba(11,143,98,.16);}
 .del-btn,.ghost-btn{border-radius:12px;}
@@ -397,6 +437,47 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .category-chip{font-size:10px;padding:4px 7px;border-radius:12px;background:var(--paper-deep);color:var(--muted)}
 @media (max-width:520px){.dashboard-stats{grid-template-columns:1fr 1fr}.dashboard-stat:last-child{grid-column:1/-1}.dashboard-two-col{grid-template-columns:1fr}.category-add-row{grid-template-columns:1fr 1fr}.category-add-row button{grid-column:1/-1;min-height:40px}}
 
+
+/* Calendar visual refresh */
+#calendar > .section-title{font-size:21px;margin-bottom:12px;}
+#calAccountFilter{height:44px;border:1px solid var(--line-strong);border-radius:14px;background:#fff;padding:0 14px;font-size:14px;color:var(--ink);box-shadow:0 2px 10px rgba(18,73,57,.05);}
+#calAccountFilter:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(11,143,98,.10);}
+.cal-nav{margin:12px 0 12px;padding:0 2px;}
+.cal-nav button{width:44px;height:44px;border-radius:14px;font-size:24px;line-height:1;background:#fff;border:1px solid var(--line-strong);box-shadow:0 3px 12px rgba(18,73,57,.07);transition:transform .15s,background .15s;}
+.cal-nav button:active{transform:scale(.95);background:#F2F8F5;}
+.cal-title{font-size:20px;letter-spacing:.01em;}
+.cal-grid{gap:2px;border:1px solid #DCE8E2;border-radius:16px;background:#DCE8E2;box-shadow:0 6px 18px rgba(18,73,57,.07);}
+.cal-dow{background:#EEF6F2;padding:8px 0;font-size:9px;color:#52645D;letter-spacing:.04em;}
+.cal-day{position:relative;background:#fff;min-height:86px;padding:6px 4px 5px;border-radius:0;justify-content:flex-start;gap:3px;}
+.cal-day.empty{background:#F5F8F6;}
+.cal-day.today{outline:2px solid var(--green);outline-offset:-2px;background:#F3FBF7;}
+.cal-day.today .cal-daynum{display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;padding:0 5px;border-radius:999px;background:var(--green);color:#fff;}
+.cal-day.projected{background:repeating-linear-gradient(135deg,#fff,#fff 7px,#F3F8F5 7px,#F3F8F5 9px);border:1px dashed #A5C5B5;}
+.cal-day.has-income:before,.cal-day.has-expense:after{content:"";position:absolute;top:5px;width:5px;height:5px;border-radius:50%;}
+.cal-day.has-income:before{right:12px;background:#1B9E56;}
+.cal-day.has-expense:after{right:5px;background:#E0392B;}
+.cal-daynum{font-size:11px;margin-bottom:1px;}
+.cal-in,.cal-out,.cal-net,.cal-bal{font-size:9px;line-height:1.15;}
+.cal-in{font-weight:600;}
+.cal-out{font-weight:600;}
+.cal-net{font-family:'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden;letter-spacing:-.02em;}
+.cal-net.pos{color:#2878C8;}
+.cal-net.neg{color:#B53A2E;}
+.cal-bal{margin-top:auto;padding-top:3px;border-top:1px solid #EDF2EF;font-weight:600;}
+.cal-footer{gap:8px;margin-top:10px;}
+.cal-footer .tstat{padding:11px 9px;border-radius:14px;background:#fff;border:1px solid var(--line);box-shadow:0 3px 12px rgba(18,73,57,.05);}
+.cal-footer .tstat .l{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#68766F;}
+.cal-footer .tstat .v{font-size:13px;font-weight:700;margin-top:4px;white-space:nowrap;}
+#calendar .gate-hint{padding:10px 12px;background:#F2F7F4;border:1px solid #DCE8E2;border-radius:12px;font-size:12px;line-height:1.45;color:#68766F;}
+@media(max-width:600px){
+  .cal-day{min-height:82px;padding:5px 3px;gap:2px;}
+  .cal-in,.cal-out,.cal-net,.cal-bal{font-size:8.5px;}
+  .cal-daynum{font-size:10.5px;}
+  .cal-title{font-size:19px;}
+  .cal-footer{gap:5px;}
+  .cal-footer .tstat{padding:10px 6px;}
+  .cal-footer .tstat .v{font-size:12px;}
+}
 </style>
 </head>
 <body>
@@ -419,7 +500,6 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 <div class="margin-rule"></div>
 <div class="wrap">
   <header>
-    <div id="lastSavedLabel" style="position:absolute; top:4px; right:6px; font-size:9px; color:var(--muted); font-family:'IBM Plex Mono',monospace; text-align:right;"></div>
     <div class="brand" style="justify-content:center; text-align:center; flex-direction:column;">
       <div style="width:100%;">
         <h1 style="text-align:center;">AR Expenses Tracker</h1>
@@ -476,21 +556,37 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
       <div class="totals-strip">
         <div class="tstat"><div class="l">Income</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
         <div class="tstat"><div class="l">Expenses</div><div class="v" id="statOut" style="color:var(--red)">—</div></div>
-        <div class="tstat"><div class="l">Net</div><div class="v" id="statNet">—</div></div>
+        <div class="tstat"><div class="l">Net savings</div><div class="v" id="statNet">—</div></div>
+        <div class="tstat"><div class="l">Savings rate</div><div class="v" id="statSavingsRate" style="color:var(--green)">—</div></div>
       </div>
 
-      <div class="section-title">Income vs Expenses</div>
-      <div class="chart-legend">
-        <span class="legend-dot" style="background:#1F4A3D;"></span> Income
-        <span class="legend-dot" style="background:#9B3B2B; margin-left:14px;"></span> Expenses
+      <div class="summary-trend-head">
+        <div class="section-title" style="margin:0;">Income vs Expenses & Savings</div>
+        <div class="summary-chart-toggle"><button id="summaryChartBtn" class="active">Chart</button><button id="summaryTableBtn">Table</button></div>
+      </div>
+      <div class="chart-legend summary-legend">
+        <span><span class="legend-dot" style="background:#1F4A3D;"></span>Income</span>
+        <span><span class="legend-dot" style="background:#9B3B2B;"></span>Expenses</span>
+        <span><span class="legend-dot" style="background:#2878C8;"></span>Savings</span>
       </div>
       <div id="trendChartSvg" class="trend-chart"></div>
+      <div id="summaryTable" class="summary-table" style="display:none;"></div>
 
-      <div class="section-title">Income by category</div>
-      <div id="analysisIncomeCats"></div>
+      <div class="summary-two-col">
+        <div class="summary-card">
+          <div class="summary-card-title">Spending by category</div>
+          <div id="expenseDonut" class="expense-donut-wrap"></div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-title">Top 5 expense categories</div>
+          <div id="analysisCats"></div>
+        </div>
+      </div>
 
-      <div class="section-title">Spending by category</div>
-      <div id="analysisCats"></div>
+      <div class="summary-card summary-income-card">
+        <div class="summary-card-title">Income by category</div>
+        <div id="analysisIncomeCats"></div>
+      </div>
     </section>
 
     <section id="calendar">
@@ -503,7 +599,7 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
       </div>
       <div class="cal-grid" id="calGrid"></div>
       <div class="cal-footer" id="calFooter"></div>
-      <p class="gate-hint" style="text-align:left; margin-top:10px;">Days up to today show actual recorded activity. Days after today show projected figures from your Projections plan (dashed border).</p>
+      <p class="gate-hint" style="text-align:left; margin-top:10px;">Actual days show recorded income and expenses. Future days show planned projections with a dashed border. The small net figure shows that day’s movement; the bottom figure is the running balance.</p>
     </section>
 
     <section id="plan">
@@ -519,8 +615,8 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
           <div class="field">
             <label>Type</label>
             <div class="type-switch">
-              <button type="button" class="type-btn active expense" data-ptype="debit">Debit</button>
-              <button type="button" class="type-btn income" data-ptype="credit">Credit</button>
+              <button type="button" class="type-btn active expense" data-ptype="debit">Expense</button>
+              <button type="button" class="type-btn income" data-ptype="credit">Income</button>
             </div>
           </div>
         </div>
@@ -895,7 +991,6 @@ function saveData(){
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
-  updateLastSavedLabel();
 }
 function loadPlans(){
   const raw = localStorage.getItem(LS_PLANS);
@@ -908,7 +1003,6 @@ function savePlans(){
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
-  updateLastSavedLabel();
 }
 let backupTimer = null;
 function debouncedBackup(){
@@ -1145,45 +1239,51 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
 
 function renderTrendChart(range, list, curYM, customFrom, customTo){
   const data = buildChartBuckets(range, list, curYM, customFrom, customTo);
+  const el = document.getElementById('trendChartSvg');
   if(!data.length){
-    document.getElementById('trendChartSvg').innerHTML = `<div class="empty-note">Nothing to chart in this range.</div>`;
+    el.innerHTML = `<div class="empty-note">Nothing to chart in this range.</div>`;
     return;
   }
-  const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense)));
-
-  const width = Math.max(320, data.length*56), height = 168, padding = 6, bottomPad = 22, topPad = 16;
-  const groupW = (width - padding*2) / data.length;
-  const barW = groupW * 0.3;
-  const chartH = height - bottomPad - topPad;
-  const showLabels = data.length <= 31;
-
-  let svg = '';
+  const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense, d.income-d.expense)));
+  const width = Math.max(340, data.length*58), height = 210, left=34, right=8, bottom=30, top=20;
+  const chartW = width-left-right, chartH = height-top-bottom, groupW=chartW/data.length, barW=Math.min(18,groupW*.24);
+  const showLabels=data.length<=12;
+  const baseY=top+chartH;
+  const y=v=>baseY-(Math.max(0,v)/max)*chartH;
+  let svg=`<svg viewBox="0 0 ${width} ${height}" style="width:${width}px;height:${height}px;display:block;">`;
+  [0,.25,.5,.75,1].forEach(fr=>{
+    const yy=baseY-chartH*fr;
+    const val=max*fr;
+    svg+=`<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#E8EFEC" stroke-width="1"/>`;
+    svg+=`<text x="${left-5}" y="${yy+3}" font-size="8" fill="#7A857F" text-anchor="end" font-family="Inter,sans-serif">${fmtCompactMoney(val)}</text>`;
+  });
+  const points=[];
   data.forEach((d,i)=>{
-    const gx = padding + i*groupW;
-    const incomeH = (d.income/max) * chartH;
-    const expenseH = (d.expense/max) * chartH;
-    const baseY = height - bottomPad;
-    const ix = gx + groupW*0.12, ex = gx + groupW*0.52;
-    if(showLabels && d.income > 0){
-      svg += `<text x="${ix+barW/2}" y="${baseY-incomeH-3}" font-size="8" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoney(d.income)}</text>`;
-    }
-    if(showLabels && d.expense > 0){
-      svg += `<text x="${ex+barW/2}" y="${baseY-expenseH-3}" font-size="8" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtMoney(d.expense)}</text>`;
-    }
-    const dataAttr = d.ym ? `data-ym="${d.ym}"` : `data-date="${d.date}"`;
-    svg += `<rect class="trend-bar" ${dataAttr} x="${ix}" y="${baseY-incomeH}" width="${barW}" height="${Math.max(incomeH,1)}" fill="#1F4A3D" rx="2" style="cursor:pointer;"/>`;
-    svg += `<rect class="trend-bar" ${dataAttr} x="${ex}" y="${baseY-expenseH}" width="${barW}" height="${Math.max(expenseH,1)}" fill="#9B3B2B" rx="2" style="cursor:pointer;"/>`;
-    svg += `<rect class="trend-hit" ${dataAttr} x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer;"/>`;
-    svg += `<text x="${gx+groupW/2}" y="${height-6}" font-size="9" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
+    const gx=left+i*groupW;
+    const ix=gx+groupW*.17, ex=gx+groupW*.55;
+    const ih=(Math.max(0,d.income)/max)*chartH, eh=(Math.max(0,d.expense)/max)*chartH;
+    const savings=Math.max(0,d.income-d.expense), sy=y(savings);
+    points.push(`${gx+groupW/2},${sy}`);
+    svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ix}" y="${baseY-ih}" width="${barW}" height="${Math.max(ih,1)}" fill="#1F4A3D" rx="3" style="cursor:pointer"/>`;
+    svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ex}" y="${baseY-eh}" width="${barW}" height="${Math.max(eh,1)}" fill="#9B3B2B" rx="3" style="cursor:pointer"/>`;
+    if(showLabels && d.income>0) svg+=`<text x="${ix+barW/2}" y="${Math.max(9,baseY-ih-4)}" font-size="7.5" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(d.income)}</text>`;
+    if(showLabels && d.expense>0) svg+=`<text x="${ex+barW/2}" y="${Math.max(9,baseY-eh-4)}" font-size="7.5" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(d.expense)}</text>`;
+    svg+=`<text x="${gx+groupW/2}" y="${height-9}" font-size="8.5" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
+    const key=d.ym?`data-ym="${d.ym}"`:`data-date="${d.date}"`;
+    svg+=`<rect class="trend-hit" ${key} x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer"/>`;
   });
-  const el = document.getElementById('trendChartSvg');
-  el.innerHTML = `<svg viewBox="0 0 ${width} ${height}" style="width:${width}px; height:${height}px; display:block;">${svg}</svg>`;
-  el.querySelectorAll('[data-ym]').forEach(node=>{
-    node.addEventListener('click', ()=> drillIntoMonth(node.dataset.ym));
-  });
-  el.querySelectorAll('[data-date]').forEach(node=>{
-    node.addEventListener('click', ()=> drillIntoDay(node.dataset.date));
-  });
+  if(points.length>1) svg+=`<polyline points="${points.join(' ')}" fill="none" stroke="#2878C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  points.forEach((pt,i)=>{const [px,py]=pt.split(','); svg+=`<circle cx="${px}" cy="${py}" r="3.2" fill="#2878C8"/>`; if(showLabels && data[i].income-data[i].expense>0) svg+=`<text x="${px}" y="${Math.max(10,Number(py)-6)}" font-size="7.5" fill="#2878C8" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(data[i].income-data[i].expense)}</text>`;});
+  svg+='</svg>';
+  el.innerHTML=svg;
+  el.querySelectorAll('[data-ym]').forEach(node=>node.addEventListener('click',()=>drillIntoMonth(node.dataset.ym)));
+  el.querySelectorAll('[data-date]').forEach(node=>node.addEventListener('click',()=>drillIntoDay(node.dataset.date)));
+}
+function fmtCompactMoney(v){
+  v=Number(v)||0; const sign=v<0?'−':''; v=Math.abs(v);
+  if(v>=100000) return sign+'₹'+(v/100000).toFixed(v>=1000000?1:1)+'L';
+  if(v>=1000) return sign+'₹'+(v/1000).toFixed(v>=10000?0:1)+'K';
+  return sign+'₹'+Math.round(v);
 }
 
 function drillIntoMonth(ym){
@@ -1602,11 +1702,11 @@ function renderCalendar(){
     }
     monthIncome += inAmt; monthExpense += outAmt;
     const isToday = dateStr === todayStr;
-    html += `<div class="cal-day${isToday?' today':''}${isFuture?' projected':''}">
+    html += `<div class="cal-day${isToday?' today':''}${isFuture?' projected':''}${inAmt>0?' has-income':''}${outAmt>0?' has-expense':''}">
       <div class="cal-daynum">${day}</div>
       <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoneyWhole(inAmt):'&nbsp;'}</div>
       <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoneyWhole(outAmt):'&nbsp;'}</div>
-      <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
+      <div class="cal-net ${inAmt-outAmt>=0?'pos':'neg'}">${(inAmt>0||outAmt>0)?((inAmt-outAmt>=0?'+':'−')+fmtMoneyWhole(Math.abs(inAmt-outAmt))):'&nbsp;'}</div><div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
@@ -1618,12 +1718,10 @@ function renderCalendar(){
   });
 
   const net = monthIncome - monthExpense;
-  const expensePct = monthIncome > 0 ? (monthExpense/monthIncome*100).toFixed(1)+'%' : '';
-  const netPct = monthIncome > 0 ? (net/monthIncome*100).toFixed(1)+'%' : '';
   document.getElementById('calFooter').innerHTML = `
     <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div></div>
-    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}${expensePct?' ('+expensePct+')':''}</div></div>
-    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}${netPct?' ('+netPct+')':''}</div></div>
+    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div></div>
+    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div></div>
   `;
   document.querySelectorAll('#calFooter .v').forEach(el=>{
     let size = 13;
@@ -1646,74 +1744,50 @@ document.getElementById('calNext').addEventListener('click', ()=>{
 document.getElementById('calAccountFilter').addEventListener('change', renderCalendar);
 
 function renderAnalysis(range){
-  const now = new Date();
-  const curYM = now.toISOString().slice(0,7);
-  const todayStr = now.toISOString().slice(0,10);
-  const excluded = new Set(getExcludedAccounts());
-  let list, customFrom = null, customTo = null;
-  if(range==='today'){
-    list = TXNS.filter(t=> t.date === todayStr);
-  } else if(range==='month'){
-    list = TXNS.filter(t=> reportMonth(t)===curYM);
-  } else if(range==='custom'){
-    customFrom = displayToIsoDate(document.getElementById('customFrom').value);
-    customTo = displayToIsoDate(document.getElementById('customTo').value);
-    list = TXNS.filter(t=> t.date && (!customFrom || t.date >= customFrom) && (!customTo || t.date <= customTo));
-  } else {
-    list = TXNS.filter(t=> t.date);
-  }
-  list = list.filter(t=>!excluded.has(t.account));
-  renderTrendChart(range, list, curYM, customFrom, customTo);
-  const income = list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
-  const expense = list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
-  const expPct = income > 0 ? (Math.abs(expense)/income*100).toFixed(1)+'%' : '';
-  document.getElementById('statIn').textContent = fmtMoney(income);
-  document.getElementById('statOut').textContent = fmtMoney(Math.abs(expense)) + (expPct?' ('+expPct+')':'');
-  const net = income+expense;
-  const netPct = income > 0 ? (net/income*100).toFixed(1)+'%' : '';
-  const netEl = document.getElementById('statNet');
-  netEl.textContent = fmtMoney(net) + (netPct?' ('+netPct+')':'');
-  netEl.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
-  document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{
-    let size = 13;
-    el.style.fontSize = size+'px';
-    while(el.scrollWidth > el.clientWidth && size > 7){
-      size -= 0.5;
-      el.style.fontSize = size+'px';
-    }
-  });
-  const byCat = {};
-  list.filter(isRealExpense).forEach(t=>{ byCat[t.category] = (byCat[t.category]||0)+Math.abs(t.amount); });
-  const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
-  const max = sorted.length ? sorted[0][1] : 1;
-  document.getElementById('analysisCats').innerHTML = sorted.map(([cat,amt])=>`
-    <div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;">
-      <div class="cname">${escapeHtml(cat)}</div>
-      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/max*100))}%"></div></div>
-      <div class="cat-amt">${fmtMoney(amt)}</div>
-    </div>`).join('') || `<div class="empty-note">Nothing to analyze in this range.</div>`;
-  document.querySelectorAll('#analysisCats .cat-row').forEach(row=>{
-    row.addEventListener('click', ()=>{
-      document.getElementById('filterCategory').value = row.dataset.cat;
-      document.getElementById('filterAccount').value = '';
-      switchTab('ledger');
-      renderLedger();
-    });
-  });
+  const now=new Date(), curYM=now.toISOString().slice(0,7), todayStr=now.toISOString().slice(0,10), excluded=new Set(getExcludedAccounts());
+  let list,customFrom=null,customTo=null;
+  if(range==='today') list=TXNS.filter(t=>t.date===todayStr);
+  else if(range==='month') list=TXNS.filter(t=>reportMonth(t)===curYM);
+  else if(range==='custom'){
+    customFrom=displayToIsoDate(document.getElementById('customFrom').value); customTo=displayToIsoDate(document.getElementById('customTo').value);
+    list=TXNS.filter(t=>t.date&&(!customFrom||t.date>=customFrom)&&(!customTo||t.date<=customTo));
+  } else list=TXNS.filter(t=>t.date);
+  list=list.filter(t=>!excluded.has(t.account));
+  renderTrendChart(range,list,curYM,customFrom,customTo);
+  const income=list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
+  const expense=list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
+  const absExpense=Math.abs(expense), net=income+expense;
+  const expPct=income>0?(absExpense/income*100).toFixed(1)+'%':'';
+  const netPct=income>0?(net/income*100).toFixed(1)+'%':'';
+  document.getElementById('statIn').textContent=fmtMoney(income);
+  document.getElementById('statOut').textContent=fmtMoney(absExpense)+(expPct?' ('+expPct+')':'');
+  const netEl=document.getElementById('statNet'); netEl.textContent=fmtMoney(net); netEl.style.color=net>=0?'var(--green)':'var(--red)';
+  const rateEl=document.getElementById('statSavingsRate'); if(rateEl) rateEl.textContent=income>0?(net/income*100).toFixed(1)+'%':'—';
+  document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{let size=13;el.style.fontSize=size+'px';while(el.scrollWidth>el.clientWidth&&size>7){size-=.5;el.style.fontSize=size+'px';}});
 
-  const byIncomeSrc = {};
-  list.filter(isRealIncome).forEach(t=>{
-    const key = t.subcategory || t.category || 'Other';
-    byIncomeSrc[key] = (byIncomeSrc[key]||0) + t.amount;
-  });
-  const sortedIncome = Object.entries(byIncomeSrc).sort((a,b)=>b[1]-a[1]);
-  const maxIncome = sortedIncome.length ? sortedIncome[0][1] : 1;
-  document.getElementById('analysisIncomeCats').innerHTML = sortedIncome.map(([src,amt])=>`
-    <div class="cat-row">
-      <div class="cname">${escapeHtml(src)}</div>
-      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,(amt/maxIncome*100))}%; background:var(--green);"></div></div>
-      <div class="cat-amt">${fmtMoney(amt)}</div>
-    </div>`).join('') || `<div class="empty-note">No income recorded in this range.</div>`;
+  const byCat={}; list.filter(isRealExpense).forEach(t=>byCat[t.category]=(byCat[t.category]||0)+Math.abs(t.amount));
+  const sorted=Object.entries(byCat).sort((a,b)=>b[1]-a[1]), top5=sorted.slice(0,5), maxTop=top5.length?top5[0][1]:1;
+  document.getElementById('analysisCats').innerHTML=top5.map(([cat,amt],i)=>`<div class="summary-top-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;"><div><div class="summary-top-name">${i+1}. ${escapeHtml(cat)}</div><div class="summary-top-bar"><div class="summary-top-fill" style="width:${Math.max(4,amt/maxTop*100)}%"></div></div></div><div class="summary-top-meta"><span>${fmtMoney(amt)}</span><span>${absExpense>0?(amt/absExpense*100).toFixed(1)+'%':''}</span></div></div>`).join('')||`<div class="empty-note">No expenses recorded in this range.</div>`;
+  document.querySelectorAll('#analysisCats .summary-top-row').forEach(row=>row.addEventListener('click',()=>{document.getElementById('filterCategory').value=row.dataset.cat;document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}));
+
+  const byIncomeSrc={}; list.filter(isRealIncome).forEach(t=>{const key=t.category||'Other';byIncomeSrc[key]=(byIncomeSrc[key]||0)+t.amount;});
+  const sortedIncome=Object.entries(byIncomeSrc).sort((a,b)=>b[1]-a[1]),maxIncome=sortedIncome.length?sortedIncome[0][1]:1;
+  document.getElementById('analysisIncomeCats').innerHTML=sortedIncome.map(([src,amt])=>`<div class="cat-row"><div class="cname">${escapeHtml(src)}</div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,amt/maxIncome*100)}%;background:var(--green);"></div></div><div class="cat-amt">${fmtMoney(amt)}</div></div>`).join('')||`<div class="empty-note">No income recorded in this range.</div>`;
+
+  // Donut chart for expense distribution.
+  const donut=document.getElementById('expenseDonut');
+  if(!sorted.length){donut.innerHTML='<div class="empty-note">No expenses recorded in this range.</div>';} else {
+    const cx=105,cy=105,r=70,circ=2*Math.PI*r, topColors=['#1F4A3D','#D84A5A','#2878C8','#E0A51B','#7A45C5','#7F8B86','#B86B3E','#5D77A8'];
+    let offset=0, arcs='', legend='';
+    sorted.slice(0,8).forEach(([cat,amt],i)=>{const len=circ*(amt/absExpense);arcs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${topColors[i%topColors.length]}" stroke-width="28" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" style="cursor:pointer" data-cat="${escapeHtml(cat)}"/>`;offset+=len;legend+=`<div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;padding:5px 0;"><div class="cname" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${topColors[i%topColors.length]};display:inline-block"></span>${escapeHtml(cat)}</div><div class="cat-amt">${fmtMoney(amt)} (${(amt/absExpense*100).toFixed(1)}%)</div></div>`;});
+    donut.innerHTML=`<div><svg viewBox="0 0 210 210" aria-label="Expense category donut">${arcs}<circle cx="${cx}" cy="${cy}" r="55" fill="#fff"/><text x="${cx}" y="101" text-anchor="middle" font-size="12" fill="#65736D" font-family="Inter,sans-serif">Total expense</text><text x="${cx}" y="121" text-anchor="middle" font-size="14" font-weight="700" fill="#1F4A3D" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(absExpense)}</text></svg>${legend}</div>`;
+    donut.querySelectorAll('[data-cat]').forEach(node=>node.addEventListener('click',()=>{document.getElementById('filterCategory').value=node.dataset.cat;document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}));
+  }
+
+  const table=document.getElementById('summaryTable');
+  table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th><th>Saving</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>{const sv=d.income-d.expense;return `<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td><td class="${sv>=0?'net-pos':'net-neg'}">${fmtMoney(sv)}</td></tr>`}).join('')}</tbody></table>`;
+  const cb=document.getElementById('summaryChartBtn'),tb=document.getElementById('summaryTableBtn');
+  if(cb&&!cb.dataset.bound){cb.dataset.bound='1';cb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='block';table.style.display='none';cb.classList.add('active');tb.classList.remove('active');});tb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='none';table.style.display='block';tb.classList.add('active');cb.classList.remove('active');});}
 }
 
 function switchTab(tab){
@@ -1965,20 +2039,6 @@ delBtn.addEventListener('click', ()=>{
 function refreshAll(){
   renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger();
   renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
-  updateLastSavedLabel();
-}
-function updateLastSavedLabel(){
-  const el = document.getElementById('lastSavedLabel');
-  if(!el) return;
-  const ts = parseInt(localStorage.getItem(LS_LAST_MODIFIED) || '0', 10);
-  if(!ts){ el.textContent = ''; return; }
-  const d = new Date(ts);
-  const now = new Date();
-  const sameDay = d.toDateString() === now.toDateString();
-  const timeStr = d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-  el.textContent = sameDay
-    ? 'Saved ' + timeStr
-    : 'Saved ' + String(d.getDate()).padStart(2,'0') + '-' + MONTH_ABBR[d.getMonth()] + '-' + timeStr;
 }
 
 // ---------- Category manager ----------
