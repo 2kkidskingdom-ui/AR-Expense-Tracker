@@ -1809,9 +1809,9 @@ function renderCalendar(){
   const expensePct = monthIncome > 0 ? (monthExpense / monthIncome * 100).toFixed(1) + '%' : '';
   const netPct = monthIncome > 0 ? (net / monthIncome * 100).toFixed(1) + '%' : '';
   document.getElementById('calFooter').innerHTML = `
-    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div></div>
-    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}${expensePct ? ' (' + expensePct + ')' : ''}</div></div>
-    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}${netPct ? ' (' + netPct + ')' : ''}</div></div>
+    <div class="tstat"><div class="l">Income</div><div class="v" style="color:var(--green)">${fmtMoney(monthIncome)}</div><div class="sub">&nbsp;</div></div>
+    <div class="tstat"><div class="l">Expenses</div><div class="v" style="color:var(--red)">${fmtMoney(monthExpense)}</div><div class="sub">${expensePct ? expensePct + ' of income' : '&nbsp;'}</div></div>
+    <div class="tstat"><div class="l">Net</div><div class="v" style="color:${net>=0?'var(--green)':'var(--red)'}">${fmtMoney(net)}</div><div class="sub">${netPct ? netPct + ' of income' : '&nbsp;'}</div></div>
   `;
   document.querySelectorAll('#calFooter .v').forEach(el=>{
     let size = 13;
