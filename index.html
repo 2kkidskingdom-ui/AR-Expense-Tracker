@@ -411,12 +411,12 @@
     <div class="field-row" id="fCatWrap">
       <div class="field">
         <label>Category</label>
-        <input list="categoryList" id="fCategory" placeholder="e.g. Milk">
+        <input list="categoryList" id="fCategory" placeholder="Select or type category" autocomplete="off">
         <datalist id="categoryList"></datalist>
       </div>
       <div class="field">
         <label>Subcategory</label>
-        <input list="subcategoryList" id="fSubcategory" placeholder="e.g. Shop">
+        <input list="subcategoryList" id="fSubcategory" placeholder="Select or type subcategory" autocomplete="off">
         <datalist id="subcategoryList"></datalist>
       </div>
     </div>
@@ -464,8 +464,8 @@
     <div id="excludeAccountsList" style="margin-bottom:8px;"></div>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-09-04-separate-income-expense-categories-v2</p>
-    <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-09-04-google-drive-primary-storage</p>
+    <p class="hint">Google Drive is the primary storage for your entries and projections. A local copy is kept on this device for faster loading/offline use. Connect the same Google account on another phone to load the same data.</p>
   </div>
 </div>
 
@@ -496,6 +496,10 @@ SEED.forEach(t=>{
   // Keep the two category trees completely independent.
   // Account transfers and initial-balance rows are not selectable income/expense categories.
   if(t.category === 'Account Transfer' || t.subcategory === 'Account Transfer' || t.subcategory === 'Initial Balance') return;
+  // Existing seed rows use the generic category 'Income'. Do not expose that
+  // generic value as an Income category; Income categories are intentionally
+  // kept separate and can be defined later by the user.
+  if(Number(t.amount) > 0 && t.category === 'Income') return;
   const target = Number(t.amount) > 0 ? INCOME_CATEGORY_SUBCATS : EXPENSE_CATEGORY_SUBCATS;
   if(!target[t.category]) target[t.category] = new Set();
   if(t.subcategory) target[t.category].add(t.subcategory);
@@ -599,6 +603,8 @@ function ensurePurseAccount(){
 function saveData(){
   localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  // Local storage is only the offline/cache copy. When connected, Google Drive
+  // receives the latest data automatically and is the cross-device source of truth.
   if(accessToken) debouncedBackup();
   updateLastSavedLabel();
 }
@@ -1317,8 +1323,19 @@ const fCatWrap = document.getElementById('fCatWrap');
 const fAccountLabel = document.getElementById('fAccountLabel');
 const delBtn = document.getElementById('delBtn');
 const sheetTitle = document.getElementById('sheetTitle');
+const fCategoryLabel = document.getElementById('fCategoryLabel');
+const fSubcategoryLabel = document.getElementById('fSubcategoryLabel');
+
+function updateCategoryFieldsForType(){
+  const income = currentType === 'income';
+  if(fCategoryLabel) fCategoryLabel.textContent = income ? 'INCOME CATEGORY' : 'EXPENSE CATEGORY';
+  if(fSubcategoryLabel) fSubcategoryLabel.textContent = income ? 'INCOME SUBCATEGORY' : 'EXPENSE SUBCATEGORY';
+  fCategory.placeholder = income ? 'e.g. Salary' : 'e.g. Milk';
+  fSubcategory.placeholder = income ? 'e.g. Monthly' : 'e.g. Shop';
+}
 
 function populateDatalists(){
+  updateCategoryFieldsForType();
   const accts = getAccounts();
   const accHtml = accts.map(a=>`<option value="${escapeHtml(a)}">`).join('');
   document.getElementById('accountList').innerHTML = accHtml;
@@ -1347,6 +1364,7 @@ fCategory.addEventListener('input', ()=> populateSubcatFor(fCategory.value));
 
 function setType(type){
   currentType = type;
+  updateCategoryFieldsForType();
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===type));
   fToAccountWrap.style.display = type==='transfer' ? 'block' : 'none';
   fCatWrap.style.display = type==='transfer' ? 'none' : 'flex';
@@ -1428,7 +1446,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     const spanMonths = Math.max(1, parseInt(fSpanMonths.value,10) || 1);
     const applicableStart = fApplicableMonth.value || date.slice(0,7);
     const baseDesc = fDesc.value.trim();
-    const category = fCategory.value.trim() || (currentType==='income' ? 'Income' : 'Uncategorized');
+    const category = fCategory.value.trim() || (currentType==='income' ? 'Uncategorized Income' : 'Uncategorized Expense');
     const subcategory = fSubcategory.value.trim();
 
     if(editingId){ TXNS = TXNS.filter(t=>t.id!==editingId); }
@@ -1623,20 +1641,20 @@ async function driveSyncOnConnect(quiet){
   try{
     const existing = await driveFindFile();
     if(existing){
-      const remoteTime = existing.modifiedTime ? new Date(existing.modifiedTime).getTime() : 0;
-      const localTime = parseInt(localStorage.getItem(LS_LAST_MODIFIED) || '0', 10);
-      if(remoteTime > localTime + 2000){
-        if(!quiet) showToast('Drive has newer data — pulling latest');
-        await driveRestore(true);
-      } else if(localTime > remoteTime + 2000){
-        if(!quiet) showToast('This device has newer data — backing up to Drive');
-        await driveBackup(true);
-      }
-      // otherwise already in sync — nothing to do, stay quiet
+      // Google Drive is the source of truth. This prevents a new phone's
+      // empty/seeded local storage from overwriting the existing cloud data.
+      if(!quiet) showToast('Loading your data from Google Drive…');
+      await driveRestore(true);
+      updateLastSavedLabel();
     } else {
+      // First-time setup: no cloud file exists yet, so upload this device's data.
       await driveBackup(true);
+      if(!quiet) showToast('Data saved to Google Drive');
     }
-  }catch(e){ console.error(e); if(!quiet) showToast('Drive sync check failed'); }
+  }catch(e){
+    console.error(e);
+    if(!quiet) showToast('Drive sync check failed');
+  }
 }
 
 async function driveBackup(silent){
@@ -1770,10 +1788,19 @@ bindDateTextInput('fDate');
   document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
   // Try to reconnect to Drive automatically if we've connected in this browser before
   attemptSilentReconnect();
-  // While the app stays open, periodically check Drive for changes made on another device
+  // Keep all devices in sync with Google Drive. A connected device pulls
+  // cloud changes periodically and whenever it becomes active again.
   setInterval(()=>{
+    if(accessToken && navigator.onLine) driveSyncOnConnect(true);
+  }, 60000);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible' && accessToken && navigator.onLine){
+      driveSyncOnConnect(true);
+    }
+  });
+  window.addEventListener('online', ()=>{
     if(accessToken) driveSyncOnConnect(true);
-  }, 120000);
+  });
 })();
 </script>
 </body>
