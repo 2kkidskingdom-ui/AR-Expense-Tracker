@@ -1152,6 +1152,32 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); }
   });
 });
+
+// Mobile swipe navigation between the main tabs.
+(function enableMobileTabSwipe(){
+  const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+  const main = document.querySelector('main');
+  if(!main || tabs.length < 2) return;
+  let startX = 0, startY = 0, startTime = 0;
+  main.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    startTime = Date.now();
+  }, {passive:true});
+  main.addEventListener('touchend', e=>{
+    if(!startTime || e.changedTouches.length !== 1) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    const dt = Date.now() - startTime;
+    startTime = 0;
+    if(window.innerWidth > 768 || dt > 700 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    const active = tabs.findIndex(b=>b.classList.contains('active'));
+    if(active < 0) return;
+    const next = dx < 0 ? active + 1 : active - 1;
+    if(next >= 0 && next < tabs.length) tabs[next].click();
+  }, {passive:true});
+})();
 document.getElementById('rangeBtns').addEventListener('click', (e)=>{
   if(e.target.tagName!=='BUTTON') return;
   document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.remove('active'));
