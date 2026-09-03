@@ -294,9 +294,9 @@
         <button data-range="custom">Custom</button>
       </div>
       <div class="custom-range-row" id="customRangeRow" style="display:none;">
-        <input type="date" id="customFrom">
+        <input type="text" id="customFrom" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off">
         <span style="color:var(--muted); font-size:12px;">to</span>
-        <input type="date" id="customTo">
+        <input type="text" id="customTo" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off">
       </div>
       <div class="totals-strip">
         <div class="tstat"><div class="l">Income</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
@@ -340,7 +340,7 @@
           <button type="button" id="planCancelBtn" style="display:none; background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline;">Cancel edit</button>
         </div>
         <div class="field-row">
-          <div class="field"><label>Date</label><input type="date" id="planDate"></div>
+          <div class="field"><label>Date</label><input type="text" id="planDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
           <div class="field">
             <label>Type</label>
             <div class="type-switch">
@@ -348,6 +348,17 @@
               <button type="button" class="type-btn income" data-ptype="credit">Credit</button>
             </div>
           </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Repeat</label>
+            <select id="planRepeat">
+              <option value="none">One time</option>
+              <option value="weekly">Every week</option>
+              <option value="monthly">Every month</option>
+              <option value="yearly">Every year</option>
+            </select>
+          </div>
+          <div class="field" id="planUntilWrap" style="display:none;"><label>Repeat until</label><input type="text" id="planUntil" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
         </div>
         <div class="field-row">
           <div class="field"><label>Amount (₹)</label><input type="number" step="0.01" id="planAmount" class="amt-input" placeholder="0.00"></div>
@@ -385,7 +396,7 @@
       <input type="number" step="0.01" id="fAmount" class="amt-input" placeholder="0.00">
     </div>
     <div class="field-row">
-      <div class="field"><label>Date</label><input type="date" id="fDate"></div>
+      <div class="field"><label>Date</label><input type="text" id="fDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
       <div class="field" id="fAccountWrap">
         <label id="fAccountLabel">Account</label>
         <input list="accountList" id="fAccount" placeholder="Select or type new">
@@ -453,7 +464,7 @@
     <div id="excludeAccountsList" style="margin-bottom:8px;"></div>
 
     <div class="section-title" style="margin-top:24px;">About this app</div>
-    <p class="hint" style="opacity:0.6;">Version: 2026-09-04-separate-income-expense-categories</p>
+    <p class="hint" style="opacity:0.6;">Version: 2026-09-04-separate-income-expense-categories-v2</p>
     <p class="hint">All entries are saved on this device automatically. Google Drive backup is optional — it stores a single JSON file in your Drive's private app folder, only accessible to this app and your account.</p>
   </div>
 </div>
@@ -482,7 +493,10 @@ const EXPENSE_CATEGORY_SUBCATS = {};
 
 SEED.forEach(t=>{
   if(!t.category) return;
-  const target = Number(t.amount) >= 0 ? INCOME_CATEGORY_SUBCATS : EXPENSE_CATEGORY_SUBCATS;
+  // Keep the two category trees completely independent.
+  // Account transfers and initial-balance rows are not selectable income/expense categories.
+  if(t.category === 'Account Transfer' || t.subcategory === 'Account Transfer' || t.subcategory === 'Initial Balance') return;
+  const target = Number(t.amount) > 0 ? INCOME_CATEGORY_SUBCATS : EXPENSE_CATEGORY_SUBCATS;
   if(!target[t.category]) target[t.category] = new Set();
   if(t.subcategory) target[t.category].add(t.subcategory);
 });
@@ -505,6 +519,34 @@ function fmtMonthLabel(ym){
   const [y,m] = ym.split('-').map(Number);
   if(!y || !m) return ym;
   return MONTH_ABBR[m-1] + ' ' + y;
+}
+function isoToDisplayDate(ds){
+  if(!ds) return '';
+  const d = new Date(ds+'T00:00:00');
+  if(isNaN(d)) return ds;
+  return String(d.getDate()).padStart(2,'0') + '-' + MONTH_ABBR[d.getMonth()] + '-' + d.getFullYear();
+}
+function displayToIsoDate(value){
+  const v = String(value || '').trim();
+  if(!v) return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m = v.match(/^(\d{1,2})[-\/ ]([A-Za-z]{3})[-\/ ](\d{4})$/);
+  if(!m) return '';
+  const month = MONTH_ABBR.findIndex(x=>x.toLowerCase()===m[2].toLowerCase()) + 1;
+  if(!month) return '';
+  const day = Number(m[1]), year = Number(m[3]);
+  const d = new Date(year, month-1, day);
+  if(d.getFullYear()!==year || d.getMonth()!==month-1 || d.getDate()!==day) return '';
+  return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+}
+function bindDateTextInput(id, initialIso=''){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(initialIso) el.value = isoToDisplayDate(initialIso);
+  el.addEventListener('blur', ()=>{
+    const iso = displayToIsoDate(el.value);
+    if(iso) el.value = isoToDisplayDate(iso);
+  });
 }
 function fmtDateLabel(ds){
   if(!ds) return '';
@@ -591,13 +633,10 @@ function getAccounts(){
   });
 }
 function getCategories(type = currentType){
+  // IMPORTANT: do not add categories from TXNS here.
+  // Income and Expense must always use their own independent category trees.
   const source = type === 'income' ? INCOME_CATEGORY_SUBCATS : EXPENSE_CATEGORY_SUBCATS;
-  const set = new Set([
-    ...Object.keys(source),
-    ...TXNS.filter(t => type === 'income' ? Number(t.amount) >= 0 : Number(t.amount) < 0)
-          .map(t=>t.category).filter(Boolean)
-  ]);
-  return [...set].sort();
+  return Object.keys(source).sort();
 }
 function accountBalance(acct){ return TXNS.filter(t=>t.account===acct).reduce((s,t)=>s+t.amount,0); }
 function netWorth(){ return TXNS.reduce((s,t)=>s+t.amount,0); }
@@ -738,16 +777,16 @@ function drillIntoMonth(ym){
   const [y,m] = ym.split('-').map(Number);
   const lastDay = new Date(y, m, 0).getDate();
   const to = `${ym}-${String(lastDay).padStart(2,'0')}`;
-  document.getElementById('customFrom').value = from;
-  document.getElementById('customTo').value = to;
+  document.getElementById('customFrom').value = isoToDisplayDate(from);
+  document.getElementById('customTo').value = isoToDisplayDate(to);
   document.getElementById('customRangeRow').style.display = 'flex';
   document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.range==='custom'));
   renderAnalysis('custom');
 }
 
 function drillIntoDay(dateStr){
-  document.getElementById('customFrom').value = dateStr;
-  document.getElementById('customTo').value = dateStr;
+  document.getElementById('customFrom').value = isoToDisplayDate(dateStr);
+  document.getElementById('customTo').value = isoToDisplayDate(dateStr);
   document.getElementById('customRangeRow').style.display = 'flex';
   document.querySelectorAll('#rangeBtns button').forEach(b=>b.classList.toggle('active', b.dataset.range==='custom'));
   renderAnalysis('custom');
@@ -879,6 +918,45 @@ function populatePlanAccountList(){
   document.getElementById('planAccountList').innerHTML = getAccounts().map(a=>`<option value="${escapeHtml(a)}">`).join('');
 }
 
+function planRepeatLabel(repeat){
+  return repeat==='weekly' ? 'Every week' : repeat==='monthly' ? 'Every month' : repeat==='yearly' ? 'Every year' : 'One time';
+}
+function refreshPlanRepeatUI(){
+  const repeat = document.getElementById('planRepeat').value;
+  document.getElementById('planUntilWrap').style.display = repeat==='none' ? 'none' : 'block';
+}
+function expandPlanOccurrences(plan, fromDate, toDate){
+  if(!plan || !plan.date) return [];
+  const start = new Date(plan.date+'T00:00:00');
+  if(isNaN(start)) return [];
+  const until = plan.until ? new Date(plan.until+'T00:00:00') : null;
+  const from = new Date(fromDate+'T00:00:00');
+  const to = new Date(toDate+'T00:00:00');
+  const out=[];
+  const anchorDay = start.getDate();
+  let cur = new Date(start);
+  let guard=0;
+  while(cur <= to && guard++ < 2400){
+    if(cur >= from && (!until || cur <= until)){
+      out.push({...plan, date:`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`});
+    }
+    if(plan.repeat==='weekly') {
+      cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()+7);
+    } else if(plan.repeat==='monthly') {
+      const monthsFromStart = guard;
+      const target = new Date(start.getFullYear(), start.getMonth()+monthsFromStart, 1);
+      const last = new Date(target.getFullYear(), target.getMonth()+1, 0).getDate();
+      cur = new Date(target.getFullYear(), target.getMonth(), Math.min(anchorDay,last));
+    } else if(plan.repeat==='yearly') {
+      const targetYear = start.getFullYear()+guard;
+      const last = new Date(targetYear, start.getMonth()+1, 0).getDate();
+      cur = new Date(targetYear, start.getMonth(), Math.min(anchorDay,last));
+    } else break;
+    if(until && cur > until) break;
+  }
+  return out;
+}
+
 function renderPlanList(){
   const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   const el = document.getElementById('planList');
@@ -889,7 +967,7 @@ function renderPlanList(){
       <div class="dot ${isCredit?'pos':'neg'}"></div>
       <div class="mid">
         <div class="cat">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
-        <div class="meta">${escapeHtml(p.account||'No account')} · ${escapeHtml(fmtDateLabel(p.date))}</div>
+        <div class="meta">${escapeHtml(p.account||'No account')} · ${escapeHtml(fmtDateLabel(p.date))}${p.repeat && p.repeat!=='none' ? ' · '+escapeHtml(planRepeatLabel(p.repeat))+(p.until?' until '+escapeHtml(fmtDateLabel(p.until)):'') : ''}</div>
       </div>
       <div class="amt" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
     </div>`;
@@ -904,11 +982,14 @@ function openPlanForEdit(id){
   if(!p) return;
   editingPlanId = id;
   populatePlanAccountList();
-  document.getElementById('planDate').value = p.date || '';
+  document.getElementById('planDate').value = isoToDisplayDate(p.date || '');
   const isCredit = p.credit > 0;
   document.getElementById('planAmount').value = isCredit ? p.credit : p.debit;
   document.getElementById('planAccount').value = p.account || '';
   document.getElementById('planDesc').value = p.description || '';
+  document.getElementById('planRepeat').value = p.repeat || 'none';
+  document.getElementById('planUntil').value = p.until ? isoToDisplayDate(p.until) : '';
+  refreshPlanRepeatUI();
   setPlanType(isCredit ? 'credit' : 'debit');
   document.getElementById('planFormTitle').textContent = 'Edit planned entry';
   document.getElementById('planAddBtn').textContent = 'Save changes';
@@ -919,10 +1000,13 @@ function openPlanForEdit(id){
 
 function resetPlanForm(){
   editingPlanId = null;
-  document.getElementById('planDate').value = '';
+  document.getElementById('planDate').value = isoToDisplayDate(new Date().toISOString().slice(0,10));
   document.getElementById('planAmount').value = '';
   document.getElementById('planAccount').value = '';
   document.getElementById('planDesc').value = '';
+  document.getElementById('planRepeat').value = 'none';
+  document.getElementById('planUntil').value = '';
+  refreshPlanRepeatUI();
   setPlanType('debit');
   document.getElementById('planFormTitle').textContent = 'Add planned entry';
   document.getElementById('planAddBtn').textContent = 'Add planned entry';
@@ -938,6 +1022,13 @@ function setPlanType(type){
 document.querySelectorAll('#plan .type-btn').forEach(b=>{
   b.addEventListener('click', ()=> setPlanType(b.dataset.ptype));
 });
+document.getElementById('planRepeat').addEventListener('change', refreshPlanRepeatUI);
+document.getElementById('planUntil').addEventListener('blur', ()=>{
+  const el=document.getElementById('planUntil');
+  const iso=displayToIsoDate(el.value);
+  if(iso) el.value=isoToDisplayDate(iso);
+});
+
 document.getElementById('planCancelBtn').addEventListener('click', resetPlanForm);
 document.getElementById('planDeleteBtn').addEventListener('click', ()=>{
   if(!editingPlanId) return;
@@ -949,18 +1040,24 @@ document.getElementById('planDeleteBtn').addEventListener('click', ()=>{
   showToast('Planned entry deleted');
 });
 document.getElementById('planAddBtn').addEventListener('click', ()=>{
-  const date = document.getElementById('planDate').value;
+  const date = displayToIsoDate(document.getElementById('planDate').value) || new Date().toISOString().slice(0,10);
+  if(!displayToIsoDate(document.getElementById('planDate').value) && document.getElementById('planDate').value.trim()){ document.getElementById('planDate').focus(); return; }
   const amt = parseFloat(document.getElementById('planAmount').value);
   const account = document.getElementById('planAccount').value.trim();
   const desc = document.getElementById('planDesc').value.trim();
+  const repeat = document.getElementById('planRepeat').value || 'none';
+  const untilRaw = document.getElementById('planUntil').value.trim();
+  const until = repeat==='none' ? '' : displayToIsoDate(untilRaw);
   if(!date){ showToast('Pick a date'); return; }
   if(isNaN(amt) || amt<=0){ showToast('Enter a valid amount'); return; }
   if(!account){ showToast('Pick or type an account'); return; }
+  if(repeat!=='none' && untilRaw && !until){ document.getElementById('planUntil').focus(); showToast('Enter a valid repeat-until date'); return; }
+  if(until && until < date){ document.getElementById('planUntil').focus(); showToast('Repeat-until date must be on or after the start date'); return; }
   const entry = {
     id: editingPlanId || uid(), date, account,
     debit: currentPlanType==='debit' ? amt : 0,
     credit: currentPlanType==='credit' ? amt : 0,
-    description: desc
+    description: desc, repeat, until
   };
   if(editingPlanId){
     const idx = PLANS.findIndex(p=>p.id===editingPlanId);
@@ -994,11 +1091,17 @@ function renderCalendar(){
     return bal;
   }
   // planned entries only make sense against the combined view — a single account can't be attributed
-  const sortedPlans = (acct ? PLANS.filter(p=>p.account===acct) : PLANS.filter(p=>!excludedAccts.has(p.account))).filter(p=>p.date).sort((a,b)=>a.date.localeCompare(b.date));
+  const basePlans = (acct ? PLANS.filter(p=>p.account===acct) : PLANS.filter(p=>!excludedAccts.has(p.account))).filter(p=>p.date);
+  const monthStart = `${calYear}-${String(calMon+1).padStart(2,'0')}-01`;
+  const monthEnd = `${calYear}-${String(calMon+1).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`;
+  const sortedPlans = basePlans.flatMap(p=>expandPlanOccurrences(p, todayStr, monthEnd)).sort((a,b)=>a.date.localeCompare(b.date));
   const todayRealBalance = balanceThrough(todayStr);
   function projectedBalanceThrough(dateStr){
     let extra = 0;
-    for(const p of sortedPlans){ if(p.date > todayStr && p.date <= dateStr) extra += (p.credit||0) - (p.debit||0); }
+    for(const p of basePlans){
+      const occurrences = expandPlanOccurrences(p, todayStr, dateStr);
+      for(const o of occurrences) extra += (o.credit||0) - (o.debit||0);
+    }
     return todayRealBalance + extra;
   }
 
@@ -1078,8 +1181,8 @@ function renderAnalysis(range){
   } else if(range==='month'){
     list = TXNS.filter(t=> reportMonth(t)===curYM);
   } else if(range==='custom'){
-    customFrom = document.getElementById('customFrom').value;
-    customTo = document.getElementById('customTo').value;
+    customFrom = displayToIsoDate(document.getElementById('customFrom').value);
+    customTo = displayToIsoDate(document.getElementById('customTo').value);
     list = TXNS.filter(t=> t.date && (!customFrom || t.date >= customFrom) && (!customTo || t.date <= customTo));
   } else {
     list = TXNS.filter(t=> t.date);
@@ -1187,8 +1290,8 @@ document.getElementById('rangeBtns').addEventListener('click', (e)=>{
   if(range==='custom'){
     const from = document.getElementById('customFrom');
     const to = document.getElementById('customTo');
-    if(!from.value) from.value = new Date().toISOString().slice(0,8)+'01';
-    if(!to.value) to.value = new Date().toISOString().slice(0,10);
+    if(!displayToIsoDate(from.value)) from.value = isoToDisplayDate(new Date().toISOString().slice(0,8)+'01');
+    if(!displayToIsoDate(to.value)) to.value = isoToDisplayDate(new Date().toISOString().slice(0,10));
   }
   renderAnalysis(range);
 });
@@ -1263,7 +1366,7 @@ function openAddSheet(){
   editingId = null;
   sheetTitle.innerHTML = 'Add entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = ''; fDate.value = new Date().toISOString().slice(0,10);
+  fAmount.value = ''; fDate.value = isoToDisplayDate(new Date().toISOString().slice(0,10));
   fAccount.value=''; fToAccount.value=''; fCategory.value=''; fSubcategory.value=''; fDesc.value='';
   fApplicableMonth.value = new Date().toISOString().slice(0,7);
   fSpanMonths.value = 1;
@@ -1278,7 +1381,7 @@ function openEditSheet(id){
   editingId = id;
   sheetTitle.innerHTML = 'Edit entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = Math.abs(t.amount); fDate.value = t.date || '';
+  fAmount.value = Math.abs(t.amount); fDate.value = isoToDisplayDate(t.date || '');
   fAccount.value = t.account || ''; fToAccount.value='';
   fCategory.value = '';
   fSubcategory.value = '';
@@ -1309,7 +1412,8 @@ function addMonths(ym, n){
 document.getElementById('saveBtn').addEventListener('click', ()=>{
   const amt = parseFloat(fAmount.value);
   if(isNaN(amt) || amt===0){ fAmount.focus(); return; }
-  const date = fDate.value || new Date().toISOString().slice(0,10);
+  const date = displayToIsoDate(fDate.value) || new Date().toISOString().slice(0,10);
+  if(!displayToIsoDate(fDate.value) && fDate.value.trim()){ fDate.focus(); return; }
   const day = date.slice(8,10);
   const acct = fAccount.value.trim();
   if(!acct){ fAccount.focus(); return; }
@@ -1648,6 +1752,13 @@ function initAuthGate(){
   }
 }
 initAuthGate();
+
+// Date fields use a consistent dd-MMM-yyyy display while data remains ISO internally.
+bindDateTextInput('customFrom');
+bindDateTextInput('customTo');
+bindDateTextInput('planDate');
+bindDateTextInput('planUntil');
+bindDateTextInput('fDate');
 
 // ---------- Init ----------
 (function init(){
