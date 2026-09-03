@@ -716,6 +716,9 @@ let tokenClient = null;
 let driveFileId = localStorage.getItem(LS_DRIVE_FILE_ID) || null;
 let syncInFlight = false;
 let localDirty = false;
+let lastDriveError = '';
+let tokenRefreshInFlight = null;
+let autoReconnectDisabled = localStorage.getItem('ledger.autoReconnectDisabled.v1') === '1';
 
 function uid(){ return 't'+Date.now()+Math.random().toString(36).slice(2,7); }
 function reportMonth(t){ return t.appliedMonth || (t.date ? t.date.slice(0,7) : ''); }
@@ -2009,20 +2012,29 @@ function updateSyncUI(state){
   document.getElementById('syncDot').classList.toggle('on', isConnected);
   document.getElementById('syncLabel').textContent = connecting ? 'Reconnecting…' : syncing ? 'Syncing…' : hasError ? 'Sync issue' : (isConnected ? `Synced ${syncAgeLabel()}` : 'Not connected');
   document.getElementById('driveDot').classList.toggle('on', isConnected);
-  document.getElementById('driveStatusText').textContent = connecting ? 'Reconnecting to Google Drive…' : syncing ? 'Syncing with Google Drive…' : hasError ? 'Sync needs attention' : (isConnected ? `Google Drive · ${syncAgeLabel()}` : 'Google Drive not connected');
+  document.getElementById('driveStatusText').textContent = connecting ? 'Reconnecting to Google Drive…' : syncing ? 'Syncing with Google Drive…' : hasError ? (lastDriveError ? `Drive error: ${lastDriveError}` : 'Sync needs attention') : (isConnected ? `Google Drive · ${syncAgeLabel()}` : 'Google Drive not connected');
   document.getElementById('connectDriveBtn').style.display = (isConnected || connecting || syncing) ? 'none' : 'block';
   document.getElementById('backupBtn').style.display = isConnected ? 'block' : 'none';
   document.getElementById('restoreBtn').style.display = isConnected ? 'block' : 'none';
   document.getElementById('disconnectBtn').style.display = isConnected ? 'block' : 'none';
-  if(isConnected) document.getElementById('resumeSyncBtn').style.display = 'none';
+  const resume=document.getElementById('resumeSyncBtn');
+  if(resume){
+    resume.style.display = (hasError && !autoReconnectDisabled) ? 'block' : 'none';
+    if(!hasError) resume.textContent='↻ Tap to resume Google Drive sync';
+  }
   const detail=document.getElementById('syncCenterDetail');
   if(detail){
     const m=getSyncMeta(), ts=Number(m.lastCloudModified||0);
-    detail.textContent=isConnected ? `Automatic sync is ON · ${ts?`last synced ${formatSyncTime(ts)}`:'ready'}` : (navigator.onLine?'Automatic sync will start after Google Drive connects':'Offline · changes will sync when you are back online');
+    detail.textContent=isConnected ? `Automatic sync is ON · ${ts?`last synced ${formatSyncTime(ts)}`:'ready'}` : (hasError ? (lastDriveError||'Google Drive sync needs attention') : (navigator.onLine?'Automatic sync will start after Google Drive connects':'Offline · changes will sync when you are back online'));
   }
 }
 function formatSyncTime(ts){ try{return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}catch(e){return 'recently';} }
 function syncAgeLabel(){ const ts=Number(getSyncMeta().lastCloudModified||0); if(!ts) return 'ready'; const mins=Math.max(0,Math.floor((Date.now()-ts)/60000)); return mins<1?'just now':mins<60?`${mins}m ago`:formatSyncTime(ts); }
+function shortDriveError(e){
+  const msg=String(e?.message||e||'Unknown Drive error').replace(/\s+/g,' ').trim();
+  return msg.length>90 ? msg.slice(0,87)+'…' : msg;
+}
+
 
 
 document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
@@ -2039,10 +2051,7 @@ document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
 
 function connectDrive(clientId, prompt){
   if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
-    if(prompt === ''){
-      updateSyncUI('connecting');
-      return false;
-    }
+    if(prompt === ''){ updateSyncUI('connecting'); return false; }
     showToast('Google sign-in script not loaded — check your connection');
     return false;
   }
@@ -2051,19 +2060,24 @@ function connectDrive(clientId, prompt){
     scope: DRIVE_SCOPE,
     callback: async (resp) => {
       if(resp.error){
-        if(prompt === '') {
-          // Silent reconnect can temporarily fail while Google's GIS script/session
-          // is still initializing. Leave the app usable and let the startup retry
-          // attempt again without requiring the user to tap anything.
-          updateSyncUI(false);
+        console.warn('Google token error:', resp.error, resp.error_description || '');
+        accessToken = null;
+        if(prompt === ''){
+          lastDriveError = 'Google authorization needs attention';
+          updateSyncUI('error');
           return false;
         }
+        lastDriveError = 'Google authorization failed';
+        updateSyncUI('error');
         showToast('Sign-in failed: ' + resp.error);
         return false;
       }
       accessToken = resp.access_token;
+      autoReconnectDisabled = false;
+      localStorage.removeItem('ledger.autoReconnectDisabled.v1');
       const expiresAt = Date.now() + (resp.expires_in ? resp.expires_in*1000 : 3500*1000);
       localStorage.setItem(LS_TOKEN_EXPIRY, String(expiresAt));
+      lastDriveError = '';
       updateSyncUI(true);
       if(prompt !== '') showToast('Connected to Google Drive');
       await driveSyncOnConnect();
@@ -2073,45 +2087,49 @@ function connectDrive(clientId, prompt){
   return true;
 }
 
+
 // Reconnect automatically after a page reload. Google Identity Services loads
 // asynchronously, so retry for a short period instead of treating the app as
 // disconnected when the script simply has not loaded yet. No user interaction
 // is required when Google has already granted this app Drive access.
 function attemptSilentReconnect(attempt = 0){
   const clientId = localStorage.getItem(LS_CLIENT_ID);
-  if(!clientId || accessToken) return;
+  if(!clientId || accessToken || autoReconnectDisabled) return;
   if(attempt === 0) updateSyncUI('connecting');
   if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
-    if(attempt < 30) setTimeout(()=>attemptSilentReconnect(attempt + 1), 300);
-    else updateSyncUI(false);
+    if(attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 300);
+    else { lastDriveError='Google sign-in script did not load'; updateSyncUI('error'); }
     return;
   }
   try{
     const started = connectDrive(clientId, '');
-    if(started === false && attempt < 30){
-      setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
-    }
+    if(started === false && attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
   }catch(e){
     console.error(e);
-    if(attempt < 30) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
-    else updateSyncUI(false);
+    if(attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
+    else { lastDriveError=shortDriveError(e); updateSyncUI('error'); }
   }
 }
 document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
   const clientId = localStorage.getItem(LS_CLIENT_ID);
   if(!clientId) return;
+  autoReconnectDisabled=false;
+  localStorage.removeItem('ledger.autoReconnectDisabled.v1');
   document.getElementById('resumeSyncBtn').textContent = 'Connecting…';
-  connectDrive(clientId, '');
+  connectDrive(clientId, 'consent');
 });
 
 document.getElementById('disconnectBtn').addEventListener('click', ()=>{
   accessToken = null;
   localStorage.removeItem(LS_TOKEN_EXPIRY);
+  autoReconnectDisabled=true;
+  localStorage.setItem('ledger.autoReconnectDisabled.v1','1');
   updateSyncUI(false);
   showToast('Disconnected from Drive');
 });
 
-document.getElementById('syncNowBtn').addEventListener('click', ()=>{ if(accessToken) driveSyncMerge(false); else showToast('Connect Google Drive first'); });
+
+document.getElementById('syncNowBtn').addEventListener('click', ()=>{ if(accessToken) driveSyncMerge(false); else { const cid=localStorage.getItem(LS_CLIENT_ID); if(cid) connectDrive(cid,'consent'); else showToast('Enter your Google OAuth Client ID first'); } });
 document.getElementById('backupBtn').addEventListener('click', ()=> driveBackup(false));
 document.getElementById('restoreBtn').addEventListener('click', ()=> driveRestore());
 document.getElementById('lockAppBtn').addEventListener('click', ()=>{
@@ -2119,10 +2137,49 @@ document.getElementById('lockAppBtn').addEventListener('click', ()=>{
   location.reload();
 });
 
-async function driveApiFetch(url, opts={}){
-  opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + accessToken });
-  return fetch(url, opts);
+async function refreshDriveTokenSilently(){
+  if(tokenRefreshInFlight) return tokenRefreshInFlight;
+  const clientId=localStorage.getItem(LS_CLIENT_ID);
+  if(!clientId || autoReconnectDisabled || !google?.accounts?.oauth2) return false;
+  tokenRefreshInFlight=new Promise(resolve=>{
+    try{
+      const tc=google.accounts.oauth2.initTokenClient({
+        client_id:clientId,
+        scope:DRIVE_SCOPE,
+        callback:(resp)=>{
+          if(resp?.access_token){
+            accessToken=resp.access_token;
+            const expiresAt=Date.now()+(resp.expires_in?resp.expires_in*1000:3500*1000);
+            localStorage.setItem(LS_TOKEN_EXPIRY,String(expiresAt));
+            lastDriveError='';
+            resolve(true);
+          }else resolve(false);
+        }
+      });
+      tc.requestAccessToken({prompt:''});
+    }catch(e){ console.warn('Silent token refresh failed',e); resolve(false); }
+  }).finally(()=>{tokenRefreshInFlight=null;});
+  return tokenRefreshInFlight;
 }
+async function driveApiFetch(url, opts={}, retry=true){
+  if(!accessToken) throw new Error('Google Drive is not connected');
+  opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + accessToken });
+  let res=await fetch(url, opts);
+  if(res.status===401 && retry){
+    const ok=await refreshDriveTokenSilently();
+    if(ok){
+      opts.headers = Object.assign({}, opts.headers, { 'Authorization': 'Bearer ' + accessToken });
+      res=await fetch(url, opts);
+    }
+  }
+  if(!res.ok){
+    let msg='HTTP '+res.status;
+    try{ const d=await res.clone().json(); msg=d.error?.message||msg; }catch(e){}
+    throw new Error(msg);
+  }
+  return res;
+}
+
 
 async function driveFindFile(){
   const q="spaces='appDataFolder' and trashed=false and name='"+DRIVE_FILENAME+"'";
@@ -2284,8 +2341,10 @@ async function driveSyncMerge(silent, existingMeta){
     updateSyncUI(true); refreshAll();
     if(!silent) showToast('Synced with Google Drive');
   }catch(e){
-    console.error(e); updateSyncUI('error');
-    if(!silent) showToast('Drive sync failed');
+    console.error('Drive sync failed:', e);
+    lastDriveError=shortDriveError(e);
+    updateSyncUI('error');
+    if(!silent) showToast('Drive sync failed: '+lastDriveError);
   }finally{ syncInFlight=false; }
 }
 async function driveBackup(silent){
@@ -2409,6 +2468,7 @@ bindDateTextInput('fDate');
   }
   populateFilterSelects();
   refreshAll();
+  lastDriveError='';
   updateSyncUI(false);
   document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
   // Reconnect silently on startup when Google has already granted access.
