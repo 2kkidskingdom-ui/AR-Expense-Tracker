@@ -2183,7 +2183,7 @@ async function driveApiFetch(url, opts={}, retry=true){
 
 async function driveFindFile(){
   const q="'appDataFolder' in parents and trashed=false and name='"+DRIVE_FILENAME+"'";
-  const url='https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({q,fields:'files(id,name,modifiedTime,version)',pageSize:'10'}).toString();
+  const url='https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({q,spaces:'appDataFolder',fields:'files(id,name,modifiedTime,version)',pageSize:'10'}).toString();
   const res=await driveApiFetch(url); const data=await res.json();
   if(data.files && data.files.length){
     driveFileId=data.files[0].id;
@@ -2194,7 +2194,7 @@ async function driveFindFile(){
 }
 async function driveListFilesByPrefix(prefix){
   const q="'appDataFolder' in parents and trashed=false and name contains '"+prefix+"'";
-  const url='https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({q,fields:'files(id,name,modifiedTime,version)',pageSize:'100'}).toString();
+  const url='https://www.googleapis.com/drive/v3/files?'+new URLSearchParams({q,spaces:'appDataFolder',fields:'files(id,name,modifiedTime,version)',pageSize:'100'}).toString();
   const res=await driveApiFetch(url); if(!res.ok) throw new Error('Drive list failed: '+res.status);
   const data=await res.json(); return data.files||[];
 }
