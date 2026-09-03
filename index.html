@@ -752,9 +752,44 @@ function bindDateTextInput(id, initialIso=''){
   const el = document.getElementById(id);
   if(!el) return;
   if(initialIso) el.value = isoToDisplayDate(initialIso);
-  el.addEventListener('blur', ()=>{
-    const iso = displayToIsoDate(el.value);
-    if(iso) el.value = isoToDisplayDate(iso);
+
+  // Use the native mobile calendar picker instead of requiring manual date typing.
+  // The visible value keeps the app's dd-MMM-yyyy format; the hidden date input
+  // supplies the actual calendar UI and returns an ISO yyyy-mm-dd value.
+  el.readOnly = true;
+  el.setAttribute('inputmode','none');
+  el.setAttribute('aria-haspopup','dialog');
+  el.style.cursor = 'pointer';
+  const picker = document.createElement('input');
+  picker.type = 'date';
+  picker.tabIndex = -1;
+  picker.setAttribute('aria-hidden','true');
+  picker.style.position = 'absolute';
+  picker.style.opacity = '0';
+  picker.style.width = '1px';
+  picker.style.height = '1px';
+  picker.style.padding = '0';
+  picker.style.margin = '0';
+  picker.style.border = '0';
+  picker.style.pointerEvents = 'none';
+  el.parentElement.style.position = el.parentElement.style.position || 'relative';
+  el.parentElement.appendChild(picker);
+
+  const openCalendar = (e) => {
+    if(e) e.preventDefault();
+    picker.value = displayToIsoDate(el.value) || new Date().toISOString().slice(0,10);
+    try {
+      if(typeof picker.showPicker === 'function') picker.showPicker();
+      else picker.click();
+    } catch(err) {
+      try { picker.click(); } catch(_) {}
+    }
+  };
+  el.addEventListener('click', openCalendar);
+  el.addEventListener('focus', openCalendar);
+  picker.addEventListener('change', ()=>{
+    if(picker.value) el.value = isoToDisplayDate(picker.value);
+    el.dispatchEvent(new Event('change', {bubbles:true}));
   });
 }
 function fmtDateLabel(ds){
