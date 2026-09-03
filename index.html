@@ -1003,9 +1003,8 @@ function fmtMoney(n){
   return (n<0?'−':'') + '₹' + s;
 }
 function fmtMoneyWhole(n){
-  const abs = Math.round(Math.abs(n));
-  const s = abs.toLocaleString('en-IN');
-  return (n<0?'−':'') + '₹' + s;
+  // Kept for chart/layout callers, but never drop paise.
+  return fmtMoney(n);
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1267,7 +1266,7 @@ function totalBalanceForDisplay(){
 function renderNetStamp(){
   const net = totalBalanceForDisplay();
   const tb = document.getElementById('totalBalanceFull');
-  if(tb) tb.textContent = fmtMoney(net);
+  if(tb){ tb.textContent = fmtMoney(net); tb.style.color = net < 0 ? 'var(--red)' : '#fff'; }
 }
 
 function isRealFlow(t){
@@ -1383,10 +1382,13 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
   el.querySelectorAll('[data-date]').forEach(node=>node.addEventListener('click',()=>drillIntoDay(node.dataset.date)));
 }
 function fmtCompactMoney(v){
-  v=Number(v)||0; const sign=v<0?'−':''; v=Math.abs(v);
-  if(v>=100000) return sign+'₹'+(v/100000).toFixed(v>=1000000?1:1)+'L';
+  v=Number(v)||0;
+  // Never round away paise. Use the full currency format whenever a decimal exists.
+  if(Math.abs(v % 1) > 0.0000001) return fmtMoney(v);
+  const sign=v<0?'−':''; v=Math.abs(v);
+  if(v>=100000) return sign+'₹'+(v/100000).toFixed(1)+'L';
   if(v>=1000) return sign+'₹'+(v/1000).toFixed(v>=10000?0:1)+'K';
-  return sign+'₹'+Math.round(v);
+  return sign+'₹'+v.toLocaleString('en-IN');
 }
 
 function drillIntoMonth(ym){
@@ -1746,8 +1748,8 @@ function renderProjectionGraph(){
   const line=coords.map((c,i)=>(i?'L':'M')+c[0].toFixed(1)+' '+c[1].toFixed(1)).join(' ');
   const area=line+` L ${coords.at(-1)[0].toFixed(1)} ${(T+ph).toFixed(1)} L ${coords[0][0].toFixed(1)} ${(T+ph).toFixed(1)} Z`;
   const yTicks=[max, min+(max-min)/2, min];
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected balance for ${months} months"><defs><linearGradient id="projFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0B8F62" stop-opacity=".18"/><stop offset="100%" stop-color="#0B8F62" stop-opacity="0"/></linearGradient></defs>${yTicks.map(v=>{const y=T+(1-(v-min)/span)*ph;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#DDE8E2"/><text x="${L-7}" y="${y+3}" text-anchor="end" font-size="9" fill="#68766F">${escapeHtml(fmtMoneyWhole(v))}</text>`}).join('')}<path d="${area}" fill="url(#projFill)"/><path d="${line}" fill="none" stroke="#0B8F62" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c[0]}" cy="${c[1]}" r="4" fill="#fff" stroke="#0B8F62" stroke-width="2"/><text x="${c[0]}" y="${H-14}" text-anchor="middle" font-size="9" fill="#68766F">${points[i].label}</text>`).join('')}</svg>`;
-  const last=points.at(-1); const lbl=document.getElementById('projectionEndLabel'); if(lbl) lbl.textContent=`End: ${fmtMoney(last.balance)}`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected balance for ${months} months"><defs><linearGradient id="projFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0B8F62" stop-opacity=".18"/><stop offset="100%" stop-color="#0B8F62" stop-opacity="0"/></linearGradient></defs>${yTicks.map(v=>{const y=T+(1-(v-min)/span)*ph;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#DDE8E2"/><text x="${L-7}" y="${y+3}" text-anchor="end" font-size="9" fill="${v<0?'var(--red)':'#68766F'}">${escapeHtml(fmtMoneyWhole(v))}</text>`}).join('')}<path d="${area}" fill="url(#projFill)"/><path d="${line}" fill="none" stroke="#0B8F62" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c[0]}" cy="${c[1]}" r="4" fill="#fff" stroke="#0B8F62" stroke-width="2"/><text x="${c[0]}" y="${H-14}" text-anchor="middle" font-size="9" fill="#68766F">${points[i].label}</text>`).join('')}</svg>`;
+  const last=points.at(-1); const lbl=document.getElementById('projectionEndLabel'); if(lbl){ lbl.textContent=`End: ${fmtMoney(last.balance)}`; lbl.style.color = last.balance < 0 ? 'var(--red)' : 'var(--muted)'; }
 }
 
 function renderCalendar(){
