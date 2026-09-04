@@ -1336,7 +1336,9 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
       buckets.push({ label:MONTH_ABBR[m-1]+" '"+String(y).slice(2), income, expense, ym });
     });
   }
-  return buckets;
+  // Only show periods/days that actually have income or expense activity.
+  // This keeps zero-value days out of both the chart and table.
+  return buckets.filter(d => Number(d.income || 0) !== 0 || Number(d.expense || 0) !== 0);
 }
 
 function renderTrendChart(range, list, curYM, customFrom, customTo){
@@ -1349,7 +1351,7 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
   const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense, Math.max(0,d.income-d.expense))));
   const width = Math.max(380, data.length*68), height = 240, left=42, right=10, bottom=34, top=30;
   const chartW = width-left-right, chartH = height-top-bottom, groupW=chartW/data.length, barW=Math.min(24,groupW*.28);
-  const showLabels=data.length<=12;
+  const showLabels=true;
   const baseY=top+chartH;
   const y=v=>baseY-(Math.max(0,v)/max)*chartH;
   let svg=`<svg viewBox="0 0 ${width} ${height}" style="width:${width}px;height:${height}px;display:block;">`;
