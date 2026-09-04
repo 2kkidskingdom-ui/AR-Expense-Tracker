@@ -864,6 +864,7 @@ const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC C
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
 const LS_DEVICE_AUTH = 'ledger.deviceAuth.v1';
+const LS_APP_SESSION = 'ledger.appSession.v2';
 const LS_CLIENT_ID = 'ledger.googleClientId.v1';
 const LS_DRIVE_FILE_ID = 'ledger.driveFileId.v1';
 const LS_TOKEN_EXPIRY = 'ledger.tokenExpiry.v1';
@@ -2285,7 +2286,7 @@ function connectDrive(clientId, prompt){
       await driveSyncOnConnect();
     }
   });
-  tokenClient.requestAccessToken({ prompt });
+  tokenClient.requestAccessToken({ prompt: prompt === '' ? 'none' : prompt });
   return true;
 }
 
@@ -2300,7 +2301,7 @@ function attemptSilentReconnect(attempt = 0){
   if(attempt === 0) updateSyncUI('connecting');
   if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
     if(attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 300);
-    else { lastDriveError='Google sign-in script did not load'; updateSyncUI('error'); }
+    else { lastDriveError=''; updateSyncUI(false); }
     return;
   }
   try{
@@ -2337,6 +2338,7 @@ document.getElementById('restoreBtn').addEventListener('click', ()=> driveRestor
 document.getElementById('lockAppBtn').addEventListener('click', ()=>{
   localStorage.removeItem(LS_AUTH_EMAIL);
   localStorage.removeItem(LS_DEVICE_AUTH);
+  localStorage.removeItem(LS_APP_SESSION);
   location.reload();
 });
 
@@ -2359,7 +2361,7 @@ async function refreshDriveTokenSilently(){
           }else resolve(false);
         }
       });
-      tc.requestAccessToken({prompt:''});
+      tc.requestAccessToken({prompt:'none'});
     }catch(e){ console.warn('Silent token refresh failed',e); resolve(false); }
   }).finally(()=>{tokenRefreshInFlight=null;});
   return tokenRefreshInFlight;
@@ -2619,6 +2621,7 @@ function initGSISignIn(clientId){
       if(email === ALLOWED_EMAIL){
         localStorage.setItem(LS_AUTH_EMAIL, email);
         localStorage.setItem(LS_DEVICE_AUTH, '1');
+        localStorage.setItem(LS_APP_SESSION, JSON.stringify({email, authorized:true, createdAt:Date.now()}));
         hideGate();
       } else {
         document.getElementById('gateError').style.display = 'block';
@@ -2632,7 +2635,12 @@ function initGSISignIn(clientId){
 function initAuthGate(){
   const authedEmail = localStorage.getItem(LS_AUTH_EMAIL);
   const trustedDevice = localStorage.getItem(LS_DEVICE_AUTH) === '1';
-  if(authedEmail === ALLOWED_EMAIL || trustedDevice){
+  let appSession = null;
+  try { appSession = JSON.parse(localStorage.getItem(LS_APP_SESSION) || 'null'); } catch(e) {}
+  const trustedSession = appSession?.authorized === true && appSession?.email === ALLOWED_EMAIL;
+  if(authedEmail === ALLOWED_EMAIL || trustedDevice || trustedSession){
+    localStorage.setItem(LS_AUTH_EMAIL, ALLOWED_EMAIL);
+    localStorage.setItem(LS_DEVICE_AUTH, '1');
     hideGate();
     return;
   }
@@ -2681,11 +2689,12 @@ bindDateTextInput('fDate');
   lastDriveError='';
   updateSyncUI(false);
   document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
-  // Reconnect silently on startup when Google has already granted access.
-  // No manual sync is required during normal app opening.
-  attemptSilentReconnect();
-  // Background sync keeps multiple phones reasonably current without requiring
-  // the user to press Sync. It only runs when a valid token is already available.
+  // Do NOT start Google OAuth automatically on app launch.
+  // This is intentional: Google may show its account chooser even for a silent
+  // token request (depending on browser/FedCM state). The app must open directly
+  // like a normal installed app after the first successful device login.
+  // Drive connection/sync is started only by an explicit user action.
+  // Background sync keeps multiple phones current once a valid token is available.
   setInterval(()=>{
     if(accessToken && navigator.onLine) driveSyncMerge(true);
   }, 120000);
