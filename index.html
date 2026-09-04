@@ -609,10 +609,13 @@ nav.tabs button:hover{background:#EEF9F6!important;}
 button,.ghost-btn,.del-btn,.save-btn,.type-btn,.cal-today-btn{transition:transform .12s ease,box-shadow .12s ease,background .12s ease,border-color .12s ease;}
 .save-btn,.primary,.btn-primary{background:linear-gradient(135deg,#0F9D78,#10B981)!important;border-color:#0F9D78!important;color:#fff!important;box-shadow:0 5px 14px rgba(15,157,120,.18);}
 .save-btn:active,.primary:active,.btn-primary:active{transform:translateY(1px);}
-.type-btn.active{background:#DDF7EE!important;color:#075E4A!important;border-color:#8ED9C3!important;}
-.type-btn.income{color:#0F9D78!important;}
-.type-btn.expense{color:#E04450!important;}
-.type-btn.transfer{color:#7C4DFF!important;}
+.type-btn{font-weight:700!important;border-width:2px!important;}
+.type-btn.income{color:#0F9D78!important;background:#E9FBF4!important;border-color:#9ADFC9!important;}
+.type-btn.expense{color:#D83D4A!important;background:#FFF0F2!important;border-color:#F0A7AE!important;}
+.type-btn.transfer{color:#7048D8!important;background:#F3EEFF!important;border-color:#C9B9F4!important;}
+.type-btn.active.income{background:#0F9D78!important;color:#FFFFFF!important;border-color:#0F9D78!important;box-shadow:0 5px 14px rgba(15,157,120,.22)!important;}
+.type-btn.active.expense{background:#D83D4A!important;color:#FFFFFF!important;border-color:#D83D4A!important;box-shadow:0 5px 14px rgba(216,61,74,.22)!important;}
+.type-btn.active.transfer{background:#7048D8!important;color:#FFFFFF!important;border-color:#7048D8!important;box-shadow:0 5px 14px rgba(112,72,216,.20)!important;}
 .amt-input{background:#F9FFFD!important;border-color:#9ADCC8!important;box-shadow:0 0 0 3px rgba(15,157,120,.06)!important;}
 input:focus,select:focus,textarea:focus{border-color:#58C8A9!important;box-shadow:0 0 0 3px rgba(15,157,120,.10)!important;outline:none;}
 .cal-today-btn{background:#FFF4CF!important;border-color:#F2C24B!important;color:#7A5600!important;}
@@ -1832,7 +1835,11 @@ function resetPlanForm(){
 let currentPlanType = 'debit';
 function setPlanType(type){
   currentPlanType = type;
-  document.querySelectorAll('#plan .type-btn').forEach(x=>x.classList.toggle('active', x.dataset.ptype===type));
+  document.querySelectorAll('#plan .type-btn').forEach(x=>{
+    const active = x.dataset.ptype===type;
+    x.classList.toggle('active', active);
+    x.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
 }
 document.querySelectorAll('#plan .type-btn').forEach(b=>{
   b.addEventListener('click', ()=> setPlanType(b.dataset.ptype));
@@ -2188,7 +2195,11 @@ fCategory.addEventListener('input', ()=> populateSubcatFor(fCategory.value));
 function setType(type){
   currentType = type;
   updateCategoryFieldsForType();
-  document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active', b.dataset.type===type));
+  document.querySelectorAll('.type-btn').forEach(b=>{
+    const active = b.dataset.type===type;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
   fToAccountWrap.style.display = type==='transfer' ? 'block' : 'none';
   fCatWrap.style.display = type==='transfer' ? 'none' : 'flex';
   fSpanWrap.style.display = type==='transfer' ? 'none' : 'flex';
