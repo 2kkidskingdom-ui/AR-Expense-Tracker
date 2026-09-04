@@ -2687,14 +2687,14 @@ bindDateTextInput('fDate');
   populateFilterSelects();
   refreshAll();
   lastDriveError='';
+  // Re-establish the Drive access token silently after every page reload.
+  // The OAuth access token itself cannot safely survive a browser reload, so
+  // we keep the device/app session locally and ask Google only for a silent
+  // token. If Google cannot issue one silently, stay signed into the app and
+  // do not open an account chooser.
   updateSyncUI(false);
   document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
-  // Do NOT start Google OAuth automatically on app launch.
-  // This is intentional: Google may show its account chooser even for a silent
-  // token request (depending on browser/FedCM state). The app must open directly
-  // like a normal installed app after the first successful device login.
-  // Drive connection/sync is started only by an explicit user action.
-  // Background sync keeps multiple phones current once a valid token is available.
+  setTimeout(()=>attemptSilentReconnect(0), 250);
   setInterval(()=>{
     if(accessToken && navigator.onLine) driveSyncMerge(true);
   }, 120000);
