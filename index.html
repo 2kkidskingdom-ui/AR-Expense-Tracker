@@ -574,6 +574,72 @@ main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
   main input:not([type="checkbox"]):not([type="radio"]),main select,
   .sheet input:not([type="checkbox"]):not([type="radio"]),.sheet select,.sheet textarea{font-size:14px!important;min-height:44px;}
 }
+
+/* Bright color refresh — visual only; functionality and data logic unchanged. */
+:root{
+  --paper:#F6FBFF;
+  --paper-deep:#EAF3F9;
+  --line:#D7E5EE;
+  --line-strong:#B9D3DF;
+  --ink:#17212B;
+  --muted:#64748B;
+  --green:#0F9D78;
+  --green-dark:#075E4A;
+  --green-soft:#DDF7EE;
+  --red:#E04450;
+  --red-soft:#FFE4E7;
+  --gold:#F2A900;
+  --gold-soft:#FFF1C7;
+  --card:#FFFFFF;
+  --shadow:0 6px 22px rgba(23,65,82,.08);
+}
+body{
+  background:linear-gradient(180deg,#F7FCFF 0%,#F1FAF7 52%,#F7F9FF 100%);
+  color:var(--ink);
+}
+header{background:linear-gradient(180deg,#FFFFFF 0%,#F5FCFA 100%);border-bottom:1px solid #DCEBF1;}
+.brand h1,.section-title,.sheet h2,.cal-title{color:#075E4A!important;}
+.tabs{border-bottom-color:#CFE1E9!important;}
+nav.tabs button.active{color:#075E4A!important;border-bottom-color:#0F9D78!important;background:#E2F7EF!important;border-radius:14px 14px 0 0;}
+nav.tabs button:hover{background:#EEF9F6!important;}
+.total-balance-banner{background:linear-gradient(135deg,#075E4A 0%,#0F9D78 58%,#19B889 100%)!important;box-shadow:0 10px 26px rgba(15,157,120,.20);}
+.total-balance-banner::after{background:rgba(255,255,255,.10)!important;}
+.card,.panel,.summary-card,.account-card,.upcoming-card,.money-card,.category-card,.settings-card,.calendar-card,
+.tstat,.table-wrap,.chart-card,.category-manager-card{background:#FFFFFF!important;border-color:#D7E5EE!important;box-shadow:var(--shadow)!important;}
+button,.ghost-btn,.del-btn,.save-btn,.type-btn,.cal-today-btn{transition:transform .12s ease,box-shadow .12s ease,background .12s ease,border-color .12s ease;}
+.save-btn,.primary,.btn-primary{background:linear-gradient(135deg,#0F9D78,#10B981)!important;border-color:#0F9D78!important;color:#fff!important;box-shadow:0 5px 14px rgba(15,157,120,.18);}
+.save-btn:active,.primary:active,.btn-primary:active{transform:translateY(1px);}
+.type-btn.active{background:#DDF7EE!important;color:#075E4A!important;border-color:#8ED9C3!important;}
+.type-btn.income{color:#0F9D78!important;}
+.type-btn.expense{color:#E04450!important;}
+.type-btn.transfer{color:#7C4DFF!important;}
+.amt-input{background:#F9FFFD!important;border-color:#9ADCC8!important;box-shadow:0 0 0 3px rgba(15,157,120,.06)!important;}
+input:focus,select:focus,textarea:focus{border-color:#58C8A9!important;box-shadow:0 0 0 3px rgba(15,157,120,.10)!important;outline:none;}
+.cal-today-btn{background:#FFF4CF!important;border-color:#F2C24B!important;color:#7A5600!important;}
+.cal-today-btn:hover{background:#FFE9A8!important;}
+.income,.credit,.positive{color:#0F9D78!important;}
+.expense,.debit,.negative{color:#E04450!important;}
+.net,.savings{color:#2F7ACB!important;}
+.badge,.pill{background:#EAF3FF!important;color:#2F6FB3!important;border-color:#C9DDF5!important;}
+.cat-bar-fill{background:linear-gradient(90deg,#0F9D78,#2DD4A0)!important;}
+.progress-fill{background:linear-gradient(90deg,#0F9D78,#39D39E)!important;}
+.legend-dot.income{background:#0F9D78!important}.legend-dot.expense{background:#E04450!important}.legend-dot.savings{background:#3182CE!important}
+.category-tab.active,.category-switch button.active{background:#DDF7EE!important;color:#075E4A!important;border-color:#9ADCC8!important;}
+.delete,.remove,.del-btn{color:#E04450!important;}
+.add-subcategory{color:#0F8F6E!important;}
+.cal-grid{border-color:#D7E8E3!important;background:#fff!important;}
+.cal-day.today{background:#E2F8F0!important;border-color:#0F9D78!important;}
+.cal-day.projected{background:repeating-linear-gradient(135deg,#F2FBF8,#F2FBF8 7px,#E7F6F1 7px,#E7F6F1 10px)!important;}
+/* Colorful category accents */
+.category-card:nth-child(4n+1){border-top:4px solid #0F9D78!important;}
+.category-card:nth-child(4n+2){border-top:4px solid #3182CE!important;}
+.category-card:nth-child(4n+3){border-top:4px solid #F2A900!important;}
+.category-card:nth-child(4n+4){border-top:4px solid #8B5CF6!important;}
+.sheet{background:#FFFFFF!important;border-top-color:#D7E5EE!important;}
+@media(max-width:520px){
+  body{padding-bottom:72px;}
+  .total-balance-banner{border-radius:18px!important;}
+}
 </style>
 
 </head>
