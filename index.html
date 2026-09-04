@@ -2195,7 +2195,8 @@ fCategory.addEventListener('input', ()=> populateSubcatFor(fCategory.value));
 function setType(type){
   currentType = type;
   updateCategoryFieldsForType();
-  document.querySelectorAll('.type-btn').forEach(b=>{
+  // Only update the Add/Edit Entry selector. Projection has its own selector/state.
+  document.querySelectorAll('#overlay .type-btn').forEach(b=>{
     const active = b.dataset.type===type;
     b.classList.toggle('active', active);
     b.setAttribute('aria-pressed', active ? 'true' : 'false');
@@ -2212,7 +2213,7 @@ function setType(type){
     document.getElementById('subcategoryList').innerHTML = '';
   }
 }
-document.querySelectorAll('.type-btn').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.type)));
+document.querySelectorAll('#overlay .type-btn').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.type)));
 
 function openAddSheet(){
   editingId = null;
