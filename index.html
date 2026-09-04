@@ -657,13 +657,12 @@ main input[list],.sheet input[list]{appearance:none;-webkit-appearance:none;}
       </div>
 
       <div class="summary-trend-head">
-        <div class="section-title" style="margin:0;">Income vs Expenses & Savings</div>
+        <div class="section-title" style="margin:0;">Income vs Expenses</div>
         <div class="summary-chart-toggle"><button id="summaryChartBtn" class="active">Chart</button><button id="summaryTableBtn">Table</button></div>
       </div>
       <div class="chart-legend summary-legend">
         <span><span class="legend-dot" style="background:#1F4A3D;"></span>Income</span>
         <span><span class="legend-dot" style="background:#9B3B2B;"></span>Expenses</span>
-        <span><span class="legend-dot" style="background:#2878C8;"></span>Savings</span>
       </div>
       <div id="trendChartSvg" class="trend-chart"></div>
       <div id="summaryTable" class="summary-table" style="display:none;"></div>
@@ -1363,13 +1362,10 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     svg+=`<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#E8EFEC" stroke-width="1"/>`;
     svg+=`<text x="${left-5}" y="${yy+3}" font-size="8" fill="#7A857F" text-anchor="end" font-family="Inter,sans-serif">${fmtMoney(val)}</text>`;
   });
-  const points=[];
   data.forEach((d,i)=>{
     const gx=left+i*groupW;
     const ix=gx+groupW*.17, ex=gx+groupW*.55;
     const ih=(Math.max(0,d.income)/max)*chartH, eh=(Math.max(0,d.expense)/max)*chartH;
-    const savings=Math.max(0,d.income-d.expense), sy=y(savings);
-    points.push(`${gx+groupW/2},${sy}`);
     svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ix}" y="${baseY-ih}" width="${barW}" height="${Math.max(ih,1)}" fill="#1F4A3D" rx="3" style="cursor:pointer"/>`;
     svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ex}" y="${baseY-eh}" width="${barW}" height="${Math.max(eh,1)}" fill="#9B3B2B" rx="3" style="cursor:pointer"/>`;
     if(showLabels && d.income>0){ const ly=Math.max(14,baseY-ih-8); const txt=fmtMoney(d.income); const tw=Math.max(34,txt.length*5.3); svg+=`<rect x="${ix+barW/2-tw/2}" y="${ly-10}" width="${tw}" height="12" rx="4" fill="#fff" opacity=".94" pointer-events="none"/><text x="${ix+barW/2}" y="${ly}" font-size="8.5" font-weight="700" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace" pointer-events="none">${txt}</text>`; }
@@ -1378,8 +1374,6 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     const key=d.ym?`data-ym="${d.ym}"`:`data-date="${d.date}"`;
     svg+=`<rect class="trend-hit" ${key} x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer"/>`;
   });
-  if(points.length>1) svg+=`<polyline points="${points.join(' ')}" fill="none" stroke="#2878C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-  points.forEach((pt,i)=>{const [px,py]=pt.split(','); const net=data[i].income-data[i].expense; svg+=`<circle cx="${px}" cy="${py}" r="3.2" fill="#2878C8"/>`; if(showLabels && net!==0){ const txt=fmtMoney(net); const ly=Math.max(14,Number(py)-8); const tw=Math.max(34,txt.length*5.3); svg+=`<rect x="${Number(px)-tw/2}" y="${ly-10}" width="${tw}" height="12" rx="4" fill="#fff" opacity=".94" pointer-events="none"/><text x="${px}" y="${ly}" font-size="8.5" font-weight="700" fill="${net<0?'#9B3B2B':'#2878C8'}" text-anchor="middle" font-family="IBM Plex Mono,monospace" pointer-events="none">${txt}</text>`; }});
   svg+='</svg>';
   el.innerHTML=svg;
   el.querySelectorAll('[data-ym]').forEach(node=>node.addEventListener('click',()=>drillIntoMonth(node.dataset.ym)));
@@ -1893,7 +1887,7 @@ function renderAnalysis(range){
   }
 
   const table=document.getElementById('summaryTable');
-  table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th><th>Saving</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>{const sv=d.income-d.expense;return `<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td><td class="${sv>=0?'net-pos':'net-neg'}">${fmtMoney(sv)}</td></tr>`}).join('')}</tbody></table>`;
+  table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>`<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td></tr>`).join('')}</tbody></table>`;
   const cb=document.getElementById('summaryChartBtn'),tb=document.getElementById('summaryTableBtn');
   if(cb&&!cb.dataset.bound){cb.dataset.bound='1';cb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='block';table.style.display='none';cb.classList.add('active');tb.classList.remove('active');});tb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='none';table.style.display='block';tb.classList.add('active');cb.classList.remove('active');});}
 }
