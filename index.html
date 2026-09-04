@@ -1346,9 +1346,9 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     el.innerHTML = `<div class="empty-note">Nothing to chart in this range.</div>`;
     return;
   }
-  const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense, d.income-d.expense)));
-  const width = Math.max(340, data.length*58), height = 210, left=34, right=8, bottom=30, top=20;
-  const chartW = width-left-right, chartH = height-top-bottom, groupW=chartW/data.length, barW=Math.min(18,groupW*.24);
+  const max = Math.max(1, ...data.map(d=>Math.max(d.income, d.expense, Math.max(0,d.income-d.expense))));
+  const width = Math.max(380, data.length*68), height = 240, left=42, right=10, bottom=34, top=30;
+  const chartW = width-left-right, chartH = height-top-bottom, groupW=chartW/data.length, barW=Math.min(24,groupW*.28);
   const showLabels=data.length<=12;
   const baseY=top+chartH;
   const y=v=>baseY-(Math.max(0,v)/max)*chartH;
@@ -1357,7 +1357,7 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     const yy=baseY-chartH*fr;
     const val=max*fr;
     svg+=`<line x1="${left}" y1="${yy}" x2="${width-right}" y2="${yy}" stroke="#E8EFEC" stroke-width="1"/>`;
-    svg+=`<text x="${left-5}" y="${yy+3}" font-size="8" fill="#7A857F" text-anchor="end" font-family="Inter,sans-serif">${fmtCompactMoney(val)}</text>`;
+    svg+=`<text x="${left-5}" y="${yy+3}" font-size="8" fill="#7A857F" text-anchor="end" font-family="Inter,sans-serif">${fmtMoney(val)}</text>`;
   });
   const points=[];
   data.forEach((d,i)=>{
@@ -1368,29 +1368,19 @@ function renderTrendChart(range, list, curYM, customFrom, customTo){
     points.push(`${gx+groupW/2},${sy}`);
     svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ix}" y="${baseY-ih}" width="${barW}" height="${Math.max(ih,1)}" fill="#1F4A3D" rx="3" style="cursor:pointer"/>`;
     svg+=`<rect class="trend-bar" data-key="${d.ym||d.date||''}" x="${ex}" y="${baseY-eh}" width="${barW}" height="${Math.max(eh,1)}" fill="#9B3B2B" rx="3" style="cursor:pointer"/>`;
-    if(showLabels && d.income>0) svg+=`<text x="${ix+barW/2}" y="${Math.max(9,baseY-ih-4)}" font-size="7.5" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(d.income)}</text>`;
-    if(showLabels && d.expense>0) svg+=`<text x="${ex+barW/2}" y="${Math.max(9,baseY-eh-4)}" font-size="7.5" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(d.expense)}</text>`;
+    if(showLabels && d.income>0){ const ly=Math.max(14,baseY-ih-8); const txt=fmtMoney(d.income); const tw=Math.max(34,txt.length*5.3); svg+=`<rect x="${ix+barW/2-tw/2}" y="${ly-10}" width="${tw}" height="12" rx="4" fill="#fff" opacity=".94" pointer-events="none"/><text x="${ix+barW/2}" y="${ly}" font-size="8.5" font-weight="700" fill="#1F4A3D" text-anchor="middle" font-family="IBM Plex Mono,monospace" pointer-events="none">${txt}</text>`; }
+    if(showLabels && d.expense>0){ const ly=Math.max(14,baseY-eh-8); const txt=fmtMoney(d.expense); const tw=Math.max(34,txt.length*5.3); svg+=`<rect x="${ex+barW/2-tw/2}" y="${ly-10}" width="${tw}" height="12" rx="4" fill="#fff" opacity=".94" pointer-events="none"/><text x="${ex+barW/2}" y="${ly}" font-size="8.5" font-weight="700" fill="#9B3B2B" text-anchor="middle" font-family="IBM Plex Mono,monospace" pointer-events="none">${txt}</text>`; }
     svg+=`<text x="${gx+groupW/2}" y="${height-9}" font-size="8.5" fill="#7A705C" text-anchor="middle" font-family="Inter,sans-serif">${d.label}</text>`;
     const key=d.ym?`data-ym="${d.ym}"`:`data-date="${d.date}"`;
     svg+=`<rect class="trend-hit" ${key} x="${gx}" y="0" width="${groupW}" height="${height}" fill="transparent" style="cursor:pointer"/>`;
   });
   if(points.length>1) svg+=`<polyline points="${points.join(' ')}" fill="none" stroke="#2878C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-  points.forEach((pt,i)=>{const [px,py]=pt.split(','); svg+=`<circle cx="${px}" cy="${py}" r="3.2" fill="#2878C8"/>`; if(showLabels && data[i].income-data[i].expense>0) svg+=`<text x="${px}" y="${Math.max(10,Number(py)-6)}" font-size="7.5" fill="#2878C8" text-anchor="middle" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(data[i].income-data[i].expense)}</text>`;});
+  points.forEach((pt,i)=>{const [px,py]=pt.split(','); const net=data[i].income-data[i].expense; svg+=`<circle cx="${px}" cy="${py}" r="3.2" fill="#2878C8"/>`; if(showLabels && net!==0){ const txt=fmtMoney(net); const ly=Math.max(14,Number(py)-8); const tw=Math.max(34,txt.length*5.3); svg+=`<rect x="${Number(px)-tw/2}" y="${ly-10}" width="${tw}" height="12" rx="4" fill="#fff" opacity=".94" pointer-events="none"/><text x="${px}" y="${ly}" font-size="8.5" font-weight="700" fill="${net<0?'#9B3B2B':'#2878C8'}" text-anchor="middle" font-family="IBM Plex Mono,monospace" pointer-events="none">${txt}</text>`; }});
   svg+='</svg>';
   el.innerHTML=svg;
   el.querySelectorAll('[data-ym]').forEach(node=>node.addEventListener('click',()=>drillIntoMonth(node.dataset.ym)));
   el.querySelectorAll('[data-date]').forEach(node=>node.addEventListener('click',()=>drillIntoDay(node.dataset.date)));
 }
-function fmtCompactMoney(v){
-  v=Number(v)||0;
-  // Never round away paise. Use the full currency format whenever a decimal exists.
-  if(Math.abs(v % 1) > 0.0000001) return fmtMoney(v);
-  const sign=v<0?'−':''; v=Math.abs(v);
-  if(v>=100000) return sign+'₹'+(v/100000).toFixed(1)+'L';
-  if(v>=1000) return sign+'₹'+(v/1000).toFixed(v>=10000?0:1)+'K';
-  return sign+'₹'+v.toLocaleString('en-IN');
-}
-
 function drillIntoMonth(ym){
   const from = `${ym}-01`;
   const [y,m] = ym.split('-').map(Number);
@@ -1748,7 +1738,7 @@ function renderProjectionGraph(){
   const line=coords.map((c,i)=>(i?'L':'M')+c[0].toFixed(1)+' '+c[1].toFixed(1)).join(' ');
   const area=line+` L ${coords.at(-1)[0].toFixed(1)} ${(T+ph).toFixed(1)} L ${coords[0][0].toFixed(1)} ${(T+ph).toFixed(1)} Z`;
   const yTicks=[max, min+(max-min)/2, min];
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected balance for ${months} months"><defs><linearGradient id="projFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0B8F62" stop-opacity=".18"/><stop offset="100%" stop-color="#0B8F62" stop-opacity="0"/></linearGradient></defs>${yTicks.map(v=>{const y=T+(1-(v-min)/span)*ph;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#DDE8E2"/><text x="${L-7}" y="${y+3}" text-anchor="end" font-size="9" fill="${v<0?'var(--red)':'#68766F'}">${escapeHtml(fmtMoneyWhole(v))}</text>`}).join('')}<path d="${area}" fill="url(#projFill)"/><path d="${line}" fill="none" stroke="#0B8F62" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c[0]}" cy="${c[1]}" r="4" fill="#fff" stroke="#0B8F62" stroke-width="2"/><text x="${c[0]}" y="${H-14}" text-anchor="middle" font-size="9" fill="#68766F">${points[i].label}</text>`).join('')}</svg>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected balance for ${months} months"><defs><linearGradient id="projFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#0B8F62" stop-opacity=".18"/><stop offset="100%" stop-color="#0B8F62" stop-opacity="0"/></linearGradient></defs>${yTicks.map(v=>{const y=T+(1-(v-min)/span)*ph;return `<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#DDE8E2"/><text x="${L-7}" y="${y+3}" text-anchor="end" font-size="9" fill="${v<0?'var(--red)':'#68766F'}">${escapeHtml(fmtMoney(v))}</text>`}).join('')}<path d="${area}" fill="url(#projFill)"/><path d="${line}" fill="none" stroke="#0B8F62" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c[0]}" cy="${c[1]}" r="4" fill="#fff" stroke="#0B8F62" stroke-width="2"/><text x="${c[0]}" y="${H-14}" text-anchor="middle" font-size="9" fill="#68766F">${points[i].label}</text>`).join('')}</svg>`;
   const last=points.at(-1); const lbl=document.getElementById('projectionEndLabel'); if(lbl){ lbl.textContent=`End: ${fmtMoney(last.balance)}`; lbl.style.color = last.balance < 0 ? 'var(--red)' : 'var(--muted)'; }
 }
 
@@ -1809,9 +1799,9 @@ function renderCalendar(){
     const isToday = dateStr === todayStr;
     html += `<div class="cal-day${isToday?' today':''}${isFuture?' projected':''}${inAmt>0?' has-income':''}${outAmt>0?' has-expense':''}">
       <div class="cal-daynum">${day}</div>
-      <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoneyWhole(inAmt):'&nbsp;'}</div>
-      <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoneyWhole(outAmt):'&nbsp;'}</div>
-      <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoneyWhole(bal)}</div>
+      <div class="cal-in" data-date="${dateStr}" data-type="income" ${inAmt>0?'':'style="cursor:default;"'}>${inAmt>0?fmtMoney(inAmt):'&nbsp;'}</div>
+      <div class="cal-out" data-date="${dateStr}" data-type="expense" ${outAmt>0?'':'style="cursor:default;"'}>${outAmt>0?fmtMoney(outAmt):'&nbsp;'}</div>
+      <div class="cal-bal ${bal>=0?'pos':'neg'}">${fmtMoney(bal)}</div>
     </div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
@@ -1894,7 +1884,7 @@ function renderAnalysis(range){
     const cx=105,cy=105,r=70,circ=2*Math.PI*r, topColors=['#1F4A3D','#D84A5A','#2878C8','#E0A51B','#7A45C5','#7F8B86','#B86B3E','#5D77A8'];
     let offset=0, arcs='', legend='';
     sorted.slice(0,8).forEach(([cat,amt],i)=>{const len=circ*(amt/absExpense);arcs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${topColors[i%topColors.length]}" stroke-width="28" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" style="cursor:pointer" data-cat="${escapeHtml(cat)}"/>`;offset+=len;legend+=`<div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;padding:5px 0;"><div class="cname" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${topColors[i%topColors.length]};display:inline-block"></span>${escapeHtml(cat)}</div><div class="cat-amt">${fmtMoney(amt)} (${(amt/absExpense*100).toFixed(1)}%)</div></div>`;});
-    donut.innerHTML=`<div><svg viewBox="0 0 210 210" aria-label="Expense category donut">${arcs}<circle cx="${cx}" cy="${cy}" r="55" fill="#fff"/><text x="${cx}" y="101" text-anchor="middle" font-size="12" fill="#65736D" font-family="Inter,sans-serif">Total expense</text><text x="${cx}" y="121" text-anchor="middle" font-size="14" font-weight="700" fill="#1F4A3D" font-family="IBM Plex Mono,monospace">${fmtCompactMoney(absExpense)}</text></svg>${legend}</div>`;
+    donut.innerHTML=`<div><svg viewBox="0 0 210 210" aria-label="Expense category donut">${arcs}<circle cx="${cx}" cy="${cy}" r="55" fill="#fff"/><text x="${cx}" y="101" text-anchor="middle" font-size="12" fill="#65736D" font-family="Inter,sans-serif">Total expense</text><text x="${cx}" y="121" text-anchor="middle" font-size="14" font-weight="700" fill="#1F4A3D" font-family="IBM Plex Mono,monospace">${fmtMoney(absExpense)}</text></svg>${legend}</div>`;
     donut.querySelectorAll('[data-cat]').forEach(node=>node.addEventListener('click',()=>{document.getElementById('filterCategory').value=node.dataset.cat;document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}));
   }
 
