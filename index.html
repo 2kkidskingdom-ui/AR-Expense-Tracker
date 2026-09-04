@@ -2466,7 +2466,7 @@ async function ensureDeviceShard(){
   const name=`ledger-device-${DEVICE_ID}.json`;
   const files=await driveListFilesByPrefix('ledger-device-');
   const own=files.find(f=>f.name===name);
-  return {file:own||null,name};
+  return {file:own||null,name,files};
 }
 async function createDriveSnapshot(reason='auto', mergedState=null){
   if(!accessToken || !navigator.onLine) return false;
@@ -2510,14 +2510,20 @@ async function driveSyncMerge(silent, existingMeta){
   if(!accessToken || !navigator.onLine || syncInFlight) return;
   syncInFlight=true; updateSyncUI('syncing');
   try{
-    const shardInfo=await ensureDeviceShard();
+    // Do the initial Drive reads in parallel so startup does not wait on each
+    // network request one-by-one. The shard list is reused for the write step.
+    const [shardInfo, legacy] = await Promise.all([
+      ensureDeviceShard(),
+      fetchDriveData().catch(()=>null)
+    ]);
     const sources=[];
-    const legacy=await fetchDriveData().catch(()=>null);
     if(legacy) sources.push({...legacy,deviceId:'legacy'});
-    const shardFiles=await driveListFilesByPrefix('ledger-device-');
-    for(const f of shardFiles){
-      try{ const d=await driveGetFileJson(f.id); if(d) sources.push(d); }catch(e){ console.warn('Shard read failed',f.name,e); }
-    }
+    const shardFiles=shardInfo.files||[];
+    const shardResults=await Promise.all(shardFiles.map(async f=>{
+      try{ return await driveGetFileJson(f.id); }
+      catch(e){ console.warn('Shard read failed',f.name,e); return null; }
+    }));
+    shardResults.forEach(d=>{ if(d) sources.push(d); });
     // If this browser has never initialized, cloud is the baseline. If it has
     // local edits, those edits participate in the same merge instead of being discarded.
     const meta=getSyncMeta();
@@ -2545,9 +2551,12 @@ async function driveSyncMerge(silent, existingMeta){
       await writeDriveFile(shardInfo.file.id,shardInfo.name,JSON.stringify(state));
       localStorage.setItem(LS_DRIVE_FILE_ID,shardInfo.file.id); driveFileId=shardInfo.file.id;
     }
-    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
     setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:getSyncMeta().deleted||{}});
+    // Mark the connection complete as soon as the primary data sync finishes.
+    // Automatic backup continues in the background and no longer delays the UI.
     updateSyncUI(true); refreshAll();
+    const backupState={ ...state, transactions:TXNS, plans:PLANS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() };
+    setTimeout(()=>{ createDriveSnapshot('auto', backupState).catch(e=>console.warn('Background backup failed',e)); }, 0);
     if(!silent) showToast('Synced with Google Drive');
   }catch(e){
     console.error('Drive sync failed:', e);
