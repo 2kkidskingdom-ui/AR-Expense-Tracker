@@ -813,6 +813,9 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
 .cal-in,.cal-out,.cal-bal{font-size:9.5px!important;line-height:1.2!important;}
 /* Form amount remains distinct as an input control, not a display amount. */
 .amt-input{font-size:23px!important;line-height:1.2!important;}
+
+/* Login gate fix: Google Drive OAuth is handled from Settings; never block app startup with a Client ID form. */
+#authGate{display:none!important;}
 </style>
 
 </head>
@@ -3060,7 +3063,7 @@ if('serviceWorker' in navigator){
     window.location.reload();
   });
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js?v=6').then(reg=>{
+    navigator.serviceWorker.register('sw.js?v=7').then(reg=>{
       // Explicitly check for a newer service worker whenever the app opens.
       reg.update().catch(()=>{});
     }).catch(()=>{});
@@ -3102,9 +3105,10 @@ function initGSISignIn(clientId){
 }
 
 function initAuthGate(){
-  // The app should always open directly. Google Drive authentication is handled
-  // independently in the background/settings and must never block the local app.
-  hideGate();
+  // Google Drive authentication is handled independently in Settings/background.
+  // The old Client-ID gate is intentionally disabled so it can never block startup.
+  const gate=document.getElementById('authGate');
+  if(gate) gate.remove();
 }
 initAuthGate();
 
