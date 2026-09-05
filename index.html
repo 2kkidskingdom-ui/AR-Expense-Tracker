@@ -1300,6 +1300,52 @@ nav.tabs button{
 }
 </style>
 
+
+<style id="mobile-sticky-tabs-fix">
+/* Visual-only: keep navigation available while scrolling; never truncate tab labels. */
+html, body { overflow-x: clip !important; }
+nav.tabs {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  white-space: nowrap !important;
+}
+nav.tabs::-webkit-scrollbar { display:none !important; }
+nav.tabs button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: max-content !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+  letter-spacing: 0 !important;
+  font-size: 11px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+@media (max-width:520px) {
+  nav.tabs {
+    margin-left: -5px !important;
+    margin-right: -5px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+  }
+  nav.tabs button {
+    font-size: 11px !important;
+    min-height: 40px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="authGate">
