@@ -1016,6 +1016,159 @@ nav.tabs button{
 }
 </style>
 
+
+<style id="approved-monthly-projection-style">
+/* Approved Monthly Projection design — presentation only */
+.dashboard-monthly-projection{
+  margin-top:16px;
+  padding:24px 20px 20px;
+  border:1px solid #D2E8E3;
+  border-radius:25px;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(16,185,129,.10),transparent 30%),
+    linear-gradient(145deg,#F9FFFD 0%,#FFFFFF 58%,#F5FAFF 100%);
+  box-shadow:0 14px 34px rgba(30,91,113,.09);
+}
+.dashboard-main-projection-title{
+  margin:0 0 20px!important;
+  font-family:Georgia,'Times New Roman',serif!important;
+  font-size:31px!important;
+  line-height:1.1!important;
+  font-weight:700!important;
+  color:#075A49!important;
+  letter-spacing:-.02em!important;
+}
+.dashboard-month-select-wrap{
+  margin-bottom:22px;
+}
+.dashboard-month-select-wrap #dashboardProjectionMonth{
+  width:100%;
+  min-height:52px;
+  box-sizing:border-box;
+  border:1.5px solid #28A987;
+  border-radius:16px;
+  background:#FFFFFF;
+  padding:10px 15px;
+  font-size:16px;
+  font-weight:700;
+  color:#1E2A35;
+  box-shadow:0 0 0 7px rgba(15,157,120,.07);
+}
+.dashboard-projection-panel{
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.dashboard-projection-panel #dashboardUpcoming{
+  display:block;
+}
+.dashboard-projection-panel .projection-group{
+  margin:0 0 18px!important;
+  border-radius:20px!important;
+}
+.dashboard-projection-panel .projection-group:last-child{
+  margin-bottom:0!important;
+}
+.dashboard-projection-panel .projection-group-head{
+  padding:15px 18px!important;
+  font-family:Georgia,'Times New Roman',serif!important;
+  font-size:20px!important;
+}
+.dashboard-projection-panel .projection-group.income{
+  border-color:#D5ECE5!important;
+  background:#FFFFFF!important;
+}
+.dashboard-projection-panel .projection-group.income .projection-group-head{
+  background:#EAF9F4!important;
+  color:#087F62!important;
+}
+.dashboard-projection-panel .projection-group.expense{
+  border-color:#F1D7D9!important;
+  background:#FFFFFF!important;
+}
+.dashboard-projection-panel .projection-group.expense .projection-group-head{
+  background:#FDEEEF!important;
+  color:#C53F4C!important;
+}
+.dashboard-projection-panel .projection-group-total{
+  font-family:'IBM Plex Mono',monospace!important;
+  font-size:19px!important;
+}
+.dashboard-projection-panel .upcoming-row{
+  min-height:70px;
+  margin:0 14px!important;
+}
+.dashboard-projection-panel .u-title{
+  font-size:15px!important;
+  font-weight:700!important;
+}
+.dashboard-projection-panel .u-meta{
+  font-size:11px!important;
+}
+.dashboard-projection-panel .u-amt{
+  font-size:15px!important;
+}
+.dashboard-balance-panel{
+  margin-top:18px;
+  padding:0;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+}
+.dashboard-balance-panel #dashboardOutlook{
+  margin:0;
+}
+.dashboard-balance-panel .upcoming-row{
+  min-height:82px;
+  margin:0!important;
+  padding:16px 18px!important;
+  border:1px solid #D7EEE7!important;
+  border-radius:20px!important;
+  background:linear-gradient(135deg,#F0FBF6,#FFFFFF)!important;
+  box-shadow:none!important;
+}
+.dashboard-balance-panel .u-title{
+  font-size:17px!important;
+  font-weight:800!important;
+}
+.dashboard-balance-panel .u-meta{
+  margin-top:5px!important;
+  font-size:11px!important;
+}
+.dashboard-balance-panel .u-amt{
+  font-family:'IBM Plex Mono',monospace!important;
+  font-size:19px!important;
+  font-weight:800!important;
+}
+.dashboard-balance-panel .upcoming-row .u-main{
+  padding-right:10px;
+}
+@media(max-width:520px){
+  .dashboard-monthly-projection{
+    padding:22px 14px 16px;
+    border-radius:23px;
+  }
+  .dashboard-main-projection-title{
+    font-size:28px!important;
+    margin-bottom:18px!important;
+  }
+  .dashboard-month-select-wrap #dashboardProjectionMonth{
+    min-height:50px;
+    font-size:15px;
+  }
+  .dashboard-projection-panel .projection-group-head{
+    padding:14px 16px!important;
+    font-size:20px!important;
+  }
+  .dashboard-projection-panel .upcoming-row{
+    min-height:66px;
+    margin:0 12px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -1065,22 +1218,16 @@ nav.tabs button{
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
       <div class="dashboard-monthly-projection">
-        <div class="dashboard-month-control">
-          <div>
-            <div class="dashboard-month-label">MONTHLY PROJECTION</div>
-            <div class="dashboard-month-sub">Planned income, expenses and balance</div>
-          </div>
+        <h3 class="dashboard-main-projection-title">Monthly Projection</h3>
+        <div class="dashboard-month-select-wrap">
           <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
         </div>
 
-        <div class="dashboard-panel dashboard-projection-panel">
-          <h3>Monthly Projection</h3>
-          <div class="dashboard-projection-sub">Income first, followed by expenses</div>
+        <div class="dashboard-projection-panel">
           <div id="dashboardUpcoming"></div>
         </div>
 
-        <div class="dashboard-panel dashboard-totals-panel">
-          <h3>Monthly Totals</h3>
+        <div class="dashboard-balance-panel">
           <div id="dashboardOutlook"></div>
         </div>
       </div>
@@ -1987,7 +2134,7 @@ function renderDashboard(){
       projected -= afterSelected.reduce((s,p)=>s+(p.credit||0)-(p.debit||0),0);
     }
 
-    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">Total income</div><div class="u-meta">${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt credit">+${fmtMoney(inMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Total expenses</div><div class="u-meta">${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt debit">−${fmtMoney(outMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">For ${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
+    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">For ${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
   }
 
   if(monthPicker && !monthPicker.dataset.bound){
