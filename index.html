@@ -3087,7 +3087,7 @@ function renderBudgetSummary(){
   const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
   document.getElementById('budgetTotal').textContent=fmtMoney(tot);
   if(!list.length){w.innerHTML='<div class="budget-empty">No budget added yet.</div>';return}
-  w.innerHTML=list.map((b,i)=>{
+  const ranked=list.map((b,i)=>{
     let spent=0;
     TXNS.forEach(t=>{
       if(t.amount<0&&isRealExpense(t)&&reportMonth(t)===m){
@@ -3095,8 +3095,12 @@ function renderBudgetSummary(){
         if(cm&&((b.subcategories||[]).length?sm:true))spent+=Math.abs(Number(t.amount||0));
       }
     });
-    const amt=Number(b.amount||0),pct=amt?Math.min(100,spent/amt*100):0,over=spent>amt&&amt>0;
-    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?(spent/amt*100).toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
+    const amt=Number(b.amount||0),rawPct=amt>0?spent/amt*100:0;
+    return {b,i,spent,rawPct};
+  }).sort((a,b)=>b.rawPct-a.rawPct);
+  w.innerHTML=ranked.map(({b,i,spent,rawPct})=>{
+    const amt=Number(b.amount||0),pct=Math.min(100,rawPct),over=spent>amt&&amt>0;
+    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?rawPct.toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
   }).join('');
   w.querySelectorAll('[data-budget-edit]').forEach(btn=>btn.addEventListener('click',()=>startBudgetEdit(btn.dataset.budgetEdit)));
   w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{
