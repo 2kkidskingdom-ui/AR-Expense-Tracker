@@ -3087,7 +3087,7 @@ function renderBudgetSummary(){
   const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
   document.getElementById('budgetTotal').textContent=fmtMoney(tot);
   if(!list.length){w.innerHTML='<div class="budget-empty">No budget added yet.</div>';return}
-  const ranked=list.map((b,i)=>{
+  w.innerHTML=list.map((b,i)=>{
     let spent=0;
     TXNS.forEach(t=>{
       if(t.amount<0&&isRealExpense(t)&&reportMonth(t)===m){
@@ -3095,12 +3095,8 @@ function renderBudgetSummary(){
         if(cm&&((b.subcategories||[]).length?sm:true))spent+=Math.abs(Number(t.amount||0));
       }
     });
-    const amt=Number(b.amount||0),rawPct=amt>0?spent/amt*100:0;
-    return {b,i,spent,rawPct};
-  }).sort((a,b)=>b.rawPct-a.rawPct);
-  w.innerHTML=ranked.map(({b,i,spent,rawPct})=>{
-    const amt=Number(b.amount||0),pct=Math.min(100,rawPct),over=spent>amt&&amt>0;
-    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?rawPct.toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
+    const amt=Number(b.amount||0),pct=amt?Math.min(100,spent/amt*100):0,over=spent>amt&&amt>0;
+    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?(spent/amt*100).toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
   }).join('');
   w.querySelectorAll('[data-budget-edit]').forEach(btn=>btn.addEventListener('click',()=>startBudgetEdit(btn.dataset.budgetEdit)));
   w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -3784,12 +3780,28 @@ async function fetchDriveData(){
 }
 function getLocalShard(){
   return {
-    schemaVersion:4, deviceId:DEVICE_ID,
-    transactions:TXNS, plans:PLANS,
+    schemaVersion:5, deviceId:DEVICE_ID,
+    transactions:TXNS, plans:PLANS, budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
   };
+}
+function mergeBudgetSources(sources){
+  const map=new Map();
+  for(const src of sources){
+    for(const item of (Array.isArray(src?.budgets)?src.budgets:[])){
+      if(!item||!item.id) continue;
+      const prev=map.get(item.id);
+      const a=Number(item.updatedAt||item.createdAt||0), b=Number(prev?.updatedAt||prev?.createdAt||0);
+      if(!prev || a>b || (a===b && String(src.deviceId||'')>String(prev.__deviceId||''))){
+        map.set(item.id,{...item,__deviceId:src.deviceId||''});
+      }
+    }
+  }
+  const out=[];
+  map.forEach(item=>{ delete item.__deviceId; out.push(item); });
+  return out;
 }
 function mergeRecordsFromSources(sources, key, deleted){
   const map=new Map();
@@ -3857,14 +3869,16 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
+  MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
   localStorage.setItem(LS_TXNS,JSON.stringify(TXNS));
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
+  localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
   setSyncMeta({initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted});
@@ -3892,9 +3906,10 @@ async function driveSyncMerge(silent, existingMeta){
       const all=sources;
       TXNS=mergeRecordsFromSources(all,'transactions',deleted);
       PLANS=mergeRecordsFromSources(all,'plans',deleted);
+      MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -3934,10 +3949,10 @@ async function driveRestore(silent){
     if(sorted.length){
       const data=await driveGetFileJson(sorted[0].id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
