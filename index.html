@@ -760,6 +760,164 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
 }
 </style>
 
+
+<style id="budget-visual-polish">
+/* VISUAL-ONLY UPDATE: tab alignment + Budget styling. Existing functionality is untouched. */
+
+/* All six tabs fit on the screen and remain evenly aligned. */
+nav.tabs{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:4px!important;
+  justify-content:stretch!important;
+  overflow:hidden!important;
+  padding-left:5px!important;
+  padding-right:5px!important;
+}
+nav.tabs button{
+  width:100%!important;
+  min-width:0!important;
+  padding-left:2px!important;
+  padding-right:2px!important;
+  font-size:11.5px!important;
+  letter-spacing:-.02em!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:520px){
+  nav.tabs{
+    grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:3px!important;
+    padding-left:3px!important;
+    padding-right:3px!important;
+  }
+  nav.tabs button{
+    font-size:10.2px!important;
+    padding-left:1px!important;
+    padding-right:1px!important;
+    min-height:40px!important;
+    white-space:nowrap!important;
+  }
+}
+
+/* Premium Budget presentation — styling only. */
+#budget{position:relative;}
+#budget > .section-title{
+  font-size:23px!important;
+  letter-spacing:-.02em!important;
+  margin-bottom:15px!important;
+}
+#budget > .section-title::before{
+  content:"₹";
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;height:34px;
+  margin-right:8px;
+  border-radius:11px;
+  background:linear-gradient(135deg,#075A49,#0F9D78);
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:16px;
+  box-shadow:0 6px 14px rgba(7,150,105,.20);
+}
+#budget .budget-card{
+  position:relative!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:24px!important;
+  padding:20px!important;
+  background:
+    radial-gradient(circle at 100% 0%,rgba(16,185,129,.14),transparent 34%),
+    radial-gradient(circle at 0% 100%,rgba(49,130,206,.09),transparent 32%),
+    linear-gradient(145deg,#FFFFFF 0%,#F7FFFC 58%,#F4FAFF 100%)!important;
+  box-shadow:0 14px 34px rgba(30,91,113,.10)!important;
+}
+#budget .budget-card:before{
+  content:"";
+  position:absolute;width:110px;height:110px;right:-38px;top:-42px;
+  border-radius:50%;background:rgba(15,157,120,.10);
+}
+#budget .budget-card:after{
+  content:"";
+  position:absolute;width:70px;height:70px;left:-30px;bottom:-34px;
+  border-radius:50%;background:rgba(49,130,206,.07);
+}
+#budget .budget-card > *{position:relative;z-index:1;}
+#budget .budget-month-row{
+  gap:10px!important;align-items:stretch!important;margin-bottom:14px!important;
+}
+#budget .budget-month-row .field{margin-bottom:0!important;}
+#budget .budget-month-row label,#budget .field>label{
+  font-weight:800!important;letter-spacing:.09em!important;color:#60736E!important;
+}
+#budget #budgetMonth{
+  font-size:15px!important;font-weight:650!important;
+  border:2px solid #B9E3D4!important;background:#fff!important;
+  box-shadow:0 4px 12px rgba(7,150,105,.06)!important;
+}
+#budget .budget-total-box{
+  min-width:160px!important;padding:12px 14px!important;border:0!important;
+  border-radius:16px!important;
+  background:linear-gradient(135deg,#075A49,#0F9D78)!important;
+  box-shadow:0 8px 18px rgba(7,150,105,.18)!important;
+  color:#fff!important;display:flex!important;flex-direction:column!important;justify-content:center!important;
+}
+#budget .budget-small-label{color:#D8FFF1!important;font-weight:800!important;letter-spacing:.1em!important;}
+#budget .budget-total{color:#fff!important;font-size:21px!important;margin-top:5px!important;}
+#budget .field{margin-bottom:15px!important;}
+#budget .budget-select-btn{
+  min-height:48px!important;border:1px solid #C8DDE6!important;border-radius:14px!important;
+  padding:11px 14px!important;background:rgba(255,255,255,.96)!important;
+  font-size:14px!important;font-weight:650!important;box-shadow:0 4px 12px rgba(30,91,113,.045)!important;
+}
+#budget .budget-select-btn:hover{
+  border-color:#79CDB3!important;box-shadow:0 6px 16px rgba(7,150,105,.09)!important;
+}
+#budget .budget-dropdown{
+  top:53px!important;border:1px solid #CFE1E8!important;border-radius:15px!important;
+  padding:8px!important;box-shadow:0 16px 35px rgba(30,91,113,.16)!important;
+}
+#budget .budget-option{min-height:42px!important;border-radius:10px!important;font-weight:550!important;}
+#budget .budget-option:hover{background:#EAF9F3!important;}
+#budget .budget-option input{accent-color:#0F9D78;}
+#budget #budgetAmount{
+  min-height:54px!important;font-family:'IBM Plex Mono',monospace!important;font-size:21px!important;
+  font-weight:700!important;border:2px solid #A8DEC9!important;background:#F8FFFC!important;
+  box-shadow:0 5px 15px rgba(7,150,105,.06)!important;
+}
+#budget #budgetSaveBtn{
+  min-height:52px!important;margin-top:3px!important;border-radius:15px!important;
+  font-size:15px!important;letter-spacing:.01em!important;
+  background:linear-gradient(135deg,#075A49,#079669 55%,#18B986)!important;
+  box-shadow:0 9px 20px rgba(7,150,105,.20)!important;
+}
+#budget .budget-summary{margin-top:16px!important;gap:12px!important;}
+#budget .budget-summary-card{
+  position:relative!important;overflow:hidden!important;border:0!important;border-radius:20px!important;
+  padding:16px!important;background:linear-gradient(145deg,#FFFFFF,#F8FCFF)!important;
+  box-shadow:0 9px 24px rgba(30,91,113,.09)!important;
+}
+#budget .budget-summary-card:before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,#0F9D78,#39D39E);
+}
+#budget .budget-name{font-size:15px!important;color:#075A49!important;}
+#budget .budget-meta{font-size:11px!important;line-height:1.5!important;}
+#budget .budget-amount{font-size:16px!important;color:#075A49!important;}
+#budget .budget-progress{
+  height:11px!important;margin-top:13px!important;border-radius:20px!important;background:#E7F2F7!important;
+}
+#budget .budget-progress-fill{background:linear-gradient(90deg,#079669,#31D09E)!important;}
+#budget .budget-progress-fill.over{background:linear-gradient(90deg,#E04450,#F66D78)!important;}
+#budget .budget-spent-row{font-size:11px!important;font-weight:600!important;}
+#budget .budget-delete{border-radius:10px!important;padding:7px 11px!important;font-weight:750!important;}
+@media(max-width:520px){
+  #budget .budget-month-row{flex-direction:column!important;align-items:stretch!important;}
+  #budget .budget-total-box{min-width:0!important;}
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
