@@ -1210,6 +1210,63 @@ nav.tabs button{
 }
 </style>
 
+
+<style id="final-typography-uniformity">
+/* Final typography-only normalization. No layout, colors, functionality or spacing changes. */
+/* Primary section headers */
+.section-title,
+.dashboard-main-projection-title{
+  font-family:'Fraunces',serif!important;
+  font-size:21px!important;
+  font-weight:600!important;
+  line-height:1.25!important;
+  letter-spacing:0!important;
+}
+/* Navigation labels */
+nav.tabs button{
+  font-family:'Inter',sans-serif!important;
+  font-size:12px!important;
+  font-weight:600!important;
+  line-height:1.2!important;
+}
+/* Secondary/card headers */
+.summary-card-title,
+.dashboard-panel h3,
+.cal-title,
+.dashboard-projection-panel .projection-group-head{
+  font-family:'Fraunces',serif!important;
+  font-size:18px!important;
+  font-weight:600!important;
+  line-height:1.25!important;
+}
+/* Projection item titles use the same secondary heading style */
+.dashboard-projection-panel .u-title{
+  font-family:'Inter',sans-serif!important;
+  font-size:14px!important;
+  font-weight:700!important;
+  line-height:1.25!important;
+}
+/* Amounts: one consistent numeric style */
+.acct-card .bal,
+.txn .amt,
+.cat-amt,
+.dashboard-stat .value,
+.upcoming-row .u-amt,
+.projection-group-total,
+.budget-amount,
+.dashboard-projection-panel .u-amt{
+  font-family:'IBM Plex Mono',monospace!important;
+  font-size:14px!important;
+  font-weight:700!important;
+  line-height:1.25!important;
+}
+/* Keep only the primary balance and amount-entry value prominent. */
+.tb-amount{font-family:'IBM Plex Mono',monospace!important;font-size:29px!important;font-weight:700!important;line-height:1.2!important;}
+.amt-input{font-family:'IBM Plex Mono',monospace!important;font-size:22px!important;font-weight:600!important;line-height:1.2!important;}
+/* Compact calendar values must remain readable within the cells. */
+.cal-in,.cal-out,.cal-bal{font-family:'IBM Plex Mono',monospace!important;font-size:8.5px!important;line-height:1.15!important;}
+</style>
+
 </head>
 <body>
 <div id="authGate">
