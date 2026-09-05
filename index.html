@@ -2732,29 +2732,19 @@ function connectDrive(clientId, prompt){
 // disconnected when the script simply has not loaded yet. No user interaction
 // is required when Google has already granted this app Drive access.
 function attemptSilentReconnect(){
-  // Use the configured household client automatically. Never block the local app.
-  // The Dashboard/local data must render immediately. If Google already has a
-  // valid session/grant, request a token once in the background. If Google
-  // cannot provide it silently, simply leave the app usable and disconnected.
-  const clientId = DEFAULT_CLIENT_ID;
-  // Keep the known-good client ID available for settings and future sessions.
-  if(localStorage.getItem(LS_CLIENT_ID) !== clientId){
-    localStorage.setItem(LS_CLIENT_ID, clientId);
-  }
-  // A previous manual disconnect should not prevent the normal startup sync.
-  autoReconnectDisabled = false;
-  localStorage.removeItem('ledger.autoReconnectDisabled.v1');
-  if(accessToken) return;
+  // Never block the local app or open a Google account chooser on launch.
+  // Silent Drive reconnect is attempted only after this device has already
+  // completed the app login successfully.
+  const clientId = localStorage.getItem(LS_CLIENT_ID) || DEFAULT_CLIENT_ID;
+  if(!localStorage.getItem(LS_CLIENT_ID)) localStorage.setItem(LS_CLIENT_ID, clientId);
+  if(!localStorage.getItem(LS_AUTH_EMAIL)) return;
+  if(accessToken || autoReconnectDisabled) return;
   setTimeout(()=>{
     if(accessToken || autoReconnectDisabled) return;
     if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
-    try{
-      connectDrive(clientId, '');
-    }catch(e){
-      console.warn('Background Drive reconnect skipped:', e);
-      updateSyncUI(false);
-    }
-  }, 800);
+    try{ connectDrive(clientId, ''); }
+    catch(e){ console.warn('Background Drive reconnect skipped:', e); updateSyncUI(false); }
+  }, 1200);
 }
 document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
   const clientId = localStorage.getItem(LS_CLIENT_ID);
@@ -3031,7 +3021,7 @@ if('serviceWorker' in navigator){
     window.location.reload();
   });
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js?v=6').then(reg=>{
+    navigator.serviceWorker.register('sw.js?v=7').then(reg=>{
       // Explicitly check for a newer service worker whenever the app opens.
       reg.update().catch(()=>{});
     }).catch(()=>{});
