@@ -1634,18 +1634,45 @@ nav.tabs button.active{font-weight:700!important;}
 </style>
 
 <style id="projection-actual-linking-fix">
-  .projection-occurrences{margin:8px 12px 12px;padding:8px 0;border-top:1px dashed var(--line);}
-  .projection-occurrence{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid rgba(207,197,162,.45);}
+  /* Projection list: compact one-line master rows; recurring details appear only after tap. */
+  .projection-master{display:block!important;width:100%!important;box-sizing:border-box!important;padding:0!important;cursor:pointer;position:relative;overflow:hidden;}
+  .projection-summary-line{display:flex!important;align-items:center!important;gap:9px!important;min-width:0!important;width:100%!important;box-sizing:border-box!important;padding:13px 14px!important;min-height:54px!important;}
+  .projection-summary-line .dot{width:9px!important;height:9px!important;min-width:9px!important;flex:none!important;}
+  .projection-summary-line .summary-name{font-weight:800;font-size:13px;line-height:1.1;min-width:0;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .projection-summary-line .summary-meta{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34%;flex:0 1 auto;}
+  .projection-summary-line .summary-amount{font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:12.5px;white-space:nowrap;flex:none;}
+  .projection-summary-line .summary-next{font-size:9.5px;color:var(--muted);white-space:nowrap;flex:none;}
+  .projection-summary-line .summary-arrow{font-size:15px;line-height:1;color:var(--muted);flex:none;transition:transform .18s ease;}
+  .projection-master.is-open .summary-arrow{transform:rotate(180deg);}
+  .projection-master:not(.is-open) .projection-details{display:none!important;}
+  .projection-details{display:block;margin:0;padding:0 14px 13px;border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(244,251,255,.65),#fff);}
+  .projection-detail-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 0 8px;}
+  .projection-detail-title{font-size:11px;color:var(--ink);font-weight:800;}
+  .projection-edit-btn{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:8px;padding:6px 9px;font-size:9.5px;font-weight:800;white-space:nowrap;cursor:pointer;}
+  .projection-link-note{margin:0 0 8px;padding:8px 9px;border-radius:9px;background:#EEF7F3;border:1px solid #CDE7DC;color:var(--green-dark);font-size:9.5px;line-height:1.3;}
+  .projection-link-note strong{font-weight:800;}
+  .projection-occurrences{margin:0;padding:0;border:1px solid var(--line);border-radius:11px;background:#fff;overflow:hidden;}
+  .projection-occurrence{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line);min-height:42px;box-sizing:border-box;}
   .projection-occurrence:last-child{border-bottom:0;}
   .projection-occurrence .occ-main{flex:1;min-width:0;}
-  .projection-occurrence .occ-date{font-weight:700;font-size:11px;color:var(--green-dark);}
-  .projection-occurrence .occ-status{font-size:9.5px;color:var(--muted);margin-top:2px;}
-  .projection-occurrence .occ-status.done{color:var(--green);font-weight:700;}
-  .projection-convert-btn{border:1px solid var(--green);background:#fff;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer;}
+  .projection-occurrence .occ-date{font-weight:800;font-size:11px;color:var(--ink);white-space:nowrap;}
+  .projection-occurrence .occ-status{font-size:9px;color:#347AC0;margin-top:2px;}
+  .projection-occurrence .occ-status.done{color:var(--green);font-weight:800;}
+  .projection-convert-btn{border:1px solid var(--green);background:#fff;color:var(--green-dark);border-radius:8px;padding:6px 8px;font-size:9.5px;font-weight:800;white-space:nowrap;cursor:pointer;flex:none;}
   .projection-convert-btn:active{transform:translateY(1px);}
-  .projection-completed-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:4px 7px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:800;white-space:nowrap;}
-  .projection-link-note{margin:0 0 10px;padding:9px 10px;border-radius:10px;background:#EEF7F3;border:1px solid #CDE7DC;color:var(--green-dark);font-size:10.5px;line-height:1.35;}
-  .projection-link-note strong{font-weight:800;}
+  .projection-completed-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:4px 7px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:800;white-space:nowrap;flex:none;}
+  .projection-master + .projection-master{border-top:1px solid var(--line)!important;}
+  @media(max-width:520px){
+    .projection-summary-line{gap:7px!important;padding:12px 11px!important;}
+    .projection-summary-line .summary-meta{max-width:30%;font-size:9.5px;}
+    .projection-summary-line .summary-next{display:none;}
+    .projection-summary-line .summary-name{font-size:12.5px;}
+    .projection-summary-line .summary-amount{font-size:12px;}
+    .projection-summary-line .summary-arrow{font-size:14px;}
+    .projection-details{padding:0 10px 11px;}
+    .projection-occurrence{gap:6px;padding:8px;}
+    .projection-convert-btn{padding:6px 7px;font-size:9px;}
+  }
 </style>
 </head>
 <body>
@@ -1832,7 +1859,7 @@ nav.tabs button.active{font-weight:700!important;}
         <button class="del-btn" id="planDeleteBtn" style="display:none;">Delete planned entry</button>
       </div>
       <div class="section-title">Planned entries</div>
-      <p class="gate-hint" style="text-align:left; margin:0 0 6px;">Tap any entry below to edit it.</p>
+      <p class="gate-hint" style="text-align:left; margin:0 0 6px;">Tap an entry to view its recurring details.</p>
       <div id="planList"></div>
       <div class="section-title">Projected balance outlook</div>
       <div class="projection-tools"><span class="hint">Based on your recurring and one-time plans.</span><select id="projectionRange" class="projection-range"><option value="3">3 months</option><option value="6" selected>6 months</option><option value="12">1 year</option></select></div>
@@ -2790,32 +2817,58 @@ function renderPlanList(){
     const isCredit = p.credit > 0;
     const amt = isCredit ? p.credit : p.debit;
     const occurrences=expandPlanOccurrences(p,from,to,true);
-    const occurrenceHtml=occurrences.length ? `
-      <div class="projection-occurrences">
-        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin:0 4px 5px;">${p.repeat && p.repeat!=='none' ? 'Monthly occurrences' : 'Projection occurrence'} — tap Convert to Actual for the specific entry</div>
-        ${occurrences.map(o=>{
-          const done=!!o.completed;
-          const paid=o.completion?.actualDate ? ` · paid ${fmtDateLabel(o.completion.actualDate)}` : '';
-          return `<div class="projection-occurrence">
-            <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${done?'✓ Completed'+escapeHtml(paid):'Projected'}</div></div>
-            ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="projection-convert-btn" data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}">Convert to Actual</button>`}
-          </div>`;
-        }).join('')}
-      </div>` : '';
     const next=occurrences.find(o=>!o.completed);
-    return `<div class="txn projection-master" data-id="${escapeHtml(p.id)}" style="cursor:pointer;">
-      <div class="dot ${isCredit?'pos':'neg'}"></div>
-      <div class="mid">
-        <div class="cat">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
-        <div class="meta">${escapeHtml(p.account||'No account')} · ${escapeHtml(fmtDateLabel(p.date))}${p.repeat && p.repeat!=='none' ? ' · '+escapeHtml(planRepeatLabel(p.repeat))+(p.until?' until '+escapeHtml(fmtDateLabel(p.until)):'') : ''}</div>
+    const repeatLabel=(p.repeat && p.repeat!=='none') ? planRepeatLabel(p.repeat) : 'One-time';
+    const summaryMeta=`${p.account||'No account'} · ${repeatLabel}`;
+    const occurrenceHtml=occurrences.length ? `
+      <div class="projection-details">
+        <div class="projection-detail-head">
+          <div class="projection-detail-title">${p.repeat && p.repeat!=='none' ? 'All recurring occurrences' : 'Projection details'}</div>
+          <button type="button" class="projection-edit-btn" data-edit-id="${escapeHtml(p.id)}">Edit projection</button>
+        </div>
+        <div class="projection-link-note"><strong>Convert to Actual</strong> for the specific occurrence when the payment/income is actually completed.</div>
+        <div class="projection-occurrences">
+          ${occurrences.map(o=>{
+            const done=!!o.completed;
+            const paid=o.completion?.actualDate ? ` · paid ${fmtDateLabel(o.completion.actualDate)}` : '';
+            return `<div class="projection-occurrence">
+              <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${done?'✓ Completed'+escapeHtml(paid):'Projected'}</div></div>
+              ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="projection-convert-btn" data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}">Convert to Actual</button>`}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : `
+      <div class="projection-details">
+        <div class="projection-detail-head">
+          <div class="projection-detail-title">Projection details</div>
+          <button type="button" class="projection-edit-btn" data-edit-id="${escapeHtml(p.id)}">Edit projection</button>
+        </div>
+        <div class="projection-link-note">No upcoming occurrences in the current 12-month view.</div>
+      </div>`;
+    return `<div class="txn projection-master" data-id="${escapeHtml(p.id)}">
+      <div class="projection-summary-line">
+        <div class="dot ${isCredit?'pos':'neg'}"></div>
+        <div class="summary-name">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
+        <div class="summary-meta">${escapeHtml(summaryMeta)}</div>
+        <div class="summary-amount" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
+        ${next ? `<div class="summary-next">Next ${escapeHtml(fmtDateLabel(next.date))}</div>` : ''}
+        <div class="summary-arrow" aria-hidden="true">⌄</div>
       </div>
-      <div class="amt" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
-      ${p.repeat && p.repeat!=='none' && next ? `<div style="width:100%;padding:0 4px 7px;font-size:9.5px;color:var(--muted);">Next: <strong>${escapeHtml(fmtDateLabel(next.date))}</strong></div>` : ''}
       ${occurrenceHtml}
     </div>`;
   }).join('') || `<div class="empty-note">No planned entries yet — add one above.</div>`;
+
   el.querySelectorAll('.projection-master').forEach(row=>{
-    row.addEventListener('click', e=>{ if(e.target.closest('.projection-convert-btn')) return; openPlanForEdit(row.dataset.id); });
+    row.addEventListener('click', e=>{
+      if(e.target.closest('.projection-convert-btn') || e.target.closest('.projection-edit-btn')) return;
+      row.classList.toggle('is-open');
+    });
+  });
+  el.querySelectorAll('.projection-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation();
+      openPlanForEdit(btn.dataset.editId);
+    });
   });
   el.querySelectorAll('.projection-convert-btn').forEach(btn=>{
     btn.addEventListener('click', e=>{
@@ -2824,7 +2877,6 @@ function renderPlanList(){
     });
   });
 }
-
 function openPlanForEdit(id){
   const p = PLANS.find(x=>x.id===id);
   if(!p) return;
