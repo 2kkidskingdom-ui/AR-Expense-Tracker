@@ -1,4 +1,4 @@
-const CACHE = 'ledger-v7';
+const CACHE = 'ledger-v8';
 const ASSETS = ['manifest.json','icon-192.png','icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(()=>{})).then(()=>self.skipWaiting()));
