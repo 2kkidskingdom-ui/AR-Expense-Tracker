@@ -1,5 +1,5 @@
 // AR Expenses Tracker - cache refresh enabled
-const CACHE = 'ledger-v3';
+const CACHE = 'ledger-v6';
 const ASSETS = [
   './manifest.json',
   './icon-192.png',

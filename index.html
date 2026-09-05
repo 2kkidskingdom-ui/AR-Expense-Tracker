@@ -2728,23 +2728,23 @@ function connectDrive(clientId, prompt){
 // asynchronously, so retry for a short period instead of treating the app as
 // disconnected when the script simply has not loaded yet. No user interaction
 // is required when Google has already granted this app Drive access.
-function attemptSilentReconnect(attempt = 0){
+function attemptSilentReconnect(){
+  // IMPORTANT: never block or hold the app in a reconnecting state on startup.
+  // The Dashboard/local data must render immediately. If Google already has a
+  // valid session/grant, request a token once in the background. If Google
+  // cannot provide it silently, simply leave the app usable and disconnected.
   const clientId = localStorage.getItem(LS_CLIENT_ID);
   if(!clientId || accessToken || autoReconnectDisabled) return;
-  if(attempt === 0) updateSyncUI('connecting');
-  if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2){
-    if(attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 300);
-    else { lastDriveError='Google sign-in script did not load'; updateSyncUI('error'); }
-    return;
-  }
-  try{
-    const started = connectDrive(clientId, '');
-    if(started === false && attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
-  }catch(e){
-    console.error(e);
-    if(attempt < 40) setTimeout(()=>attemptSilentReconnect(attempt + 1), 500);
-    else { lastDriveError=shortDriveError(e); updateSyncUI('error'); }
-  }
+  setTimeout(()=>{
+    if(accessToken || autoReconnectDisabled) return;
+    if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
+    try{
+      connectDrive(clientId, '');
+    }catch(e){
+      console.warn('Background Drive reconnect skipped:', e);
+      updateSyncUI(false);
+    }
+  }, 800);
 }
 document.getElementById('resumeSyncBtn').addEventListener('click', ()=>{
   const clientId = localStorage.getItem(LS_CLIENT_ID);
@@ -3021,7 +3021,7 @@ if('serviceWorker' in navigator){
     window.location.reload();
   });
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').then(reg=>{
+    navigator.serviceWorker.register('sw.js?v=6').then(reg=>{
       // Explicitly check for a newer service worker whenever the app opens.
       reg.update().catch(()=>{});
     }).catch(()=>{});
@@ -3063,29 +3063,9 @@ function initGSISignIn(clientId){
 }
 
 function initAuthGate(){
-  const authedEmail = localStorage.getItem(LS_AUTH_EMAIL);
-  if(authedEmail === ALLOWED_EMAIL){ hideGate(); return; }
-
-  const savedClientId = localStorage.getItem(LS_CLIENT_ID);
-  const step1 = document.getElementById('gateClientIdStep');
-  const step2 = document.getElementById('gateSignInStep');
-
-  function goToSignIn(clientId){
-    step1.style.display = 'none';
-    step2.style.display = 'block';
-    initGSISignIn(clientId);
-  }
-
-  if(savedClientId){
-    goToSignIn(savedClientId);
-  } else {
-    document.getElementById('gateClientIdSave').addEventListener('click', ()=>{
-      const cid = document.getElementById('gateClientId').value.trim();
-      if(!cid) return;
-      localStorage.setItem(LS_CLIENT_ID, cid);
-      goToSignIn(cid);
-    });
-  }
+  // The app should always open directly. Google Drive authentication is handled
+  // independently in the background/settings and must never block the local app.
+  hideGate();
 }
 initAuthGate();
 
@@ -3111,8 +3091,7 @@ bindDateTextInput('fDate');
   lastDriveError='';
   updateSyncUI(false);
   document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
-  // Reconnect silently on startup when Google has already granted access.
-  // No manual sync is required during normal app opening.
+  // Open the local app immediately; Drive reconnect/sync runs in the background.
   attemptSilentReconnect();
   // Background sync keeps multiple phones reasonably current without requiring
   // the user to press Sync. It only runs when a valid token is already available.
