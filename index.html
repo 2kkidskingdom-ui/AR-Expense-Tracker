@@ -1391,6 +1391,64 @@ nav.tabs button {
   }
 }
 </style>
+
+<style id="final-fancy-typography">
+/* Typography-only polish: elegant headings with mobile-safe spacing. */
+nav.tabs{
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:2px!important;
+  overflow:hidden!important;
+  padding-left:2px!important;
+  padding-right:2px!important;
+  align-items:stretch!important;
+}
+nav.tabs button{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+  font-family:'Fraunces',serif!important;
+  font-size:11.2px!important;
+  font-weight:600!important;
+  letter-spacing:-.01em!important;
+  line-height:1.15!important;
+  padding:9px 1px 10px!important;
+}
+nav.tabs button.active{font-weight:700!important;}
+
+/* Dashboard summary labels: same elegant heading family and consistent scale. */
+.dashboard-stat .label{
+  font-family:'Fraunces',serif!important;
+  font-size:12.2px!important;
+  font-weight:600!important;
+  line-height:1.2!important;
+  letter-spacing:.035em!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:520px){
+  nav.tabs{gap:1px!important;padding-left:1px!important;padding-right:1px!important;}
+  nav.tabs button{
+    font-size:10.5px!important;
+    letter-spacing:-.015em!important;
+    padding-left:0!important;
+    padding-right:0!important;
+  }
+  .dashboard-stat .label{
+    font-size:11.7px!important;
+    letter-spacing:.025em!important;
+  }
+}
+
+@media(max-width:380px){
+  nav.tabs button{font-size:9.9px!important;}
+  .dashboard-stat .label{font-size:11.2px!important;}
+}
+</style>
 </head>
 <body>
 <div id="authGate">
