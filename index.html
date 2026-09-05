@@ -1718,17 +1718,9 @@ nav.tabs button.active{font-weight:700!important;}
       <div id="summaryTable" class="summary-table" style="display:none;"></div>
 
       <div class="summary-directory summary-four-sections">
-        <div class="summary-directory-card income-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income Categories</span></div>
-          <div id="analysisIncomeCategoryDirectory" class="summary-category-list"></div>
-        </div>
         <div class="summary-directory-card income-subdirectory">
           <div class="summary-directory-title"><span class="summary-directory-icon">↳</span><span>Income Subcategories</span></div>
           <div id="analysisIncomeSubcategoryDirectory" class="summary-category-list"></div>
-        </div>
-        <div class="summary-directory-card expense-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expense Categories</span></div>
-          <div id="analysisExpenseCategoryDirectory" class="summary-category-list"></div>
         </div>
         <div class="summary-directory-card expense-subdirectory">
           <div class="summary-directory-title"><span class="summary-directory-icon">↳</span><span>Expense Subcategories</span></div>
@@ -2978,7 +2970,7 @@ function renderAnalysis(range){
   function renderSummaryBreakdown(type, categoryTargetId, subcategoryTargetId){
     const catTarget=document.getElementById(categoryTargetId);
     const subTarget=document.getElementById(subcategoryTargetId);
-    if(!catTarget || !subTarget) return;
+    if(!subTarget) return;
     const isIncome=type==='income';
     const txnsForType=list.filter(t=>isIncome?isRealIncome(t):isRealExpense(t));
     const overallTotal=isIncome?income:absExpense;
@@ -2999,7 +2991,7 @@ function renderAnalysis(range){
     const cats=Object.keys(catTotals).filter(cat=>catTotals[cat]>0).sort((a,b)=>catTotals[b]-catTotals[a] || a.localeCompare(b));
     const subs=Object.keys(subTotals).filter(sub=>subTotals[sub]>0).sort((a,b)=>subTotals[b]-subTotals[a] || a.localeCompare(b));
 
-    catTarget.innerHTML=cats.length?cats.map((cat,index)=>{
+    if(catTarget) catTarget.innerHTML=cats.length?cats.map((cat,index)=>{
       const total=catTotals[cat];
       const pct=overallTotal>0?(total/overallTotal*100):0;
       return `<div class="summary-category-item">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
@@ -3012,8 +3004,8 @@ function renderAnalysis(range){
     }).join(''):`<div class="summary-directory-empty">No ${type} subcategory entries for this period.</div>`;
   }
 
-  renderSummaryBreakdown('income','analysisIncomeCategoryDirectory','analysisIncomeSubcategoryDirectory');
-  renderSummaryBreakdown('expense','analysisExpenseCategoryDirectory','analysisExpenseSubcategoryDirectory');
+  renderSummaryBreakdown('income',null,'analysisIncomeSubcategoryDirectory');
+  renderSummaryBreakdown('expense',null,'analysisExpenseSubcategoryDirectory');
 
   const table=document.getElementById('summaryTable');
   table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>`<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td></tr>`).join('')}</tbody></table>`;
