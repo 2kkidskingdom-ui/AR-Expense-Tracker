@@ -3535,6 +3535,7 @@ document.getElementById('addEntryCategoryBtn')?.addEventListener('click', addCat
 document.getElementById('addEntrySubcategoryBtn')?.addEventListener('click', addSubcategoryFromEntryScreen);
 
 document.getElementById('saveBtn').addEventListener('click', ()=>{
+  let oldEditedTxn=null;
   const amt = parseFloat(fAmount.value);
   if(isNaN(amt) || amt===0){ fAmount.focus(); return; }
   const date = displayToIsoDate(fDate.value) || localDateIso();
@@ -3573,7 +3574,6 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
       if(categoryConfigChanged) saveCategoryConfig();
     }
 
-    let oldEditedTxn=null;
     if(editingId){
       oldEditedTxn = TXNS.find(t=>t.id===editingId) || null;
       if(oldEditedTxn){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [oldEditedTxn.id]:Date.now()}; setSyncMeta(m); }
