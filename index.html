@@ -655,6 +655,37 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-in,.cal-out,.cal-bal{font-size:8.5px !important;line-height:1.15 !important;}
 .cal-daynum{font-size:10.5px !important;line-height:1.2 !important;}
 
+
+/* Typography color accents — visual only */
+nav.tabs button{
+  font-weight:700;
+  letter-spacing:.01em;
+}
+nav.tabs button:nth-child(1){color:#167A61;}
+nav.tabs button:nth-child(2){color:#2E78B7;}
+nav.tabs button:nth-child(3){color:#7655A6;}
+nav.tabs button:nth-child(4){color:#C47A22;}
+nav.tabs button:nth-child(5){color:#278A8A;}
+nav.tabs button:nth-child(6){color:#B16B28;}
+nav.tabs button.active{
+  color:var(--green-dark);
+  background:linear-gradient(180deg,rgba(11,143,98,.12),rgba(11,143,98,.04));
+}
+.dashboard-stat .label{font-weight:800;}
+.dashboard-stat.income .label{color:#148A68;}
+.dashboard-stat.expense .label{color:#C33D4E;}
+.dashboard-stat.saving .label{color:#286FA8;}
+.dashboard-stat .hint{color:#6E7D77;}
+.dashboard-stat.income .value{color:#0F8B67;}
+.dashboard-stat.expense .value{color:#C83E50;}
+.dashboard-stat.saving .value{color:#286FA8;}
+
+/* Keep mobile tab spacing/visibility intact */
+@media(max-width:520px){
+  nav.tabs{gap:0;justify-content:space-between;}
+  nav.tabs button{font-size:11.5px;padding-left:6px;padding-right:6px;}
+}
+
 </style>
 
 <!-- Enhancements: consistent controls across all tabs -->
