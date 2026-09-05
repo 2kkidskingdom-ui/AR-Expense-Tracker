@@ -1817,7 +1817,8 @@ function renderDashboard(){
   const todayStr=localDateIso();
   const horizon=new Date(); horizon.setDate(horizon.getDate()+90);
   const horizonStr=horizon.toISOString().slice(0,10);
-  const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const currentYM=localMonthIso(new Date());
+  const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
   const upEl=document.getElementById('dashboardUpcoming');
   if(upEl) upEl.innerHTML=upcoming.length ? upcoming.map(p=>{
     const credit=(p.credit||0)>0, amt=credit?p.credit:p.debit;
@@ -1827,10 +1828,10 @@ function renderDashboard(){
   const outlook=document.getElementById('dashboardOutlook');
   if(outlook){
     const occ=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr));
-    const next30=occ.filter(p=>p.date<=new Date(Date.now()+30*86400000).toISOString().slice(0,10));
-    const in30=next30.reduce((s,p)=>s+(p.credit||0),0), out30=next30.reduce((s,p)=>s+(p.debit||0),0);
-    const projected=totalBalanceForDisplay()+in30-out30;
-    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">Next 30 days income</div></div><div class="u-amt credit">+${fmtMoney(in30)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Next 30 days expenses</div></div><div class="u-amt debit">−${fmtMoney(out30)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">After planned entries</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
+    const thisMonth=occ.filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM);
+    const inMonth=thisMonth.reduce((s,p)=>s+(p.credit||0),0), outMonth=thisMonth.reduce((s,p)=>s+(p.debit||0),0);
+    const projected=totalBalanceForDisplay()+inMonth-outMonth;
+    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">This month income</div></div><div class="u-amt credit">+${fmtMoney(inMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">This month expenses</div></div><div class="u-amt debit">−${fmtMoney(outMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">After this month's planned entries</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
   }
 }
 function populateFilterSelects(){
