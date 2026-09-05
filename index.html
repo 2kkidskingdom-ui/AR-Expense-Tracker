@@ -2596,8 +2596,11 @@ function renderDashboard(){
   const projectionFrom=selectedStart<todayStr ? selectedStart : todayStr;
   const projectionTo=selectedEnd>horizonStr ? selectedEnd : horizonStr;
   const allOccurrences=PLANS.flatMap(p=>expandPlanOccurrences(p,projectionFrom,projectionTo));
+  // Dashboard Monthly Projection shows upcoming planned occurrences only.
+  // Past projection dates in the selected month are intentionally hidden here;
+  // actual/past transactions remain available in Ledger and other views.
   const selectedEntries=allOccurrences
-    .filter(p=>!p.completed && p.date>=selectedStart && p.date<=selectedEnd)
+    .filter(p=>!p.completed && p.date>=todayStr && p.date>=selectedStart && p.date<=selectedEnd)
     .sort((a,b)=>a.date.localeCompare(b.date));
 
   const upEl=document.getElementById('dashboardUpcoming');
