@@ -2966,12 +2966,15 @@ function renderAnalysis(range){
     const source=type==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
     const isIncome=type==='income';
     const txnsForType=list.filter(t=>isIncome?isRealIncome(t):isRealExpense(t));
+    const overallTotal=isIncome?income:absExpense;
     const catTotals={};
     const subTotals={};
+
     txnsForType.forEach(t=>{
       const cat=(t.category||'Uncategorized').trim()||'Uncategorized';
       const sub=(t.subcategory||'').trim();
       const amount=Math.abs(Number(t.amount)||0);
+      if(amount<=0) return;
       catTotals[cat]=(catTotals[cat]||0)+amount;
       if(sub){
         if(!subTotals[cat]) subTotals[cat]={};
@@ -2979,44 +2982,57 @@ function renderAnalysis(range){
       }
     });
 
-    // Show every configured category, plus any category that exists in transactions.
-    const configured=Object.keys(source);
-    const cats=[...new Set([...configured,...Object.keys(catTotals)])].sort((a,b)=>a.localeCompare(b));
+    // Summary shows only categories/subcategories that actually have entries
+    // in the selected reporting period. Configured-but-unused items stay hidden.
+    const cats=Object.keys(catTotals)
+      .filter(cat=>catTotals[cat]>0)
+      .sort((a,b)=>a.localeCompare(b));
+
     if(!cats.length){
-      target.innerHTML=`<div class="summary-directory-empty">No ${type} categories available yet. Add them from Add Entry or Settings.</div>`;
+      target.innerHTML=`<div class="summary-directory-empty">No ${type} entries for this period.</div>`;
       return;
     }
 
-    const maxCat=Math.max(0,...Object.values(catTotals));
-    target.innerHTML=cats.map(cat=>{
-      const total=catTotals[cat]||0;
-      const pct=(total>0 && (isIncome?income:absExpense)>0)?(total/(isIncome?income:absExpense)*100):0;
-      const configuredSubs=[...(source[cat]||[])].filter(Boolean);
-      const usedSubs=Object.keys(subTotals[cat]||{});
-      const subs=[...new Set([...configuredSubs,...usedSubs])].sort((a,b)=>a.localeCompare(b));
+    target.innerHTML=cats.map((cat,index)=>{
+      const total=catTotals[cat];
+      // Category percentage is its share of the total income/expense for the period.
+      const pct=overallTotal>0?(total/overallTotal*100):0;
+      const subs=Object.keys(subTotals[cat]||{})
+        .filter(sub=>(subTotals[cat][sub]||0)>0)
+        .sort((a,b)=>a.localeCompare(b));
+
       const subHtml=subs.length?`<div class="summary-subcategory-list">${subs.map(sub=>{
-        const st=subTotals[cat]?.[sub]||0;
-        const spct=total>0?(st/total*100):0;
+        const st=subTotals[cat][sub];
+        // Subcategory percentage is also calculated against the total income/expense,
+        // so category and subcategory percentages are directly comparable.
+        const spct=overallTotal>0?(st/overallTotal*100):0;
         return `<div class="summary-subcategory-row">
           <div class="summary-subcategory-name">${escapeHtml(sub)}</div>
-          <div class="summary-subcategory-amount">${st?fmtMoney(st):'—'}</div>
-          <div class="summary-subcategory-percent">${st?spct.toFixed(1)+'%':''}</div>
+          <div class="summary-subcategory-amount">${fmtMoney(st)}</div>
+          <div class="summary-subcategory-percent">${spct.toFixed(1)}%</div>
           <div class="summary-subcategory-bar"><div class="summary-subcategory-fill" style="width:${Math.min(100,spct)}%"></div></div>
         </div>`;
-      }).join('')}</div>`:`<div class="summary-no-sub">No subcategories</div>`;
+      }).join('')}</div>`:'';
+
       return `<div class="summary-category-item" data-summary-cat="${escapeHtml(cat)}">
         <div class="summary-category-head">
-          <div class="summary-category-name">${escapeHtml(cat)}</div>
-          <div class="summary-category-amount">${total?fmtMoney(total):'—'}</div>
-          <div class="summary-category-percent">${total?pct.toFixed(1)+'%':''}</div>
+          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>
+          <div class="summary-category-amount">${fmtMoney(total)}</div>
+          <div class="summary-category-percent">${pct.toFixed(1)}%</div>
         </div>
-        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${maxCat?Math.min(100,total/maxCat*100):0}%"></div></div>
+        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>
         ${subHtml}
       </div>`;
     }).join('');
+
     target.querySelectorAll('[data-summary-cat]').forEach(row=>row.addEventListener('click',()=>{
       const filter=document.getElementById('filterCategory');
-      if(filter){filter.value=row.dataset.summaryCat||'';document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}
+      if(filter){
+        filter.value=row.dataset.summaryCat||'';
+        document.getElementById('filterAccount').value='';
+        switchTab('ledger');
+        renderLedger();
+      }
     }));
   }
 
