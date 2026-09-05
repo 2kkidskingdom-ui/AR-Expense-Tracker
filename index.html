@@ -1818,7 +1818,7 @@ function renderDashboard(){
   const horizon=new Date(); horizon.setDate(horizon.getDate()+90);
   const horizonStr=horizon.toISOString().slice(0,10);
   const currentYM=localMonthIso(new Date());
-  const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+  const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM).sort((a,b)=>a.date.localeCompare(b.date));
   const upEl=document.getElementById('dashboardUpcoming');
   if(upEl) upEl.innerHTML=upcoming.length ? upcoming.map(p=>{
     const credit=(p.credit||0)>0, amt=credit?p.credit:p.debit;
