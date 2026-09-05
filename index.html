@@ -557,6 +557,49 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
     #dashboardProjectionMonth{width:100%;min-width:0;}
   }
 
+
+  /* Unified Monthly Projection section — visual organization only */
+  .dashboard-monthly-overview{
+    margin-top:16px;
+    padding:16px;
+    border:1px solid #D3E9E4;
+    border-radius:24px;
+    background:
+      radial-gradient(circle at 100% 0%,rgba(16,185,129,.10),transparent 30%),
+      linear-gradient(145deg,#F9FFFD 0%,#FFFFFF 58%,#F5FAFF 100%);
+    box-shadow:0 14px 34px rgba(30,91,113,.09);
+  }
+  .dashboard-monthly-overview .dashboard-month-control{
+    margin-top:0;
+    margin-bottom:14px;
+    border:0;
+    background:rgba(255,255,255,.72);
+    box-shadow:none;
+  }
+  .dashboard-projection-panel,
+  .dashboard-totals-panel{
+    margin-top:12px;
+    border-radius:20px;
+  }
+  .dashboard-projection-sub{
+    margin:-7px 0 10px;
+    font-size:10.5px;
+    color:var(--muted);
+  }
+  .dashboard-projection-panel #dashboardUpcoming .upcoming-row{
+    margin-left:0;
+    margin-right:0;
+  }
+  .dashboard-totals-panel{
+    background:linear-gradient(145deg,#F5FFFA,#FFFFFF)!important;
+  }
+  @media(max-width:520px){
+    .dashboard-monthly-overview{padding:12px;border-radius:21px;}
+    .dashboard-monthly-overview .dashboard-month-control{
+      margin-bottom:10px;
+    }
+  }
+
 </style>
 
 <!-- Enhancements: consistent controls across all tabs -->
@@ -1007,16 +1050,25 @@ nav.tabs button{
       <div class="dashboard-stats" id="dashboardStats"></div>
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
-      <div class="dashboard-month-control">
-        <div>
-          <div class="dashboard-month-label">MONTHLY PROJECTION</div>
-          <div class="dashboard-month-sub">Planned income and expenses</div>
+      <div class="dashboard-monthly-overview">
+        <div class="dashboard-month-control">
+          <div>
+            <div class="dashboard-month-label">MONTHLY PROJECTION</div>
+            <div class="dashboard-month-sub">Planned income, expenses and balance</div>
+          </div>
+          <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
         </div>
-        <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
-      </div>
-      <div class="dashboard-two-col">
-        <div class="dashboard-panel"><h3>Monthly Projection</h3><div id="dashboardUpcoming"></div></div>
-        <div class="dashboard-panel"><h3>Monthly Totals</h3><div id="dashboardOutlook"></div></div>
+
+        <div class="dashboard-panel dashboard-projection-panel">
+          <h3>Monthly Projection</h3>
+          <div class="dashboard-projection-sub">Income first, followed by expenses</div>
+          <div id="dashboardUpcoming"></div>
+        </div>
+
+        <div class="dashboard-panel dashboard-totals-panel">
+          <h3>Monthly Totals</h3>
+          <div id="dashboardOutlook"></div>
+        </div>
       </div>
     </section>
 
