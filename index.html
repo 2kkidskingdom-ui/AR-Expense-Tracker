@@ -1100,6 +1100,9 @@ const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC C
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
 const LS_CLIENT_ID = 'ledger.googleClientId.v1';
+// Fixed OAuth client for this household app. The app opens locally first;
+// Drive authentication is attempted silently in the background.
+const DEFAULT_CLIENT_ID = '186531645544-2qrgf9374spt1bj3549jskvuv84tdhg0.apps.googleusercontent.com';
 const LS_DRIVE_FILE_ID = 'ledger.driveFileId.v1';
 const LS_TOKEN_EXPIRY = 'ledger.tokenExpiry.v1';
 const LS_SYNC_META = 'ledger.syncMeta.v3';
@@ -2627,7 +2630,8 @@ function renderExcludeAccountsList(){
 }
 
 document.getElementById('openSettings').addEventListener('click', ()=>{
-  document.getElementById('fClientId').value = localStorage.getItem(LS_CLIENT_ID) || '';
+  document.getElementById('fClientId').value = DEFAULT_CLIENT_ID;
+  localStorage.setItem(LS_CLIENT_ID, DEFAULT_CLIENT_ID);
   renderExcludeAccountsList();
   renderCategoryManager();
   settingsOverlay.classList.add('show');
@@ -2674,8 +2678,7 @@ function shortDriveError(e){
 
 
 document.getElementById('connectDriveBtn').addEventListener('click', ()=>{
-  const clientId = document.getElementById('fClientId').value.trim();
-  if(!clientId){ showToast('Paste your Google OAuth Client ID first'); return; }
+  const clientId = document.getElementById('fClientId').value.trim() || DEFAULT_CLIENT_ID;
   localStorage.setItem(LS_CLIENT_ID, clientId);
   const verify = localStorage.getItem(LS_CLIENT_ID);
   if(verify !== clientId){
@@ -2729,12 +2732,19 @@ function connectDrive(clientId, prompt){
 // disconnected when the script simply has not loaded yet. No user interaction
 // is required when Google has already granted this app Drive access.
 function attemptSilentReconnect(){
-  // IMPORTANT: never block or hold the app in a reconnecting state on startup.
+  // Use the configured household client automatically. Never block the local app.
   // The Dashboard/local data must render immediately. If Google already has a
   // valid session/grant, request a token once in the background. If Google
   // cannot provide it silently, simply leave the app usable and disconnected.
-  const clientId = localStorage.getItem(LS_CLIENT_ID);
-  if(!clientId || accessToken || autoReconnectDisabled) return;
+  const clientId = DEFAULT_CLIENT_ID;
+  // Keep the known-good client ID available for settings and future sessions.
+  if(localStorage.getItem(LS_CLIENT_ID) !== clientId){
+    localStorage.setItem(LS_CLIENT_ID, clientId);
+  }
+  // A previous manual disconnect should not prevent the normal startup sync.
+  autoReconnectDisabled = false;
+  localStorage.removeItem('ledger.autoReconnectDisabled.v1');
+  if(accessToken) return;
   setTimeout(()=>{
     if(accessToken || autoReconnectDisabled) return;
     if(typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
