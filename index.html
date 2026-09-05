@@ -1346,6 +1346,51 @@ nav.tabs button {
   }
 }
 </style>
+
+<style id="final-sticky-tab-fit">
+/* Final mobile navigation fix: keep every tab label visible and selectable. */
+nav.tabs {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  display: flex !important;
+  justify-content: stretch !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+}
+nav.tabs button {
+  flex: 1 1 0 !important;
+  width: 16.6667% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding-left: 2px !important;
+  padding-right: 2px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+@media (max-width: 420px) {
+  nav.tabs button {
+    font-size: 10px !important;
+    padding-left: 1px !important;
+    padding-right: 1px !important;
+    letter-spacing: -0.03em !important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="authGate">
