@@ -703,24 +703,55 @@ nav.tabs button.active{
 
 <!-- Enhancements: consistent controls across all tabs -->
 <style>
-/* Summary category directory */
-.summary-directory{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
-.summary-directory-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:17px;box-shadow:var(--shadow);min-width:0;}
-.summary-directory-title{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green-dark);line-height:1.25;margin-bottom:12px;}
-.summary-directory-icon{width:30px;height:30px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:17px;font-weight:800;flex:none;}
+/* Summary category/subcategory details */
+/* The category breakdown is the primary Summary view; keep legacy trend controls hidden without removing their JS hooks. */
+.summary-trend-head,.summary-legend,#trendChartSvg,#summaryTable{display:none !important;}
+.summary-directory{display:grid;grid-template-columns:1fr;gap:16px;margin-top:16px;}
+.summary-directory-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px 16px;box-shadow:var(--shadow);min-width:0;}
+.summary-directory-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--green-dark);line-height:1.25;margin-bottom:14px;}
+.summary-directory-title > span:last-child{flex:1;}
+.summary-directory-icon{width:34px;height:34px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:19px;font-weight:900;flex:none;}
 .income-directory .summary-directory-icon{background:#DDF7EC;color:#0B8F62;}
 .expense-directory .summary-directory-icon{background:#FDE8EB;color:#D84A5A;}
-.summary-category-list{display:grid;gap:9px;}
-.summary-category-item{border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:linear-gradient(135deg,#fff,#F8FCFA);cursor:pointer;}
-.summary-category-item:hover{box-shadow:0 5px 14px rgba(23,65,82,.08);}
-.summary-category-name{font-size:13px;font-weight:800;color:var(--ink);line-height:1.25;}
-.summary-subcategory-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
-.summary-subcategory-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10.5px;font-weight:700;line-height:1.15;}
-.income-directory .summary-subcategory-chip{background:#E9F8F1;color:#168A68;}
-.expense-directory .summary-subcategory-chip{background:#FFF0F2;color:#C84656;}
-.summary-no-sub{font-size:10.5px;color:var(--muted);margin-top:6px;}
+.summary-category-list{display:grid;gap:0;}
+.summary-category-item{border:0;border-bottom:1px solid #E5ECE9;border-radius:0;padding:13px 2px 14px;background:transparent;cursor:pointer;}
+.summary-category-item:last-child{border-bottom:0;}
+.summary-category-item:hover{box-shadow:none;background:#FBFEFC;border-radius:10px;}
+.summary-category-head{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;}
+.summary-category-name{font-size:15px;font-weight:800;color:var(--ink);line-height:1.25;min-width:0;}
+.summary-category-amount{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;white-space:nowrap;color:var(--green-dark);}
+.expense-directory .summary-category-amount{color:#D84A5A;}
+.summary-category-percent{font-size:12px;color:var(--muted);white-space:nowrap;min-width:48px;text-align:right;}
+.summary-category-meta{display:none;}
+.summary-category-bar{height:8px;background:#EAF1EE;border-radius:9px;overflow:hidden;margin-top:7px;}
+.summary-category-fill{height:100%;border-radius:9px;background:linear-gradient(90deg,#0B8F62,#53B992);}
+.expense-directory .summary-category-fill{background:linear-gradient(90deg,#D84A5A,#ED8290);}
+.summary-subcategory-list{display:grid;gap:7px;margin:9px 0 0 20px;padding:0; border:0;}
+.summary-subcategory-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;}
+.summary-subcategory-name{font-size:12px;color:var(--muted);padding-left:11px;position:relative;min-width:0;overflow-wrap:anywhere;}
+.summary-subcategory-name:before{content:'•';position:absolute;left:0;font-weight:900;}
+.income-directory .summary-subcategory-name:before{color:#0B8F62;}
+.expense-directory .summary-subcategory-name:before{color:#D84A5A;}
+.summary-subcategory-amount{font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.summary-subcategory-percent{font-size:11px;color:var(--muted);white-space:nowrap;min-width:45px;text-align:right;}
+.summary-subcategory-bar{grid-column:1/-1;height:5px;background:#F0F4F2;border-radius:6px;overflow:hidden;margin-top:-3px;}
+.summary-subcategory-fill{height:100%;border-radius:6px;background:#72C9AA;}
+.expense-directory .summary-subcategory-fill{background:#E89AA3;}
+.summary-no-sub{font-size:11px;color:var(--muted);margin:7px 0 0 20px;}
 .summary-directory-empty{padding:14px;border:1px dashed var(--line);border-radius:13px;text-align:center;color:var(--muted);font-size:11px;}
-@media(max-width:700px){.summary-directory{grid-template-columns:1fr;gap:12px;}.summary-directory-title{font-size:17px;}.summary-category-name{font-size:13px;}}
+.summary-directory-card:before{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:-3px 0 11px 46px;}
+.income-directory:before{content:'INCOME BREAKDOWN';color:#0B8F62;}
+.expense-directory:before{content:'EXPENSE BREAKDOWN';color:#D84A5A;}
+@media(max-width:520px){
+  .summary-directory{gap:12px;margin-top:13px;}
+  .summary-directory-card{padding:16px 14px;border-radius:20px;}
+  .summary-directory-title{font-size:19px;}
+  .summary-category-name{font-size:14px;}
+  .summary-category-amount{font-size:12.5px;}
+  .summary-category-percent{font-size:11.5px;min-width:43px;}
+  .summary-subcategory-name{font-size:11.5px;}
+  .summary-subcategory-amount{font-size:11px;}
+}
 
 /* Consistent, polished form controls across Dashboard, Ledger, Summary, Projections, Calendar and Settings. */
 main input:not([type="checkbox"]):not([type="radio"]),
@@ -1680,12 +1711,12 @@ nav.tabs button.active{font-weight:700!important;}
 
       <div class="summary-directory">
         <div class="summary-directory-card income-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income Categories &amp; Subcategories</span></div>
+          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income by category</span></div>
           <div id="analysisIncomeDirectory" class="summary-category-list"></div>
         </div>
 
         <div class="summary-directory-card expense-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expense Categories &amp; Subcategories</span></div>
+          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expenses by category</span></div>
           <div id="analysisExpenseDirectory" class="summary-category-list"></div>
         </div>
       </div>
@@ -2933,16 +2964,54 @@ function renderAnalysis(range){
     const target=document.getElementById(targetId);
     if(!target) return;
     const source=type==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
-    const cats=Object.keys(source).sort((a,b)=>a.localeCompare(b));
+    const isIncome=type==='income';
+    const txnsForType=list.filter(t=>isIncome?isRealIncome(t):isRealExpense(t));
+    const catTotals={};
+    const subTotals={};
+    txnsForType.forEach(t=>{
+      const cat=(t.category||'Uncategorized').trim()||'Uncategorized';
+      const sub=(t.subcategory||'').trim();
+      const amount=Math.abs(Number(t.amount)||0);
+      catTotals[cat]=(catTotals[cat]||0)+amount;
+      if(sub){
+        if(!subTotals[cat]) subTotals[cat]={};
+        subTotals[cat][sub]=(subTotals[cat][sub]||0)+amount;
+      }
+    });
+
+    // Show every configured category, plus any category that exists in transactions.
+    const configured=Object.keys(source);
+    const cats=[...new Set([...configured,...Object.keys(catTotals)])].sort((a,b)=>a.localeCompare(b));
     if(!cats.length){
       target.innerHTML=`<div class="summary-directory-empty">No ${type} categories available yet. Add them from Add Entry or Settings.</div>`;
       return;
     }
+
+    const maxCat=Math.max(0,...Object.values(catTotals));
     target.innerHTML=cats.map(cat=>{
-      const subs=[...(source[cat]||[])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+      const total=catTotals[cat]||0;
+      const pct=(total>0 && (isIncome?income:absExpense)>0)?(total/(isIncome?income:absExpense)*100):0;
+      const configuredSubs=[...(source[cat]||[])].filter(Boolean);
+      const usedSubs=Object.keys(subTotals[cat]||{});
+      const subs=[...new Set([...configuredSubs,...usedSubs])].sort((a,b)=>a.localeCompare(b));
+      const subHtml=subs.length?`<div class="summary-subcategory-list">${subs.map(sub=>{
+        const st=subTotals[cat]?.[sub]||0;
+        const spct=total>0?(st/total*100):0;
+        return `<div class="summary-subcategory-row">
+          <div class="summary-subcategory-name">${escapeHtml(sub)}</div>
+          <div class="summary-subcategory-amount">${st?fmtMoney(st):'—'}</div>
+          <div class="summary-subcategory-percent">${st?spct.toFixed(1)+'%':''}</div>
+          <div class="summary-subcategory-bar"><div class="summary-subcategory-fill" style="width:${Math.min(100,spct)}%"></div></div>
+        </div>`;
+      }).join('')}</div>`:`<div class="summary-no-sub">No subcategories</div>`;
       return `<div class="summary-category-item" data-summary-cat="${escapeHtml(cat)}">
-        <div class="summary-category-name">${escapeHtml(cat)}</div>
-        ${subs.length?`<div class="summary-subcategory-list">${subs.map(sub=>`<span class="summary-subcategory-chip">${escapeHtml(sub)}</span>`).join('')}</div>`:`<div class="summary-no-sub">No subcategories</div>`}
+        <div class="summary-category-head">
+          <div class="summary-category-name">${escapeHtml(cat)}</div>
+          <div class="summary-category-amount">${total?fmtMoney(total):'—'}</div>
+          <div class="summary-category-percent">${total?pct.toFixed(1)+'%':''}</div>
+        </div>
+        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${maxCat?Math.min(100,total/maxCat*100):0}%"></div></div>
+        ${subHtml}
       </div>`;
     }).join('');
     target.querySelectorAll('[data-summary-cat]').forEach(row=>row.addEventListener('click',()=>{
