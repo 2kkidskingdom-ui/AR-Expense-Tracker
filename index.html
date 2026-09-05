@@ -740,10 +740,18 @@ nav.tabs button.active{
 .summary-no-sub{font-size:11px;color:var(--muted);margin:7px 0 0 20px;}
 .summary-directory-empty{padding:14px;border:1px dashed var(--line);border-radius:13px;text-align:center;color:var(--muted);font-size:11px;}
 .summary-directory-card:before{display:block;font-family:Inter,sans-serif;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:-3px 0 11px 46px;}
+.summary-four-sections{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+.summary-four-sections .summary-directory-card{min-width:0;}
+.income-subdirectory .summary-directory-icon{background:#EAF9F2;color:#159A70;}
+.expense-subdirectory .summary-directory-icon{background:#FDECEF;color:#C94A5D;}
+.expense-subdirectory .summary-directory-fill,.expense-directory .summary-category-fill{background:linear-gradient(90deg,#D84A5A,#EA8290);}
+.income-subdirectory .summary-category-fill,.income-directory .summary-category-fill{background:linear-gradient(90deg,#159A70,#58C79D);}
+
 .income-directory:before{content:'INCOME BREAKDOWN';color:#0B8F62;}
 .expense-directory:before{content:'EXPENSE BREAKDOWN';color:#D84A5A;}
 @media(max-width:520px){
   .summary-directory{gap:12px;margin-top:13px;}
+  .summary-four-sections{grid-template-columns:1fr;gap:12px;}
   .summary-directory-card{padding:16px 14px;border-radius:20px;}
   .summary-directory-title{font-size:19px;}
   .summary-category-name{font-size:14px;}
@@ -1709,15 +1717,22 @@ nav.tabs button.active{font-weight:700!important;}
       <div id="trendChartSvg" class="trend-chart"></div>
       <div id="summaryTable" class="summary-table" style="display:none;"></div>
 
-      <div class="summary-directory">
+      <div class="summary-directory summary-four-sections">
         <div class="summary-directory-card income-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income by category</span></div>
-          <div id="analysisIncomeDirectory" class="summary-category-list"></div>
+          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income Categories</span></div>
+          <div id="analysisIncomeCategoryDirectory" class="summary-category-list"></div>
         </div>
-
+        <div class="summary-directory-card income-subdirectory">
+          <div class="summary-directory-title"><span class="summary-directory-icon">↳</span><span>Income Subcategories</span></div>
+          <div id="analysisIncomeSubcategoryDirectory" class="summary-category-list"></div>
+        </div>
         <div class="summary-directory-card expense-directory">
-          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expenses by category</span></div>
-          <div id="analysisExpenseDirectory" class="summary-category-list"></div>
+          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expense Categories</span></div>
+          <div id="analysisExpenseCategoryDirectory" class="summary-category-list"></div>
+        </div>
+        <div class="summary-directory-card expense-subdirectory">
+          <div class="summary-directory-title"><span class="summary-directory-icon">↳</span><span>Expense Subcategories</span></div>
+          <div id="analysisExpenseSubcategoryDirectory" class="summary-category-list"></div>
         </div>
       </div>
     </section>
@@ -2960,10 +2975,10 @@ function renderAnalysis(range){
   document.getElementById('statNetPct').textContent=income>0?(net/income*100).toFixed(1)+'% of income':'';
   document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{let size=13;el.style.fontSize=size+'px';while(el.scrollWidth>el.clientWidth&&size>7){size-=.5;el.style.fontSize=size+'px';}});
 
-  function renderSummaryCategoryDirectory(type,targetId){
-    const target=document.getElementById(targetId);
-    if(!target) return;
-    const source=type==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
+  function renderSummaryBreakdown(type, categoryTargetId, subcategoryTargetId){
+    const catTarget=document.getElementById(categoryTargetId);
+    const subTarget=document.getElementById(subcategoryTargetId);
+    if(!catTarget || !subTarget) return;
     const isIncome=type==='income';
     const txnsForType=list.filter(t=>isIncome?isRealIncome(t):isRealExpense(t));
     const overallTotal=isIncome?income:absExpense;
@@ -2977,67 +2992,28 @@ function renderAnalysis(range){
       if(amount<=0) return;
       catTotals[cat]=(catTotals[cat]||0)+amount;
       if(sub){
-        if(!subTotals[cat]) subTotals[cat]={};
-        subTotals[cat][sub]=(subTotals[cat][sub]||0)+amount;
+        subTotals[sub]=(subTotals[sub]||0)+amount;
       }
     });
 
-    // Summary shows only categories/subcategories that actually have entries
-    // in the selected reporting period. Configured-but-unused items stay hidden.
-    const cats=Object.keys(catTotals)
-      .filter(cat=>catTotals[cat]>0)
-      .sort((a,b)=>a.localeCompare(b));
+    const cats=Object.keys(catTotals).filter(cat=>catTotals[cat]>0).sort((a,b)=>catTotals[b]-catTotals[a] || a.localeCompare(b));
+    const subs=Object.keys(subTotals).filter(sub=>subTotals[sub]>0).sort((a,b)=>subTotals[b]-subTotals[a] || a.localeCompare(b));
 
-    if(!cats.length){
-      target.innerHTML=`<div class="summary-directory-empty">No ${type} entries for this period.</div>`;
-      return;
-    }
-
-    target.innerHTML=cats.map((cat,index)=>{
+    catTarget.innerHTML=cats.length?cats.map((cat,index)=>{
       const total=catTotals[cat];
-      // Category percentage is its share of the total income/expense for the period.
       const pct=overallTotal>0?(total/overallTotal*100):0;
-      const subs=Object.keys(subTotals[cat]||{})
-        .filter(sub=>(subTotals[cat][sub]||0)>0)
-        .sort((a,b)=>a.localeCompare(b));
+      return `<div class="summary-category-item">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
+    }).join(''):`<div class="summary-directory-empty">No ${type} category entries for this period.</div>`;
 
-      const subHtml=subs.length?`<div class="summary-subcategory-list">${subs.map(sub=>{
-        const st=subTotals[cat][sub];
-        // Subcategory percentage is also calculated against the total income/expense,
-        // so category and subcategory percentages are directly comparable.
-        const spct=overallTotal>0?(st/overallTotal*100):0;
-        return `<div class="summary-subcategory-row">
-          <div class="summary-subcategory-name">${escapeHtml(sub)}</div>
-          <div class="summary-subcategory-amount">${fmtMoney(st)}</div>
-          <div class="summary-subcategory-percent">${spct.toFixed(1)}%</div>
-          <div class="summary-subcategory-bar"><div class="summary-subcategory-fill" style="width:${Math.min(100,spct)}%"></div></div>
-        </div>`;
-      }).join('')}</div>`:'';
-
-      return `<div class="summary-category-item" data-summary-cat="${escapeHtml(cat)}">
-        <div class="summary-category-head">
-          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>
-          <div class="summary-category-amount">${fmtMoney(total)}</div>
-          <div class="summary-category-percent">${pct.toFixed(1)}%</div>
-        </div>
-        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>
-        ${subHtml}
-      </div>`;
-    }).join('');
-
-    target.querySelectorAll('[data-summary-cat]').forEach(row=>row.addEventListener('click',()=>{
-      const filter=document.getElementById('filterCategory');
-      if(filter){
-        filter.value=row.dataset.summaryCat||'';
-        document.getElementById('filterAccount').value='';
-        switchTab('ledger');
-        renderLedger();
-      }
-    }));
+    subTarget.innerHTML=subs.length?subs.map((sub,index)=>{
+      const total=subTotals[sub];
+      const pct=overallTotal>0?(total/overallTotal*100):0;
+      return `<div class="summary-category-item summary-subcategory-section-item">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(sub)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
+    }).join(''):`<div class="summary-directory-empty">No ${type} subcategory entries for this period.</div>`;
   }
 
-  renderSummaryCategoryDirectory('income','analysisIncomeDirectory');
-  renderSummaryCategoryDirectory('expense','analysisExpenseDirectory');
+  renderSummaryBreakdown('income','analysisIncomeCategoryDirectory','analysisIncomeSubcategoryDirectory');
+  renderSummaryBreakdown('expense','analysisExpenseCategoryDirectory','analysisExpenseSubcategoryDirectory');
 
   const table=document.getElementById('summaryTable');
   table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>`<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td></tr>`).join('')}</tbody></table>`;
