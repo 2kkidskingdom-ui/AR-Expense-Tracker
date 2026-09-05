@@ -1709,7 +1709,7 @@ nav.tabs button.active{font-weight:700!important;}
       <div class="section-title">Monthly Budget</div>
       <div class="budget-card">
         <div class="budget-month-row">
-          <div class="field" style="margin:0;flex:1;"><label for="budgetMonth">MONTH</label><input type="month" id="budgetMonth"></div>
+          <div class="field" style="margin:0;flex:1;"><label for="budgetMonth">VIEW MONTH</label><input type="month" id="budgetMonth"></div>
           <div class="budget-total-box"><div class="budget-small-label">TOTAL BUDGET</div><div class="budget-total" id="budgetTotal">₹0.00</div></div>
         </div>
         <div class="field"><label>EXPENSE CATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetCategoryBtn">Select categories</button><div class="budget-dropdown" id="budgetCategoryDropdown"></div></div></div>
@@ -3049,17 +3049,80 @@ function renderAnalysis(range){
 }
 
 // ---------- Monthly Budget (additive feature; existing data/logic untouched) ----------
-const LS_BUDGETS='ledger.monthlyBudgets.v1';
+const LS_BUDGETS='ledger.budgets.v2';
+const LS_BUDGETS_OLD='ledger.monthlyBudgets.v1';
 let MONTHLY_BUDGETS={};
 let budgetCategorySelections=new Set(), budgetSubcategorySelections=new Set();
 let editingBudgetId=null;
-function loadMonthlyBudgets(){try{const raw=localStorage.getItem(LS_BUDGETS);MONTHLY_BUDGETS=raw?JSON.parse(raw):{};if(!MONTHLY_BUDGETS||typeof MONTHLY_BUDGETS!=='object'||Array.isArray(MONTHLY_BUDGETS))MONTHLY_BUDGETS={};}catch(e){MONTHLY_BUDGETS={};}}
-function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));markLocalDirty();if(accessToken)debouncedBackup();}
+function loadMonthlyBudgets(){
+  try{
+    const raw=localStorage.getItem(LS_BUDGETS);
+    if(raw){
+      const parsed=JSON.parse(raw);
+      MONTHLY_BUDGETS=Array.isArray(parsed)?parsed:[];
+    }else{
+      // Migrate the previous month-specific budgets to the new global budget model.
+      const oldRaw=localStorage.getItem(LS_BUDGETS_OLD);
+      const old=oldRaw?JSON.parse(oldRaw):{};
+      const flat=[];
+      const seen=new Set();
+      Object.values(old||{}).forEach(arr=>{
+        (Array.isArray(arr)?arr:[]).forEach(b=>{
+          if(b && b.id && !seen.has(b.id)){
+            seen.add(b.id);
+            flat.push({...b, appliesToAllMonths:true});
+          }
+        });
+      });
+      MONTHLY_BUDGETS=flat;
+      if(flat.length) localStorage.setItem(LS_BUDGETS,JSON.stringify(flat));
+    }
+    if(!Array.isArray(MONTHLY_BUDGETS))MONTHLY_BUDGETS=[];
+  }catch(e){MONTHLY_BUDGETS=[];}
+}
+function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));markLocalDirty();if(accessToken)debouncedBackup()}
 function currentBudgetMonth(){const e=document.getElementById('budgetMonth');return e&&e.value?e.value:new Date().toISOString().slice(0,7)}
 function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
-function renderBudgetSummary(){const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS[m])?MONTHLY_BUDGETS[m]:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);document.getElementById('budgetTotal').textContent=fmtMoney(tot);if(!list.length){w.innerHTML='<div class="budget-empty">No budget added for this month.</div>';return}w.innerHTML=list.map((b,i)=>{let spent=0;TXNS.forEach(t=>{if(t.amount<0&&isRealExpense(t)&&reportMonth(t)===m){const cm=b.categories.includes(t.category),sk=(t.category||'')+'|||'+(t.subcategory||''),sm=b.subcategories.includes(sk);if(cm&&(b.subcategories.length?sm:true))spent+=Math.abs(Number(t.amount||0))}});const amt=Number(b.amount||0),pct=amt?Math.min(100,spent/amt*100):0,over=spent>amt&&amt>0;return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml(b.categories.join(', '))}</div><div class="budget-meta">${b.subcategories.length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'}</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent: ${fmtMoney(spent)}</span><span>${amt?(spent/amt*100).toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`}).join('');w.querySelectorAll('[data-budget-edit]').forEach(btn=>btn.addEventListener('click',()=>startBudgetEdit(btn.dataset.budgetEdit)));w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{const a=MONTHLY_BUDGETS[m]||[];a.splice(Number(btn.dataset.budgetDelete),1);if(a.length)MONTHLY_BUDGETS[m]=a;else delete MONTHLY_BUDGETS[m];if(editingBudgetId&&!a.some(x=>x.id===editingBudgetId))cancelBudgetEdit();saveMonthlyBudgets();renderBudgetSummary()}))}
-function addMonthlyBudget(){const m=currentBudgetMonth(),amt=Number(document.getElementById('budgetAmount').value);if(!Number.isFinite(amt)||amt<=0){showToast('Enter a valid monthly budget amount.');return}if(!budgetCategorySelections.size){showToast('Select at least one expense category.');return}if(editingBudgetId){let found=null,oldMonth=null;for(const [ym,arr] of Object.entries(MONTHLY_BUDGETS)){const idx=(Array.isArray(arr)?arr:[]).findIndex(x=>x.id===editingBudgetId);if(idx>=0){found=arr[idx];oldMonth=ym;arr.splice(idx,1);if(!arr.length)delete MONTHLY_BUDGETS[ym];break}}if(found){found.month=m;found.categories=[...budgetCategorySelections];found.subcategories=[...budgetSubcategorySelections];found.amount=amt;found.updatedAt=Date.now();if(!Array.isArray(MONTHLY_BUDGETS[m]))MONTHLY_BUDGETS[m]=[];MONTHLY_BUDGETS[m].push(found);showToast('Monthly budget updated.')}}else{if(!Array.isArray(MONTHLY_BUDGETS[m]))MONTHLY_BUDGETS[m]=[];MONTHLY_BUDGETS[m].push({id:uid(),month:m,categories:[...budgetCategorySelections],subcategories:[...budgetSubcategorySelections],amount:amt,createdAt:Date.now()});showToast('Monthly budget added.')}saveMonthlyBudgets();cancelBudgetEdit();renderBudgetSummary()}
-function startBudgetEdit(id){let found=null,month=null;for(const [ym,arr] of Object.entries(MONTHLY_BUDGETS)){const x=(Array.isArray(arr)?arr:[]).find(b=>b.id===id);if(x){found=x;month=ym;break}}if(!found)return;editingBudgetId=id;document.getElementById('budgetMonth').value=month;document.getElementById('budgetAmount').value=found.amount;budgetCategorySelections=new Set(found.categories||[]);budgetSubcategorySelections=new Set(found.subcategories||[]);document.getElementById('budgetSaveBtn').textContent='Update Budget';document.getElementById('budgetCancelEditBtn').style.display='block';renderBudgetMultiSelects();document.querySelector('#budget .budget-card')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function renderBudgetSummary(){
+  const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
+  document.getElementById('budgetTotal').textContent=fmtMoney(tot);
+  if(!list.length){w.innerHTML='<div class="budget-empty">No budget added yet.</div>';return}
+  w.innerHTML=list.map((b,i)=>{
+    let spent=0;
+    TXNS.forEach(t=>{
+      if(t.amount<0&&isRealExpense(t)&&reportMonth(t)===m){
+        const cm=(b.categories||[]).includes(t.category),sk=(t.category||'')+'|||'+(t.subcategory||''),sm=(b.subcategories||[]).includes(sk);
+        if(cm&&((b.subcategories||[]).length?sm:true))spent+=Math.abs(Number(t.amount||0));
+      }
+    });
+    const amt=Number(b.amount||0),pct=amt?Math.min(100,spent/amt*100):0,over=spent>amt&&amt>0;
+    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?(spent/amt*100).toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
+  }).join('');
+  w.querySelectorAll('[data-budget-edit]').forEach(btn=>btn.addEventListener('click',()=>startBudgetEdit(btn.dataset.budgetEdit)));
+  w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{
+    MONTHLY_BUDGETS.splice(Number(btn.dataset.budgetDelete),1);
+    if(editingBudgetId&&!MONTHLY_BUDGETS.some(x=>x.id===editingBudgetId))cancelBudgetEdit();
+    saveMonthlyBudgets();renderBudgetSummary();
+  }));
+}
+function addMonthlyBudget(){
+  const amt=Number(document.getElementById('budgetAmount').value);
+  if(!Number.isFinite(amt)||amt<=0){showToast('Enter a valid budget amount.');return}
+  if(!budgetCategorySelections.size){showToast('Select at least one expense category.');return}
+  if(editingBudgetId){
+    const found=MONTHLY_BUDGETS.find(x=>x.id===editingBudgetId);
+    if(found){found.categories=[...budgetCategorySelections];found.subcategories=[...budgetSubcategorySelections];found.amount=amt;found.appliesToAllMonths=true;found.updatedAt=Date.now();showToast('Budget updated for all months.');}
+  }else{
+    MONTHLY_BUDGETS.push({id:uid(),categories:[...budgetCategorySelections],subcategories:[...budgetSubcategorySelections],amount:amt,appliesToAllMonths:true,createdAt:Date.now()});
+    showToast('Budget added for all months.');
+  }
+  saveMonthlyBudgets();cancelBudgetEdit();renderBudgetSummary()
+}
+function startBudgetEdit(id){
+  const found=MONTHLY_BUDGETS.find(b=>b.id===id);
+  if(!found)return;
+  editingBudgetId=id;document.getElementById('budgetAmount').value=found.amount;budgetCategorySelections=new Set(found.categories||[]);budgetSubcategorySelections=new Set(found.subcategories||[]);document.getElementById('budgetSaveBtn').textContent='Update Budget';document.getElementById('budgetCancelEditBtn').style.display='block';renderBudgetMultiSelects();document.querySelector('#budget .budget-card')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function cancelBudgetEdit(){editingBudgetId=null;budgetCategorySelections=new Set();budgetSubcategorySelections=new Set();const amount=document.getElementById('budgetAmount');if(amount)amount.value='';const btn=document.getElementById('budgetSaveBtn');if(btn)btn.textContent='Add Budget';const cancel=document.getElementById('budgetCancelEditBtn');if(cancel)cancel.style.display='none';renderBudgetMultiSelects()}
 function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const cb=document.getElementById('budgetCategoryBtn'),sb=document.getElementById('budgetSubcategoryBtn'),cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');const cf=cb.closest('.field'),sf=sb.closest('.field');const closeBudgetMenus=()=>{cd.classList.remove('show');sd.classList.remove('show');cf?.classList.remove('budget-field-open');sf?.classList.remove('budget-field-open')};cb.addEventListener('click',e=>{e.stopPropagation();sd.classList.remove('show');sf?.classList.remove('budget-field-open');cd.classList.toggle('show');cf?.classList.toggle('budget-field-open',cd.classList.contains('show'))});sb.addEventListener('click',e=>{e.stopPropagation();cd.classList.remove('show');cf?.classList.remove('budget-field-open');sd.classList.toggle('show');sf?.classList.toggle('budget-field-open',sd.classList.contains('show'))});cd.addEventListener('click',e=>e.stopPropagation());sd.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',closeBudgetMenus);m.addEventListener('change',renderBudgetSummary);document.getElementById('budgetSaveBtn').addEventListener('click',addMonthlyBudget);document.getElementById('budgetCancelEditBtn').addEventListener('click',cancelBudgetEdit);renderBudgetMultiSelects();renderBudgetSummary()}
 
