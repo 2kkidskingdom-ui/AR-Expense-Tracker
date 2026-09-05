@@ -1674,11 +1674,36 @@ nav.tabs button.active{font-weight:700!important;}
     .projection-convert-btn{padding:6px 7px;font-size:9px;}
   }
 </style>
+
+<style id="fancy-app-title">
+  .app-title{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    margin:0; color:var(--green-dark);
+    font-family:'Fraunces', Georgia, serif; font-weight:800;
+    letter-spacing:-0.035em; line-height:1.05;
+    text-shadow:0 1px 0 rgba(255,255,255,.8);
+  }
+  .app-title .app-title-ar{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:42px; height:34px; padding:0 8px;
+    border:1px solid var(--gold); border-radius:10px;
+    background:linear-gradient(135deg,var(--green-dark),var(--green));
+    color:#fff; font-family:'IBM Plex Mono',monospace;
+    font-size:.62em; font-weight:800; letter-spacing:-.04em;
+    box-shadow:0 3px 10px rgba(18,48,38,.14);
+  }
+  .app-title .app-title-main{font-size:1em;}
+  @media(max-width:520px){
+    .app-title{gap:7px;font-size:clamp(25px,7.2vw,34px);}
+    .app-title .app-title-ar{min-width:38px;height:31px;padding:0 7px;}
+  }
+</style>
+
 </head>
 <body>
 <div id="authGate">
   <div class="gate-card">
-    <h1>AR Expenses Tracker</h1>
+    <h1 class="app-title"><span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span></h1>
     <p class="gate-sub">Private household ledger</p>
     <div id="gateClientIdStep">
       <p class="gate-hint">Enter the Google OAuth Client ID once to enable sign-in.</p>
@@ -1697,7 +1722,7 @@ nav.tabs button.active{font-weight:700!important;}
   <header>
     <div class="brand" style="justify-content:center; text-align:center; flex-direction:column;">
       <div style="width:100%;">
-        <h1 style="text-align:center;">AR Expenses Tracker</h1>
+        <h1 class="app-title" style="text-align:center;"><span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span></h1>
         <div class="sub" style="justify-content:center;"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span> · <button class="settings-icon" id="openSettings" title="Settings">⚙</button></div>
       </div>
     </div>
