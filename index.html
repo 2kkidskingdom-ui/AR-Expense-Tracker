@@ -540,6 +540,8 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   .cal-footer .tstat{padding:10px 6px;}
   .cal-footer .tstat .v{font-size:12px;}
 }
+
+.budget-multi{position:relative}.budget-multi-trigger{width:100%;min-height:46px;border:1px solid #CFE1E9;background:#fff;color:#273832;border-radius:12px;padding:10px 12px;font-size:13px;text-align:left;display:flex;align-items:center;justify-content:space-between;cursor:pointer}.budget-multi-trigger span{color:#0F9D78;font-weight:900}.budget-multi.open .budget-multi-trigger{border-color:#0F9D78;box-shadow:0 0 0 3px rgba(15,157,120,.10)}.budget-multi-panel{display:none;position:absolute;z-index:30;left:0;right:0;top:calc(100% + 5px);max-height:220px;overflow:auto;background:#fff;border:1px solid #CFE1E9;border-radius:12px;padding:7px;box-shadow:0 12px 28px rgba(30,91,113,.16)}.budget-multi.open .budget-multi-panel{display:block}.budget-check{display:flex;align-items:center;gap:9px;padding:9px 7px;border-radius:8px;font-size:13px;color:#2A3935;cursor:pointer}.budget-check:hover{background:#F1FBF7}.budget-check input{width:18px;height:18px;accent-color:#0F9D78}.budget-no-options{padding:10px;color:#77857F;font-size:12px}.budget-empty{padding:22px 12px;text-align:center;background:#fff;border:1px dashed #CFE1E9;border-radius:15px;color:#77857F;font-size:12px}
 </style>
 
 <!-- Enhancements: consistent controls across all tabs -->
@@ -907,8 +909,8 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
         <div class="budget-fields">
           <div class="field"><label>Budget amount (₹)</label><input type="number" step="0.01" min="0" id="budgetAmount" placeholder="0.00"></div>
           <div class="field"><label>Account</label><select id="budgetAccount"><option value="">All accounts</option></select></div>
-          <div class="field"><label>Category</label><input list="budgetCategoryList" id="budgetCategory" placeholder="All categories"><datalist id="budgetCategoryList"></datalist></div>
-          <div class="field"><label>Subcategory</label><input list="budgetSubcategoryList" id="budgetSubcategory" placeholder="All subcategories"><datalist id="budgetSubcategoryList"></datalist></div>
+          <div class="field"><label>Category</label><div class="budget-multi" id="budgetCategoryMulti"><button type="button" class="budget-multi-trigger" id="budgetCategoryTrigger">All categories <span>⌄</span></button><div class="budget-multi-panel" id="budgetCategoryPanel"></div></div></div>
+          <div class="field"><label>Subcategory</label><div class="budget-multi" id="budgetSubcategoryMulti"><button type="button" class="budget-multi-trigger" id="budgetSubcategoryTrigger">All subcategories <span>⌄</span></button><div class="budget-multi-panel" id="budgetSubcategoryPanel"></div></div></div>
           <div class="field full"><label>Description</label><input type="text" id="budgetDescription" placeholder="e.g. Groceries budget"></div>
         </div>
         <button class="budget-save" id="budgetSaveBtn">Add budget</button>
@@ -2157,37 +2159,96 @@ function shiftBudgetCursor(delta){
   else budgetCursor.setMonth(budgetCursor.getMonth()+delta);
   renderBudget();
 }
+let budgetSelectedCategories=[];
+let budgetSelectedSubcategories=[];
+function budgetCategoryNames(){
+  const cats=new Set();
+  Object.keys(EXPENSE_CATEGORY_SUBCATS||{}).forEach(c=>cats.add(c));
+  TXNS.filter(isExpense).forEach(t=>{if(t.category)cats.add(t.category)});
+  return [...cats].filter(Boolean).filter(x=>x!=='Income'&&x!=='Account Transfer'&&x!=='Initial Balance').sort();
+}
+function budgetSubcategoryNames(){
+  const set=new Set();
+  const selected=budgetSelectedCategories;
+  if(selected.length){
+    selected.forEach(cat=>{
+      (EXPENSE_CATEGORY_SUBCATS?.[cat]||new Set()).forEach(x=>set.add(x));
+      TXNS.filter(t=>t.category===cat&&t.subcategory).forEach(t=>set.add(t.subcategory));
+    });
+  }else{
+    Object.values(EXPENSE_CATEGORY_SUBCATS||{}).forEach(xs=>xs.forEach(x=>set.add(x)));
+    TXNS.filter(isExpense).forEach(t=>{if(t.subcategory)set.add(t.subcategory)});
+  }
+  return [...set].filter(Boolean).sort();
+}
+function budgetMultiLabel(values, allText){
+  if(!values.length) return allText;
+  if(values.length===1) return values[0];
+  return `${values.length} selected`;
+}
+function renderBudgetMulti(){
+  const cp=document.getElementById('budgetCategoryPanel'), sp=document.getElementById('budgetSubcategoryPanel');
+  if(!cp||!sp)return;
+  cp.innerHTML=budgetCategoryNames().map(x=>`<label class="budget-check"><input type="checkbox" value="${escapeHtml(x)}" ${budgetSelectedCategories.includes(x)?'checked':''}><span>${escapeHtml(x)}</span></label>`).join('') || '<div class="budget-no-options">No expense categories yet</div>';
+  sp.innerHTML=budgetSubcategoryNames().map(x=>`<label class="budget-check"><input type="checkbox" value="${escapeHtml(x)}" ${budgetSelectedSubcategories.includes(x)?'checked':''}><span>${escapeHtml(x)}</span></label>`).join('') || '<div class="budget-no-options">No subcategories yet</div>';
+  document.getElementById('budgetCategoryTrigger').innerHTML=`${escapeHtml(budgetMultiLabel(budgetSelectedCategories,'All categories'))} <span>⌄</span>`;
+  document.getElementById('budgetSubcategoryTrigger').innerHTML=`${escapeHtml(budgetMultiLabel(budgetSelectedSubcategories,'All subcategories'))} <span>⌄</span>`;
+}
 function populateBudgetForm(){
   const a=document.getElementById('budgetAccount'); if(a) a.innerHTML='<option value="">All accounts</option>'+getAccounts().map(x=>`<option value="${escapeHtml(x)}">${escapeHtml(x)}</option>`).join('');
-  const cats=new Set(); Object.keys(EXPENSE_CATEGORY_SUBCATS||{}).forEach(c=>cats.add(c)); TXNS.filter(isExpense).forEach(t=>{if(t.category)cats.add(t.category)});
-  document.getElementById('budgetCategoryList').innerHTML=[...cats].filter(Boolean).filter(x=>x!=='Income'&&x!=='Account Transfer'&&x!=='Initial Balance').sort().map(x=>`<option value="${escapeHtml(x)}"></option>`).join('');
-  updateBudgetSubcategories();
+  renderBudgetMulti();
 }
-function updateBudgetSubcategories(){
-  const cat=document.getElementById('budgetCategory').value.trim(); const set=new Set((EXPENSE_CATEGORY_SUBCATS?.[cat]||new Set())); TXNS.filter(t=>t.category===cat&&t.subcategory).forEach(t=>set.add(t.subcategory));
-  document.getElementById('budgetSubcategoryList').innerHTML=[...set].filter(Boolean).sort().map(x=>`<option value="${escapeHtml(x)}"></option>`).join('');
+function updateBudgetSubcategories(){ renderBudgetMulti(); }
+function budgetGetValues(field){ return field==='category' ? budgetSelectedCategories.slice() : budgetSelectedSubcategories.slice(); }
+function budgetSetValues(field,values){
+  const clean=[...new Set((Array.isArray(values)?values:(values?[values]:[])).map(x=>String(x||'').trim()).filter(Boolean))];
+  if(field==='category') budgetSelectedCategories=clean; else budgetSelectedSubcategories=clean;
+  renderBudgetMulti();
 }
+function toggleBudgetMulti(id){
+  const el=document.getElementById(id);
+  document.querySelectorAll('.budget-multi.open').forEach(x=>{if(x!==el)x.classList.remove('open')});
+  el?.classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  const catTrig=e.target.closest('#budgetCategoryTrigger'), subTrig=e.target.closest('#budgetSubcategoryTrigger');
+  if(catTrig){e.preventDefault();toggleBudgetMulti('budgetCategoryMulti');return;}
+  if(subTrig){e.preventDefault();toggleBudgetMulti('budgetSubcategoryMulti');return;}
+  const catBox=e.target.closest('#budgetCategoryPanel input[type=checkbox]');
+  if(catBox){
+    budgetSelectedCategories=[...document.querySelectorAll('#budgetCategoryPanel input:checked')].map(x=>x.value);
+    const allowed=new Set(budgetSubcategoryNames());
+    budgetSelectedSubcategories=budgetSelectedSubcategories.filter(x=>allowed.has(x));
+    renderBudgetMulti(); return;
+  }
+  const subBox=e.target.closest('#budgetSubcategoryPanel input[type=checkbox]');
+  if(subBox){budgetSelectedSubcategories=[...document.querySelectorAll('#budgetSubcategoryPanel input:checked')].map(x=>x.value);renderBudgetMulti();return;}
+  if(!e.target.closest('.budget-multi')) document.querySelectorAll('.budget-multi.open').forEach(x=>x.classList.remove('open'));
+});
 function budgetSpent(b,r){
-  return TXNS.filter(t=>t.date>=r.start&&t.date<=r.end&&isExpense(t)&&(!b.account||t.account===b.account)&&(!b.category||t.category===b.category)&&(!b.subcategory||t.subcategory===b.subcategory)).reduce((s,t)=>s+Math.abs(Number(t.amount)||0),0);
+  const cats=Array.isArray(b.categories)?b.categories:(b.category?[b.category]:[]);
+  const subs=Array.isArray(b.subcategories)?b.subcategories:(b.subcategory?[b.subcategory]:[]);
+  return TXNS.filter(t=>t.date>=r.start&&t.date<=r.end&&isExpense(t)&&(!b.account||t.account===b.account)&&(!cats.length||cats.includes(t.category))&&(!subs.length||subs.includes(t.subcategory))).reduce((s,t)=>s+Math.abs(Number(t.amount)||0),0);
 }
-function budgetApplies(b,r){ return (!b.period||b.period==='monthly') && b.startDate<=r.end && (!b.endDate || b.endDate>=r.start); }
+function budgetApplies(b,r){ return (!b.period||b.period===budgetPeriod) && b.startDate<=r.end && (!b.endDate || b.endDate>=r.start); }
 function renderBudget(){
   const r=budgetRangeFor(budgetPeriod,budgetCursor); document.getElementById('budgetRangeTitle').textContent=r.label;
-  document.querySelectorAll('#budgetPeriods .budget-period-btn').forEach(x=>x.classList.toggle('active',x.dataset.period===budgetPeriod));
   const list=document.getElementById('budgetList'); if(!list)return;
   const rows=BUDGETS.filter(b=>budgetApplies(b,r));
   list.innerHTML=rows.length?rows.map(b=>{
     const spent=budgetSpent(b,r), limit=Number(b.amount)||0, pct=limit?Math.min(100,(spent/limit)*100):0, over=spent>limit; const remaining=limit-spent;
-    const scope=[b.account||'All accounts',b.category||'All categories',b.subcategory||''].filter(Boolean).join(' · ');
+    const cats=Array.isArray(b.categories)?b.categories:(b.category?[b.category]:[]);
+    const subs=Array.isArray(b.subcategories)?b.subcategories:(b.subcategory?[b.subcategory]:[]);
+    const scope=[b.account||'All accounts',cats.length?cats.join(', '):'All categories',subs.length?subs.join(', '):'All subcategories'].filter(Boolean).join(' · ');
     return `<div class="budget-card"><div class="budget-card-top"><div><div class="budget-name">${escapeHtml(b.description||b.category||'Budget')}</div><div class="budget-meta">${escapeHtml(scope)}</div></div><div class="budget-amount ${over?'over':''}">${fmtMoney(remaining)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-stats"><span>Spent <strong>${fmtMoney(spent)}</strong> / ${fmtMoney(limit)}</span><span>${over?'Over budget':'Remaining'}</span></div><div class="budget-actions"><button data-edit-budget="${escapeHtml(b.id)}">Edit</button><button class="delete" data-delete-budget="${escapeHtml(b.id)}">Delete</button></div></div>`;
-  }).join(''):`<div class="budget-empty">No monthly budgets for this month. Add a budget above.</div>`;
+  }).join(''):`<div class="budget-empty">No ${budgetPeriod} budgets for this period. Add a budget above.</div>`;
   list.querySelectorAll('[data-edit-budget]').forEach(btn=>btn.addEventListener('click',()=>editBudget(btn.dataset.editBudget)));
   list.querySelectorAll('[data-delete-budget]').forEach(btn=>btn.addEventListener('click',()=>deleteBudget(btn.dataset.deleteBudget)));
 }
-function resetBudgetForm(){ editingBudgetId=null; document.getElementById('budgetAmount').value=''; document.getElementById('budgetAccount').value=''; document.getElementById('budgetCategory').value=''; document.getElementById('budgetSubcategory').value=''; document.getElementById('budgetDescription').value=''; document.getElementById('budgetFormTitle').textContent='Add budget'; document.getElementById('budgetSaveBtn').textContent='Add budget'; document.getElementById('budgetCancelBtn').style.display='none'; updateBudgetSubcategories(); }
-function editBudget(id){ const b=BUDGETS.find(x=>x.id===id); if(!b)return; editingBudgetId=id; document.getElementById('budgetAmount').value=b.amount||''; document.getElementById('budgetAccount').value=b.account||''; document.getElementById('budgetCategory').value=b.category||''; updateBudgetSubcategories(); document.getElementById('budgetSubcategory').value=b.subcategory||''; document.getElementById('budgetDescription').value=b.description||''; document.getElementById('budgetFormTitle').textContent='Edit budget'; document.getElementById('budgetSaveBtn').textContent='Save changes'; document.getElementById('budgetCancelBtn').style.display='block'; document.querySelector('#budget .budget-add').scrollIntoView({behavior:'smooth',block:'start'}); }
+function resetBudgetForm(){ editingBudgetId=null; document.getElementById('budgetAmount').value=''; document.getElementById('budgetAccount').value=''; budgetSelectedCategories=[]; budgetSelectedSubcategories=[]; document.getElementById('budgetDescription').value=''; document.getElementById('budgetFormTitle').textContent='Add monthly budget'; document.getElementById('budgetSaveBtn').textContent='Add budget'; document.getElementById('budgetCancelBtn').style.display='none'; renderBudgetMulti(); }
+function editBudget(id){ const b=BUDGETS.find(x=>x.id===id); if(!b)return; editingBudgetId=id; document.getElementById('budgetAmount').value=b.amount||''; document.getElementById('budgetAccount').value=b.account||''; budgetSelectedCategories=Array.isArray(b.categories)?b.categories.slice():(b.category?[b.category]:[]); budgetSelectedSubcategories=Array.isArray(b.subcategories)?b.subcategories.slice():(b.subcategory?[b.subcategory]:[]); renderBudgetMulti(); document.getElementById('budgetDescription').value=b.description||''; document.getElementById('budgetFormTitle').textContent='Edit monthly budget'; document.getElementById('budgetSaveBtn').textContent='Save changes'; document.getElementById('budgetCancelBtn').style.display='block'; document.querySelector('#budget .budget-add').scrollIntoView({behavior:'smooth',block:'start'}); }
 function deleteBudget(id){ if(!confirm('Delete this budget?'))return; BUDGETS=BUDGETS.filter(x=>x.id!==id); saveBudgets(); resetBudgetForm(); renderBudget(); showToast('Budget deleted'); }
-function saveBudget(){ const amount=Number(document.getElementById('budgetAmount').value); if(!(amount>=0))return showToast('Enter a valid budget amount'); const r=budgetRangeFor(budgetPeriod,budgetCursor); const item={id:editingBudgetId||uid(),period:budgetPeriod,startDate:r.start,endDate:r.end,amount,account:document.getElementById('budgetAccount').value.trim(),category:document.getElementById('budgetCategory').value.trim(),subcategory:document.getElementById('budgetSubcategory').value.trim(),description:document.getElementById('budgetDescription').value.trim()}; const idx=BUDGETS.findIndex(x=>x.id===item.id); if(idx>=0)BUDGETS[idx]={...BUDGETS[idx],...item}; else BUDGETS.push(item); saveBudgets(); resetBudgetForm(); renderBudget(); showToast(idx>=0?'Budget updated':'Budget added'); }
+function saveBudget(){ const amount=Number(document.getElementById('budgetAmount').value); if(!(amount>=0))return showToast('Enter a valid budget amount'); const r=budgetRangeFor(budgetPeriod,budgetCursor); const item={id:editingBudgetId||uid(),period:'monthly',startDate:r.start,endDate:r.end,amount,account:document.getElementById('budgetAccount').value.trim(),categories:budgetSelectedCategories.slice(),subcategories:budgetSelectedSubcategories.slice(),category:budgetSelectedCategories[0]||'',subcategory:budgetSelectedSubcategories[0]||'',description:document.getElementById('budgetDescription').value.trim()}; const idx=BUDGETS.findIndex(x=>x.id===item.id); if(idx>=0)BUDGETS[idx]={...BUDGETS[idx],...item}; else BUDGETS.push(item); saveBudgets(); resetBudgetForm(); renderBudget(); showToast(idx>=0?'Budget updated':'Budget added'); }
 document.getElementById('budgetPrev').addEventListener('click',()=>shiftBudgetCursor(-1)); document.getElementById('budgetNext').addEventListener('click',()=>shiftBudgetCursor(1));
 document.getElementById('budgetCategory').addEventListener('input',updateBudgetSubcategories); document.getElementById('budgetSaveBtn').addEventListener('click',saveBudget); document.getElementById('budgetCancelBtn').addEventListener('click',resetBudgetForm);
 
