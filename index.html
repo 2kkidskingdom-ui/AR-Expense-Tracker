@@ -516,6 +516,47 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   /* Monthly Budget — additive feature only */
   #budget .section-title{margin-top:0}.budget-card,.budget-summary-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-top:10px}.budget-month-row{display:flex;align-items:flex-end;gap:12px}.budget-total-box{min-width:145px;padding:10px 12px;border:1px solid #B9D3DF;border-radius:12px;background:#F3FBF8;text-align:right}.budget-small-label{font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--muted)}.budget-total{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:800;color:var(--green-dark);margin-top:4px}.budget-multi-select{position:relative}.budget-select-btn{width:100%;min-height:44px;text-align:left;border:1px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--ink);padding:10px 13px;font:14px Inter,sans-serif;cursor:pointer}.budget-select-btn:after{content:'▾';float:right;color:var(--muted)}.budget-dropdown{display:none;position:absolute;left:0;right:0;top:49px;z-index:30;max-height:240px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(23,65,82,.14);padding:7px}.budget-dropdown.show{display:block}.budget-option{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:9px;font-size:13px;cursor:pointer}.budget-option:hover{background:#F2F8F5}.budget-option input{width:17px!important;min-height:17px!important;height:17px!important;flex:none}.budget-summary{margin-top:14px;display:grid;gap:10px}.budget-summary-card{margin-top:0;padding:14px}.budget-summary-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.budget-name{font-size:14px;font-weight:800;color:var(--green-dark)}.budget-meta{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.45}.budget-amount{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;white-space:nowrap}.budget-progress{height:9px;background:#EAF3F9;border-radius:10px;overflow:hidden;margin-top:11px}.budget-progress-fill{height:100%;background:linear-gradient(90deg,#0F9D78,#10B981);border-radius:10px}.budget-progress-fill.over{background:#E04450}.budget-spent-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:6px}.budget-delete{border:1px solid #F0A7AE;background:#fff0f2;color:#D83D4A;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-top:9px}.budget-empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:12px}@media(max-width:520px){.budget-month-row{flex-direction:column;align-items:stretch}.budget-total-box{text-align:left;min-width:0}}
 
+
+  /* Dashboard monthly projection selector — visual/additive only */
+  .dashboard-month-control{
+    margin-top:16px;
+    padding:12px 14px;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:linear-gradient(135deg,#F7FFFC,#F5FAFF);
+    box-shadow:var(--shadow);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .dashboard-month-label{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.1em;
+    color:var(--green-dark);
+  }
+  .dashboard-month-sub{
+    margin-top:3px;
+    font-size:10.5px;
+    color:var(--muted);
+  }
+  #dashboardProjectionMonth{
+    min-width:155px;
+    min-height:42px;
+    border:1px solid var(--line-strong);
+    border-radius:12px;
+    background:#fff;
+    padding:8px 10px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  @media(max-width:520px){
+    .dashboard-month-control{align-items:stretch;flex-direction:column;}
+    #dashboardProjectionMonth{width:100%;min-width:0;}
+  }
+
 </style>
 
 <!-- Enhancements: consistent controls across all tabs -->
@@ -966,9 +1007,16 @@ nav.tabs button{
       <div class="dashboard-stats" id="dashboardStats"></div>
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
+      <div class="dashboard-month-control">
+        <div>
+          <div class="dashboard-month-label">MONTHLY PROJECTION</div>
+          <div class="dashboard-month-sub">Planned income and expenses</div>
+        </div>
+        <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
+      </div>
       <div class="dashboard-two-col">
-        <div class="dashboard-panel"><h3>Upcoming</h3><div id="dashboardUpcoming"></div></div>
-        <div class="dashboard-panel"><h3>Money outlook</h3><div id="dashboardOutlook"></div></div>
+        <div class="dashboard-panel"><h3>Monthly Projection</h3><div id="dashboardUpcoming"></div></div>
+        <div class="dashboard-panel"><h3>Monthly Totals</h3><div id="dashboardOutlook"></div></div>
       </div>
     </section>
 
@@ -1815,24 +1863,57 @@ function renderDashboard(){
     <div class="dashboard-stat saving"><div class="label">Monthly savings</div><div class="value">${fmtMoney(savings)}</div><div class="hint">Income − expenses</div></div>`;
 
   const todayStr=localDateIso();
-  const horizon=new Date(); horizon.setDate(horizon.getDate()+90);
+  const todayDate=new Date(todayStr+'T00:00:00');
+  const horizon=new Date();
+  horizon.setDate(horizon.getDate()+90);
   const horizonStr=horizon.toISOString().slice(0,10);
-  const currentYM=localMonthIso(new Date());
-  const upcoming=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr)).filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM).sort((a,b)=>a.date.localeCompare(b.date));
+
+  const monthPicker=document.getElementById('dashboardProjectionMonth');
+  if(monthPicker && !monthPicker.value) monthPicker.value=localMonthIso(todayDate);
+  const selectedYM=(monthPicker && monthPicker.value) || localMonthIso(todayDate);
+  const [selY,selM]=selectedYM.split('-').map(Number);
+  const selectedStart=`${selectedYM}-01`;
+  const selectedEndDate=new Date(selY,selM,0);
+  const selectedEnd=`${selectedYM}-${String(selectedEndDate.getDate()).padStart(2,'0')}`;
+
+  // Generate occurrences across the selected month, including past months.
+  const projectionFrom=selectedStart<todayStr ? selectedStart : todayStr;
+  const projectionTo=selectedEnd>horizonStr ? selectedEnd : horizonStr;
+  const allOccurrences=PLANS.flatMap(p=>expandPlanOccurrences(p,projectionFrom,projectionTo));
+  const selectedEntries=allOccurrences
+    .filter(p=>p.date>=selectedStart && p.date<=selectedEnd)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
   const upEl=document.getElementById('dashboardUpcoming');
-  if(upEl) upEl.innerHTML=upcoming.length ? upcoming.map(p=>{
+  if(upEl) upEl.innerHTML=selectedEntries.length ? selectedEntries.map(p=>{
     const credit=(p.credit||0)>0, amt=credit?p.credit:p.debit;
     return `<div class="upcoming-row"><div class="u-main"><div class="u-title">${escapeHtml(p.description || (credit?'Income':'Expense'))}</div><div class="u-meta">${escapeHtml(fmtDateLabel(p.date))} · ${escapeHtml(p.account||'')}</div></div><div class="u-amt ${credit?'credit':'debit'}">${credit?'+':'−'}${fmtMoney(amt)}</div></div>`;
-  }).join('') : `<div class="empty-mini">No upcoming planned entries.</div>`;
+  }).join('') : `<div class="empty-mini">No planned entries for ${escapeHtml(fmtMonthLabel(selectedYM))}.</div>`;
 
   const outlook=document.getElementById('dashboardOutlook');
   if(outlook){
-    const occ=PLANS.flatMap(p=>expandPlanOccurrences(p,todayStr,horizonStr));
-    const thisMonth=occ.filter(p=>p.date>=todayStr && p.date.slice(0,7)===currentYM);
-    const inMonth=thisMonth.reduce((s,p)=>s+(p.credit||0),0), outMonth=thisMonth.reduce((s,p)=>s+(p.debit||0),0);
-    const projected=totalBalanceForDisplay()+inMonth-outMonth;
-    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">This month income</div></div><div class="u-amt credit">+${fmtMoney(inMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">This month expenses</div></div><div class="u-amt debit">−${fmtMoney(outMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">After this month's planned entries</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
+    const inMonth=selectedEntries.reduce((s,p)=>s+(p.credit||0),0);
+    const outMonth=selectedEntries.reduce((s,p)=>s+(p.debit||0),0);
+
+    // Projected balance is anchored to today's actual balance and adjusted by
+    // planned flows between today and the selected month end.
+    let projected=totalBalanceForDisplay();
+    if(selectedYM>=localMonthIso(todayDate)){
+      const forward=allOccurrences.filter(p=>p.date>=todayStr && p.date<=selectedEnd);
+      projected += forward.reduce((s,p)=>s+(p.credit||0)-(p.debit||0),0);
+    }else{
+      const afterSelected=allOccurrences.filter(p=>p.date>selectedEnd && p.date<=todayStr);
+      projected -= afterSelected.reduce((s,p)=>s+(p.credit||0)-(p.debit||0),0);
+    }
+
+    outlook.innerHTML=`<div class="upcoming-row"><div class="u-main"><div class="u-title">Total income</div><div class="u-meta">${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt credit">+${fmtMoney(inMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Total expenses</div><div class="u-meta">${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt debit">−${fmtMoney(outMonth)}</div></div><div class="upcoming-row"><div class="u-main"><div class="u-title">Projected balance</div><div class="u-meta">For ${escapeHtml(fmtMonthLabel(selectedYM))}</div></div><div class="u-amt ${projected>=0?'credit':'debit'}">${fmtMoney(projected)}</div></div>`;
   }
+
+  if(monthPicker && !monthPicker.dataset.bound){
+    monthPicker.dataset.bound='1';
+    monthPicker.addEventListener('change',()=>renderDashboard());
+  }
+
 }
 function populateFilterSelects(){
   const accSel = document.getElementById('filterAccount');
