@@ -558,20 +558,20 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   }
 
 
-  /* Unified Monthly Projection section — visual organization only */
-  .dashboard-monthly-overview{
+  /* Monthly Projection unified presentation — visual only */
+  .dashboard-monthly-projection{
     margin-top:16px;
     padding:16px;
-    border:1px solid #D3E9E4;
+    border:1px solid #D4EAE5;
     border-radius:24px;
     background:
-      radial-gradient(circle at 100% 0%,rgba(16,185,129,.10),transparent 30%),
-      linear-gradient(145deg,#F9FFFD 0%,#FFFFFF 58%,#F5FAFF 100%);
+      radial-gradient(circle at 100% 0%,rgba(16,185,129,.12),transparent 32%),
+      radial-gradient(circle at 0% 100%,rgba(49,130,206,.07),transparent 30%),
+      linear-gradient(145deg,#F8FFFC 0%,#FFFFFF 60%,#F5FAFF 100%);
     box-shadow:0 14px 34px rgba(30,91,113,.09);
   }
-  .dashboard-monthly-overview .dashboard-month-control{
-    margin-top:0;
-    margin-bottom:14px;
+  .dashboard-monthly-projection .dashboard-month-control{
+    margin:0 0 14px;
     border:0;
     background:rgba(255,255,255,.72);
     box-shadow:none;
@@ -582,22 +582,36 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
     border-radius:20px;
   }
   .dashboard-projection-sub{
-    margin:-7px 0 10px;
+    margin:-7px 0 11px;
     font-size:10.5px;
     color:var(--muted);
   }
-  .dashboard-projection-panel #dashboardUpcoming .upcoming-row{
-    margin-left:0;
-    margin-right:0;
+  .projection-group{
+    overflow:hidden;
+    border-radius:16px;
+    margin-bottom:12px;
+    border:1px solid #D9ECE7;
   }
+  .projection-group.income{background:linear-gradient(145deg,#F0FBF6,#FFFFFF);}
+  .projection-group.expense{background:linear-gradient(145deg,#FFF5F5,#FFFFFF);border-color:#F1DCDC;}
+  .projection-group-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:12px 13px;
+    font-weight:800;
+  }
+  .projection-group.income .projection-group-head{color:#087F62;background:rgba(16,185,129,.09);}
+  .projection-group.expense .projection-group-head{color:#C53F4C;background:rgba(224,68,80,.08);}
+  .projection-group-total{font-family:'IBM Plex Mono',monospace;}
+  .projection-empty{padding:13px;font-size:11px;color:var(--muted);}
+  .projection-group .upcoming-row{margin:0 11px!important;}
   .dashboard-totals-panel{
-    background:linear-gradient(145deg,#F5FFFA,#FFFFFF)!important;
+    background:linear-gradient(145deg,#F2FBF7,#FFFFFF)!important;
   }
   @media(max-width:520px){
-    .dashboard-monthly-overview{padding:12px;border-radius:21px;}
-    .dashboard-monthly-overview .dashboard-month-control{
-      margin-bottom:10px;
-    }
+    .dashboard-monthly-projection{padding:12px;border-radius:21px;}
   }
 
 </style>
@@ -1050,7 +1064,7 @@ nav.tabs button{
       <div class="dashboard-stats" id="dashboardStats"></div>
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
-      <div class="dashboard-monthly-overview">
+      <div class="dashboard-monthly-projection">
         <div class="dashboard-month-control">
           <div>
             <div class="dashboard-month-label">MONTHLY PROJECTION</div>
@@ -1937,10 +1951,25 @@ function renderDashboard(){
     .sort((a,b)=>a.date.localeCompare(b.date));
 
   const upEl=document.getElementById('dashboardUpcoming');
-  if(upEl) upEl.innerHTML=selectedEntries.length ? selectedEntries.map(p=>{
-    const credit=(p.credit||0)>0, amt=credit?p.credit:p.debit;
-    return `<div class="upcoming-row"><div class="u-main"><div class="u-title">${escapeHtml(p.description || (credit?'Income':'Expense'))}</div><div class="u-meta">${escapeHtml(fmtDateLabel(p.date))} · ${escapeHtml(p.account||'')}</div></div><div class="u-amt ${credit?'credit':'debit'}">${credit?'+':'−'}${fmtMoney(amt)}</div></div>`;
-  }).join('') : `<div class="empty-mini">No planned entries for ${escapeHtml(fmtMonthLabel(selectedYM))}.</div>`;
+  if(upEl){
+    const incomeEntries=selectedEntries.filter(p=>(p.credit||0)>0);
+    const expenseEntries=selectedEntries.filter(p=>(p.debit||0)>0);
+    const renderProjectionRow=p=>{
+      const credit=(p.credit||0)>0, amt=credit?p.credit:p.debit;
+      return `<div class="upcoming-row"><div class="u-main"><div class="u-title">${escapeHtml(p.description || (credit?'Income':'Expense'))}</div><div class="u-meta">${escapeHtml(fmtDateLabel(p.date))} · ${escapeHtml(p.account||'')}</div></div><div class="u-amt ${credit?'credit':'debit'}">${credit?'+':'−'}${fmtMoney(amt)}</div></div>`;
+    };
+    const incomeTotal=incomeEntries.reduce((s,p)=>s+(p.credit||0),0);
+    const expenseTotal=expenseEntries.reduce((s,p)=>s+(p.debit||0),0);
+    upEl.innerHTML=`
+      <div class="projection-group income">
+        <div class="projection-group-head"><span>Income</span><span class="projection-group-total">+${fmtMoney(incomeTotal)}</span></div>
+        ${incomeEntries.length ? incomeEntries.map(renderProjectionRow).join('') : '<div class="projection-empty">No planned income</div>'}
+      </div>
+      <div class="projection-group expense">
+        <div class="projection-group-head"><span>Expenses</span><span class="projection-group-total">−${fmtMoney(expenseTotal)}</span></div>
+        ${expenseEntries.length ? expenseEntries.map(renderProjectionRow).join('') : '<div class="projection-empty">No planned expenses</div>'}
+      </div>`;
+  }
 
   const outlook=document.getElementById('dashboardOutlook');
   if(outlook){
