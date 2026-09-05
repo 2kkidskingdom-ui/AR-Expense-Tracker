@@ -513,6 +513,9 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
   .cal-footer .tstat{padding:10px 6px;}
   .cal-footer .tstat .v{font-size:12px;}
 }
+  /* Monthly Budget — additive feature only */
+  #budget .section-title{margin-top:0}.budget-card,.budget-summary-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-top:10px}.budget-month-row{display:flex;align-items:flex-end;gap:12px}.budget-total-box{min-width:145px;padding:10px 12px;border:1px solid #B9D3DF;border-radius:12px;background:#F3FBF8;text-align:right}.budget-small-label{font-size:9px;font-weight:700;letter-spacing:.08em;color:var(--muted)}.budget-total{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:800;color:var(--green-dark);margin-top:4px}.budget-multi-select{position:relative}.budget-select-btn{width:100%;min-height:44px;text-align:left;border:1px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--ink);padding:10px 13px;font:14px Inter,sans-serif;cursor:pointer}.budget-select-btn:after{content:'▾';float:right;color:var(--muted)}.budget-dropdown{display:none;position:absolute;left:0;right:0;top:49px;z-index:30;max-height:240px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px rgba(23,65,82,.14);padding:7px}.budget-dropdown.show{display:block}.budget-option{display:flex;align-items:center;gap:8px;padding:9px 8px;border-radius:9px;font-size:13px;cursor:pointer}.budget-option:hover{background:#F2F8F5}.budget-option input{width:17px!important;min-height:17px!important;height:17px!important;flex:none}.budget-summary{margin-top:14px;display:grid;gap:10px}.budget-summary-card{margin-top:0;padding:14px}.budget-summary-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.budget-name{font-size:14px;font-weight:800;color:var(--green-dark)}.budget-meta{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.45}.budget-amount{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;white-space:nowrap}.budget-progress{height:9px;background:#EAF3F9;border-radius:10px;overflow:hidden;margin-top:11px}.budget-progress-fill{height:100%;background:linear-gradient(90deg,#0F9D78,#10B981);border-radius:10px}.budget-progress-fill.over{background:#E04450}.budget-spent-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:6px}.budget-delete{border:1px solid #F0A7AE;background:#fff0f2;color:#D83D4A;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-top:9px}.budget-empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:12px}@media(max-width:520px){.budget-month-row{flex-direction:column;align-items:stretch}.budget-total-box{text-align:left;min-width:0}}
+
 </style>
 
 <!-- Enhancements: consistent controls across all tabs -->
@@ -793,6 +796,7 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
     <button class="tab-btn" data-tab="analysis">Summary</button>
     <button class="tab-btn" data-tab="plan">Projections</button>
     <button class="tab-btn" data-tab="calendar">Calendar</button>
+    <button class="tab-btn" data-tab="budget">Budget</button>
   </nav>
 
   <main>
@@ -817,6 +821,21 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
       </div>
       <div id="dayFilterBanner" style="display:none;"></div>
       <div class="ledger-list" id="ledgerList"></div>
+    </section>
+
+    <section id="budget">
+      <div class="section-title">Monthly Budget</div>
+      <div class="budget-card">
+        <div class="budget-month-row">
+          <div class="field" style="margin:0;flex:1;"><label for="budgetMonth">MONTH</label><input type="month" id="budgetMonth"></div>
+          <div class="budget-total-box"><div class="budget-small-label">TOTAL BUDGET</div><div class="budget-total" id="budgetTotal">₹0.00</div></div>
+        </div>
+        <div class="field"><label>EXPENSE CATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetCategoryBtn">Select categories</button><div class="budget-dropdown" id="budgetCategoryDropdown"></div></div></div>
+        <div class="field"><label>EXPENSE SUBCATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetSubcategoryBtn">Select subcategories</button><div class="budget-dropdown" id="budgetSubcategoryDropdown"></div></div></div>
+        <div class="field"><label for="budgetAmount">MONTHLY BUDGET AMOUNT</label><input type="number" id="budgetAmount" min="0" step="0.01" inputmode="decimal" placeholder="Enter amount"></div>
+        <button class="save-btn" id="budgetSaveBtn">Add Budget</button>
+      </div>
+      <div class="budget-summary" id="budgetSummary"></div>
     </section>
 
     <section id="analysis">
@@ -2077,6 +2096,18 @@ function renderAnalysis(range){
   if(cb&&!cb.dataset.bound){cb.dataset.bound='1';cb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='block';table.style.display='none';cb.classList.add('active');tb.classList.remove('active');});tb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='none';table.style.display='block';tb.classList.add('active');cb.classList.remove('active');});}
 }
 
+// ---------- Monthly Budget (additive feature; existing data/logic untouched) ----------
+const LS_BUDGETS='ledger.monthlyBudgets.v1';
+let MONTHLY_BUDGETS={};
+let budgetCategorySelections=new Set(), budgetSubcategorySelections=new Set();
+function loadMonthlyBudgets(){try{const raw=localStorage.getItem(LS_BUDGETS);MONTHLY_BUDGETS=raw?JSON.parse(raw):{};if(!MONTHLY_BUDGETS||typeof MONTHLY_BUDGETS!=='object'||Array.isArray(MONTHLY_BUDGETS))MONTHLY_BUDGETS={};}catch(e){MONTHLY_BUDGETS={};}}
+function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));markLocalDirty();if(accessToken)debouncedBackup();}
+function currentBudgetMonth(){const e=document.getElementById('budgetMonth');return e&&e.value?e.value:new Date().toISOString().slice(0,7)}
+function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
+function renderBudgetSummary(){const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS[m])?MONTHLY_BUDGETS[m]:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);document.getElementById('budgetTotal').textContent=fmtMoney(tot);if(!list.length){w.innerHTML='<div class="budget-empty">No budget added for this month.</div>';return}w.innerHTML=list.map((b,i)=>{let spent=0;TXNS.forEach(t=>{if(t.amount<0&&isRealExpense(t)&&(t.date||'').slice(0,7)===m){const cm=b.categories.includes(t.category),sk=(t.category||'')+'|||'+(t.subcategory||''),sm=b.subcategories.includes(sk);if(cm&&(b.subcategories.length?sm:true))spent+=Math.abs(Number(t.amount||0))}});const amt=Number(b.amount||0),pct=amt?Math.min(100,spent/amt*100):0,over=spent>amt&&amt>0;return `<div class="budget-summary-card"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml(b.categories.join(', '))}</div><div class="budget-meta">${b.subcategories.length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'}</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent: ${fmtMoney(spent)}</span><span>${amt?(spent/amt*100).toFixed(1)+'%':''}</span></div><button class="budget-delete" data-budget-delete="${i}">Delete</button></div>`}).join('');w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{const a=MONTHLY_BUDGETS[m]||[];a.splice(Number(btn.dataset.budgetDelete),1);if(a.length)MONTHLY_BUDGETS[m]=a;else delete MONTHLY_BUDGETS[m];saveMonthlyBudgets();renderBudgetSummary()}))}
+function addMonthlyBudget(){const m=currentBudgetMonth(),amt=Number(document.getElementById('budgetAmount').value);if(!Number.isFinite(amt)||amt<=0){showToast('Enter a valid monthly budget amount.');return}if(!budgetCategorySelections.size){showToast('Select at least one expense category.');return}if(!Array.isArray(MONTHLY_BUDGETS[m]))MONTHLY_BUDGETS[m]=[];MONTHLY_BUDGETS[m].push({id:uid(),month:m,categories:[...budgetCategorySelections],subcategories:[...budgetSubcategorySelections],amount:amt,createdAt:Date.now()});saveMonthlyBudgets();renderBudgetSummary();budgetCategorySelections=new Set();budgetSubcategorySelections=new Set();document.getElementById('budgetAmount').value='';renderBudgetMultiSelects();showToast('Monthly budget added.')}
+function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const cb=document.getElementById('budgetCategoryBtn'),sb=document.getElementById('budgetSubcategoryBtn'),cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');cb.addEventListener('click',e=>{e.stopPropagation();sd.classList.remove('show');cd.classList.toggle('show')});sb.addEventListener('click',e=>{e.stopPropagation();cd.classList.remove('show');sd.classList.toggle('show')});cd.addEventListener('click',e=>e.stopPropagation());sd.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',()=>{cd.classList.remove('show');sd.classList.remove('show')});m.addEventListener('change',renderBudgetSummary);document.getElementById('budgetSaveBtn').addEventListener('click',addMonthlyBudget);renderBudgetMultiSelects();renderBudgetSummary()}
+
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('main section').forEach(s=>s.classList.toggle('active', s.id===tab));
@@ -2089,6 +2120,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); }
+    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); }
   });
 });
 
@@ -2921,6 +2953,7 @@ bindDateTextInput('fDate');
   loadData();
   loadPlans();
   loadCategoryConfig();
+  initBudgetUI();
   if(ensureRecordTimestamps()){
     localStorage.setItem(LS_TXNS, JSON.stringify(TXNS));
     localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
