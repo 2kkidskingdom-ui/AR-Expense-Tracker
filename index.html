@@ -1697,102 +1697,9 @@ nav.tabs button.active{font-weight:700!important;}
     .app-title{gap:7px;font-size:clamp(25px,7.2vw,34px);}
     .app-title .app-title-ar{min-width:38px;height:31px;padding:0 7px;}
   }
-
-/* ================================================================
-   Modern fintech dashboard refresh — presentation only.
-   Existing data IDs and functions are intentionally preserved.
-   ================================================================ */
-:root{
-  --modern-ink:#0D1838;
-  --modern-muted:#718096;
-  --modern-teal:#08785F;
-  --modern-mint:#DDF8EE;
-  --modern-red:#DF2836;
-  --modern-blue:#1877D2;
-  --modern-purple:#7650D9;
-}
-body{
-  background:linear-gradient(180deg,#F1FBF8 0%,#F7FCFD 48%,#EFF9F7 100%) !important;
-  color:var(--modern-ink) !important;
-  font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif !important;
-}
-.wrap{max-width:900px !important;padding:0 14px !important;}
-.modern-app-header{padding:24px 4px 18px !important;}
-.modern-brand{display:grid;grid-template-columns:96px 1fr 64px;align-items:center;gap:12px;min-height:98px;}
-.finance-logo{width:94px;height:94px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 14px rgba(16,168,120,.12));}
-.finance-logo svg{width:100%;height:100%;}
-.modern-brand-copy{min-width:0;}
-.modern-brand .app-title{margin:0 !important;display:flex;align-items:baseline;gap:9px;flex-wrap:nowrap;line-height:1 !important;text-align:left !important;white-space:nowrap;}
-.modern-brand .app-title-ar,.modern-brand .app-title-main{font-family:'Inter',system-ui,sans-serif !important;font-weight:800 !important;letter-spacing:-.045em !important;}
-.modern-brand .app-title-ar{font-size:44px !important;background:linear-gradient(90deg,#0FA879,#087EBA);-webkit-background-clip:text;background-clip:text;color:transparent !important;}
-.modern-brand .app-title-main{font-size:36px !important;color:#0C1637 !important;}
-.modern-tagline{margin-top:8px;font-size:15px;color:#73839B;letter-spacing:.01em;white-space:nowrap;}
-.modern-tagline span{padding:0 7px;color:#A0ADBD;}
-.modern-sync{margin-top:7px !important;display:flex;align-items:center;gap:6px;color:#82909F !important;font-size:10px !important;}
-.modern-settings{width:58px;height:58px;border:0;border-radius:50%;background:linear-gradient(145deg,#E2FAF2,#D5F7EE);color:#08765D;font-size:27px;cursor:pointer;box-shadow:0 8px 22px rgba(16,120,95,.09);}
-.modern-tabs{background:#fff;border:0 !important;border-radius:22px;padding:9px !important;box-shadow:0 7px 24px rgba(29,80,93,.07);margin:4px 0 0 !important;position:sticky !important;top:0 !important;}
-.modern-tabs button{font-family:'Inter',sans-serif !important;font-size:14px !important;font-weight:650 !important;color:#68798E !important;border:0 !important;border-radius:16px !important;padding:12px 8px !important;min-height:54px !important;background:transparent !important;}
-.modern-tabs button.active{background:linear-gradient(145deg,#DDF8EE,#EAFBF6) !important;color:#08745C !important;border:0 !important;box-shadow:0 5px 16px rgba(11,143,98,.08);}
-.modern-tabs button::before{display:block;font-size:21px;line-height:1;margin-bottom:5px;opacity:.9;}
-.modern-tabs button:nth-child(1)::before{content:'⌂';}.modern-tabs button:nth-child(2)::before{content:'☷';}.modern-tabs button:nth-child(3)::before{content:'◔';}.modern-tabs button:nth-child(4)::before{content:'▥';}.modern-tabs button:nth-child(5)::before{content:'□';}.modern-tabs button:nth-child(6)::before{content:'▣';}
-main{padding:28px 0 0 !important;}
-#dash{padding-bottom:25px;}
-.modern-dashboard-overview,.modern-dashboard-card{background:rgba(255,255,255,.94);border:1px solid #DCECEF;border-radius:26px;box-shadow:0 12px 32px rgba(30,91,113,.07);}
-.modern-dashboard-overview{padding:28px 24px 20px;}
-.modern-overview-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
-.modern-overview-head h2,.modern-dashboard-card h2{margin:0;font-family:'Inter',sans-serif !important;font-size:28px !important;line-height:1.15;font-weight:800 !important;letter-spacing:-.035em;color:#0D1838 !important;}
-.modern-month-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
-.modern-calendar-icon{color:#687A92;font-size:17px;}
-.modern-month-row input{border:0;background:transparent;color:#718096;font-size:17px;font-weight:600;padding:0;outline:none;font-family:'Inter',sans-serif;}
-.this-month-pill{background:linear-gradient(145deg,#EFFAF7,#F5FBFD);color:#08765D;border-radius:28px;padding:14px 19px;font-weight:750;font-size:14px;white-space:nowrap;display:flex;align-items:center;gap:8px;}
-.this-month-pill span{font-size:19px;}
-.modern-overview-stats{grid-template-columns:repeat(3,1fr) !important;gap:14px !important;margin-top:24px !important;}
-.modern-overview-stats .dashboard-stat{border:0 !important;border-radius:20px !important;padding:20px 17px !important;box-shadow:none !important;min-height:128px;position:relative;display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto 1fr;column-gap:13px;align-items:center;}
-.modern-overview-stats .dashboard-stat.income{background:linear-gradient(145deg,#ECFAF5,#F8FFFC) !important;}
-.modern-overview-stats .dashboard-stat.expense{background:linear-gradient(145deg,#FFF0F1,#FFF9F9) !important;}
-.modern-overview-stats .dashboard-stat.balance{background:linear-gradient(145deg,#EDF5FF,#F7FAFF) !important;}
-.modern-overview-stats .stat-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:800;grid-row:1/3;}
-.modern-overview-stats .income .stat-icon{background:#D4F4E8;color:#0A9A6B;}.modern-overview-stats .expense .stat-icon{background:#FFD9DE;color:#E32838;}.modern-overview-stats .balance .stat-icon{background:#D9E9FF;color:#1676D2;}
-.modern-overview-stats .label{font-family:'Inter',sans-serif !important;text-transform:none !important;letter-spacing:0 !important;font-size:15px !important;font-weight:650 !important;color:#687A92 !important;align-self:end;}
-.modern-overview-stats .value{font-family:'Inter',sans-serif !important;font-size:25px !important;font-weight:800 !important;letter-spacing:-.03em;align-self:start;margin-top:4px !important;}
-.modern-overview-stats .income .value{color:#087F62 !important;}.modern-overview-stats .expense .value{color:#DE2837 !important;}.modern-overview-stats .balance .value{color:#1877D2 !important;}
-.modern-savings-line{display:flex;justify-content:flex-end;gap:9px;align-items:center;margin-top:12px;color:#7A8796;font-size:11px;}.modern-savings-line strong{color:#2873A8;font-weight:750;}
-.modern-dashboard-card{margin-top:22px;padding:24px;}
-.modern-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-.modern-card-head h2{font-size:25px !important;}
-.modern-view-all{border:0;border-radius:22px;background:#F0FAF8;color:#08765D;padding:11px 16px;font-weight:750;font-size:13px;cursor:pointer;white-space:nowrap;}.modern-view-all span{font-size:20px;margin-left:5px;vertical-align:-1px;}
-.recent-transactions-list{margin-top:4px;}
-.recent-txn-row{display:grid;grid-template-columns:56px 1fr auto;align-items:center;gap:14px;min-height:88px;border-bottom:1px solid #E7EDF1;cursor:pointer;}.recent-txn-row:last-child{border-bottom:0;}
-.recent-txn-icon{width:56px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:800;}.recent-txn-icon.income{background:#DDF7ED;color:#07966A;}.recent-txn-icon.expense{background:#FFE1E5;color:#E32838;}
-.recent-txn-main{min-width:0;}.recent-txn-title{font-size:17px;font-weight:750;color:#101A36;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.recent-txn-meta{font-size:12.5px;color:#718096;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}.recent-txn-amount{font-size:17px;font-weight:800;white-space:nowrap;}.recent-txn-amount.income{color:#07966A;}.recent-txn-amount.expense{color:#E32838;}
-.modern-empty{padding:20px 4px;text-align:center;color:#7A8796;font-size:13px;}
-.quick-actions-card h2{font-size:25px !important;margin-bottom:20px;}.quick-actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}.quick-action{border:0;border-radius:18px;min-height:126px;padding:15px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;font:750 14px 'Inter',sans-serif;cursor:pointer;}.quick-action .qa-icon{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:800;}.quick-action.income{background:#E4F8F0;color:#07855F;}.quick-action.income .qa-icon{background:#0BA875;}.quick-action.expense{background:#FFF0F2;color:#E32838;}.quick-action.expense .qa-icon{background:#E32838;}.quick-action.transfer{background:#EAF4FF;color:#1476D0;}.quick-action.transfer .qa-icon{background:#1877D2;font-size:25px;}.quick-action.reports{background:#F0EBFF;color:#7650D9;}.quick-action.reports .qa-icon{background:#7650D9;font-size:24px;}
-.accounts-modern-card{padding:22px 24px;}.accounts-modern-card .accounts-grid{margin-top:0;gap:8px;}.accounts-modern-card .acct-card{border:0;background:#F7FBFA;border-radius:15px;padding:14px 16px;box-shadow:none;}.accounts-modern-card .acct-card .name{font-size:14px;}.accounts-modern-card .acct-card .bal{font-family:'Inter',sans-serif !important;font-size:15px !important;font-weight:800 !important;}
-.dashboard-monthly-projection{margin-top:22px !important;}
-@media(max-width:700px){
-  .wrap{padding:0 9px !important;}
-  .modern-app-header{padding:18px 2px 12px !important;}
-  .modern-brand{grid-template-columns:62px 1fr 48px;gap:8px;min-height:72px;}
-  .finance-logo{width:62px;height:62px;}
-  .modern-brand .app-title{gap:5px;}.modern-brand .app-title-ar{font-size:29px !important;}.modern-brand .app-title-main{font-size:22px !important;}
-  .modern-tagline{font-size:9px;letter-spacing:-.01em;margin-top:6px;}.modern-tagline span{padding:0 3px;}.modern-sync{font-size:8px !important;margin-top:5px !important;}.modern-settings{width:44px;height:44px;font-size:21px;}
-  .modern-tabs button{font-size:10.5px !important;min-height:54px !important;padding:9px 2px !important;}.modern-tabs button::before{font-size:18px;margin-bottom:4px;}
-  main{padding-top:18px !important;}
-  .modern-dashboard-overview{padding:22px 14px 15px;border-radius:23px;}.modern-overview-head h2,.modern-dashboard-card h2{font-size:24px !important;}.modern-month-row input{font-size:14px;}.this-month-pill{padding:11px 13px;font-size:11px;}.this-month-pill span{font-size:15px;}
-  .modern-overview-stats{gap:10px !important;margin-top:19px !important;}.modern-overview-stats .dashboard-stat{padding:14px 9px !important;min-height:112px;grid-template-columns:34px 1fr;column-gap:7px;}.modern-overview-stats .stat-icon{width:34px;height:34px;font-size:19px;}.modern-overview-stats .label{font-size:11px !important;}.modern-overview-stats .value{font-size:16px !important;}.modern-savings-line{font-size:10px;}
-  .modern-dashboard-card{padding:19px 14px;border-radius:23px;margin-top:17px;}.modern-card-head h2,.quick-actions-card h2{font-size:21px !important;}.modern-view-all{font-size:10.5px;padding:9px 11px;}.recent-txn-row{grid-template-columns:43px 1fr auto;gap:10px;min-height:77px;}.recent-txn-icon{width:43px;height:43px;border-radius:14px;font-size:20px;}.recent-txn-title{font-size:14px;}.recent-txn-meta{font-size:10.5px;}.recent-txn-amount{font-size:13.5px;}
-  .quick-actions-grid{grid-template-columns:repeat(2,1fr);gap:10px;}.quick-action{min-height:105px;font-size:12px;gap:8px;}.quick-action .qa-icon{width:39px;height:39px;font-size:24px;}
-  .accounts-modern-card{padding:18px 14px;}
-}
-@media(max-width:380px){.modern-brand .app-title-ar{font-size:26px !important;}.modern-brand .app-title-main{font-size:19px !important;}.modern-tagline{font-size:8px;}.modern-overview-stats .dashboard-stat{padding:12px 7px !important;}.modern-overview-stats .value{font-size:14px !important;}}
-
-.modern-dashboard-quote{padding:22px 14px 8px;text-align:center;color:#71839B;font-size:14px;line-height:1.6;}
-.modern-dashboard-quote .quote-mark{font-size:35px;line-height:.7;font-weight:900;color:#71839B;margin-bottom:5px;}
-.modern-dashboard-quote small{display:block;font-size:12px;margin-top:2px;}
-@media(max-width:520px){.modern-dashboard-quote{font-size:12px;padding-top:18px;}.modern-dashboard-quote small{font-size:10px;}}
 </style>
 
-</head>
+\n<style id="modern-brand-and-tabs-v3">\n/* Modern brand + colourful navigation refresh — visual only. Existing functionality is untouched. */\n.modern-brand-header{\n  padding:22px 8px 18px!important;\n  background:linear-gradient(135deg,#FFFFFF 0%,#F2FFFA 54%,#EEF8FF 100%)!important;\n  border-bottom:1px solid #DCEBF1!important;\n}\n.modern-brand-row{\n  display:grid;grid-template-columns:82px minmax(0,1fr) 52px;align-items:center;gap:12px;\n}\n.finance-brand-mark{width:78px;height:78px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 7px 10px rgba(7,90,73,.12));}\n.finance-brand-mark svg{width:100%;height:100%;display:block;}\n.modern-brand-copy{min-width:0;text-align:left;}\n.modern-brand-copy .app-title{\n  display:flex!important;align-items:center;justify-content:flex-start;gap:9px!important;\n  width:100%;font-family:'Inter',Arial,sans-serif!important;font-weight:800!important;\n  letter-spacing:-.045em!important;line-height:1!important;color:#071A36!important;\n  text-shadow:none!important;\n}\n.modern-brand-copy .app-title .app-title-ar{\n  min-width:57px!important;height:45px!important;padding:0 10px!important;\n  border:1px solid #8AA9A1!important;border-radius:13px!important;\n  background:linear-gradient(145deg,#062F28 0%,#075A49 52%,#0B8F62 100%)!important;\n  color:transparent!important;background-clip:text!important;-webkit-background-clip:text!important;\n  -webkit-text-fill-color:transparent!important;\n  font-family:'Inter',Arial,sans-serif!important;font-size:1.05em!important;font-weight:900!important;\n  letter-spacing:-.08em!important;box-shadow:0 4px 13px rgba(7,90,73,.13)!important;\n  position:relative;\n}\n.modern-brand-copy .app-title .app-title-ar:after{\n  content:"";position:absolute;inset:0;border-radius:13px;\n  background:linear-gradient(145deg,rgba(6,47,40,.06),rgba(11,143,98,.02));pointer-events:none;\n}\n.modern-brand-copy .app-title .app-title-main{\n  font-size:clamp(25px,4.2vw,34px)!important;font-weight:800!important;\n  color:#071A36!important;white-space:nowrap;\n}\n.modern-tagline{\n  margin-top:9px;font-family:'Inter',Arial,sans-serif;font-size:11.5px;font-weight:500;\n  letter-spacing:.015em;color:#647A8C;white-space:nowrap;\n}\n.modern-tagline span{color:#A5B6C1;padding:0 4px;font-weight:800;}\n.modern-sync{margin-top:8px!important;display:flex!important;align-items:center;justify-content:flex-start!important;gap:7px!important;\n  font-family:'Inter',Arial,sans-serif!important;font-size:10.5px!important;letter-spacing:.02em!important;text-transform:none!important;color:#647A8C!important;}\n.modern-sync .sync-dot{width:9px!important;height:9px!important;box-shadow:0 0 0 5px rgba(7,150,105,.10)!important;}\n.modern-settings{\n  width:52px;height:52px;padding:0!important;border:0!important;border-radius:50%!important;\n  display:flex!important;align-items:center;justify-content:center;font-size:25px!important;\n  color:#08745B!important;background:linear-gradient(145deg,#DDF8EF,#ECFBF7)!important;\n  box-shadow:0 8px 20px rgba(7,150,105,.12)!important;\n}\n.modern-settings:hover{transform:rotate(22deg);color:#064E40!important;}\n.modern-tabs{\n  padding:7px 8px!important;margin:0 -8px!important;border-bottom:1px solid #D9E9F0!important;\n  background:rgba(255,255,255,.96)!important;box-shadow:0 5px 16px rgba(31,87,106,.07)!important;\n  justify-content:space-around!important;gap:4px!important;\n}\n.modern-tabs .tab-btn{\n  min-width:0;min-height:64px!important;padding:7px 8px 8px!important;border:0!important;border-radius:15px!important;\n  display:flex!important;flex:1 1 0!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;\n  background:transparent!important;font-family:'Inter',Arial,sans-serif!important;font-size:11px!important;font-weight:800!important;\n  letter-spacing:-.01em!important;line-height:1.1!important;\n  transition:transform .18s ease,background .18s ease,box-shadow .18s ease!important;\n}\n.modern-tabs .tab-icon{width:25px;height:25px;display:flex;align-items:center;justify-content:center;}\n.modern-tabs .tab-icon svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:2.15;stroke-linecap:round;stroke-linejoin:round;}\n.modern-tabs .tab-label{white-space:nowrap;}\n.modern-tabs .tab-btn:nth-child(1){color:#0B8061!important;}\n.modern-tabs .tab-btn:nth-child(2){color:#2F78B8!important;}\n.modern-tabs .tab-btn:nth-child(3){color:#7655A6!important;}\n.modern-tabs .tab-btn:nth-child(4){color:#C47A22!important;}\n.modern-tabs .tab-btn:nth-child(5){color:#258A8A!important;}\n.modern-tabs .tab-btn:nth-child(6){color:#B16B28!important;}\n.modern-tabs .tab-btn:hover{transform:translateY(-1px)!important;background:#F3F9F7!important;}\n.modern-tabs .tab-btn.active{\n  color:#075A49!important;background:linear-gradient(145deg,#D8F8EC,#EAFBF5)!important;\n  box-shadow:0 6px 15px rgba(7,150,105,.13)!important;\n}\n.modern-tabs .tab-btn.active .tab-icon{filter:drop-shadow(0 2px 3px rgba(7,90,73,.10));}\n@media(max-width:520px){\n  .modern-brand-header{padding:17px 5px 14px!important;}\n  .modern-brand-row{grid-template-columns:62px minmax(0,1fr) 45px;gap:7px;}\n  .finance-brand-mark{width:60px;height:60px;}\n  .modern-brand-copy .app-title{gap:6px!important;}\n  .modern-brand-copy .app-title .app-title-ar{min-width:44px!important;height:34px!important;padding:0 7px!important;border-radius:10px!important;}\n  .modern-brand-copy .app-title .app-title-main{font-size:clamp(21px,6.2vw,29px)!important;letter-spacing:-.055em!important;}\n  .modern-tagline{font-size:9.5px;margin-top:6px;letter-spacing:-.015em;}\n  .modern-tagline span{padding:0 2px;}\n  .modern-sync{font-size:9.5px!important;margin-top:6px!important;}\n  .modern-settings{width:43px;height:43px;font-size:21px!important;}\n  .modern-tabs{padding:6px 3px!important;margin-left:-5px!important;margin-right:-5px!important;gap:2px!important;}\n  .modern-tabs .tab-btn{min-height:60px!important;padding:6px 3px 7px!important;font-size:10px!important;border-radius:13px!important;gap:3px;}\n  .modern-tabs .tab-icon,.modern-tabs .tab-icon svg{width:22px;height:22px;}\n}\n@media(max-width:370px){\n  .modern-brand-row{grid-template-columns:55px minmax(0,1fr) 40px;}\n  .finance-brand-mark{width:53px;height:53px;}\n  .modern-brand-copy .app-title .app-title-main{font-size:20px!important;}\n  .modern-brand-copy .app-title .app-title-ar{min-width:40px!important;height:31px!important;}\n  .modern-tagline{font-size:8.5px;}\n  .modern-tabs .tab-btn{font-size:9.2px!important;padding-left:2px!important;padding-right:2px!important;}\n}\n</style>\n</head>
 <body>
 <div id="authGate">
   <div class="gate-card">
@@ -1812,84 +1719,52 @@ main{padding:28px 0 0 !important;}
 </div>
 <div class="margin-rule"></div>
 <div class="wrap">
-  <header class="modern-app-header">
-    <div class="modern-brand">
-      <div class="finance-logo" aria-hidden="true">
-        <svg viewBox="0 0 64 64" role="img">
-          <defs><linearGradient id="arLogoGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#10A878"/><stop offset="1" stop-color="#1C9CCF"/></linearGradient></defs>
-          <rect x="7" y="35" width="11" height="20" rx="3" fill="url(#arLogoGrad)"/>
-          <rect x="22" y="25" width="11" height="30" rx="3" fill="url(#arLogoGrad)"/>
-          <rect x="37" y="16" width="11" height="39" rx="3" fill="url(#arLogoGrad)"/>
-          <path d="M9 25c11-1 18-6 28-16l10 1" fill="none" stroke="#10A878" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M44 7l5 3-2 6" fill="none" stroke="#10A878" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="44" cy="42" r="12" fill="#F4B21A" stroke="#fff" stroke-width="2"/>
-          <text x="44" y="48" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" font-weight="800" fill="#fff">₹</text>
+  <header class="modern-brand-header">
+    <div class="modern-brand-row">
+      <div class="finance-brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 96 96" role="img">
+          <defs><linearGradient id="brandMarkGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stop-color="#075A49"/><stop offset="58%" stop-color="#0B8F62"/><stop offset="100%" stop-color="#21C79A"/></linearGradient></defs>
+          <path d="M12 70V55a6 6 0 0 1 6-6h12v21H12Z" fill="url(#brandMarkGrad)"/>
+          <path d="M36 70V35a6 6 0 0 1 6-6h12v41H36Z" fill="url(#brandMarkGrad)"/>
+          <path d="M60 70V20a6 6 0 0 1 6-6h12v56H60Z" fill="url(#brandMarkGrad)"/>
+          <path d="M9 31c16-2 31-10 43-22l-1 10 11 2" fill="none" stroke="#0B8F62" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="70" cy="67" r="17" fill="#F6B51B" stroke="#fff" stroke-width="3"/>
+          <text x="70" y="74" text-anchor="middle" font-size="19" font-family="Inter,Arial,sans-serif" font-weight="800" fill="#fff">₹</text>
         </svg>
       </div>
       <div class="modern-brand-copy">
-        <h1 class="app-title"><span class="app-title-ar">AR</span> <span class="app-title-main">Expenses Tracker</span></h1>
+        <h1 class="app-title"><span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span></h1>
         <div class="modern-tagline">Track Today <span>•</span> Plan Tomorrow <span>•</span> Build a Better You</div>
         <div class="sub modern-sync"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span></div>
       </div>
-      <button class="modern-settings" id="openSettings" title="Settings" aria-label="Settings">⚙</button>
+      <button class="settings-icon modern-settings" id="openSettings" title="Settings" aria-label="Settings">⚙</button>
     </div>
-    <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:12px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
+    <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
   </header>
 
   <nav class="tabs modern-tabs">
-    <button class="tab-btn active" data-tab="dash">Dashboard</button>
-    <button class="tab-btn" data-tab="ledger">Ledger</button>
-    <button class="tab-btn" data-tab="analysis">Summary</button>
-    <button class="tab-btn" data-tab="plan">Projections</button>
-    <button class="tab-btn" data-tab="calendar">Calendar</button>
-    <button class="tab-btn" data-tab="budget">Budget</button>
+    <button class="tab-btn active" data-tab="dash"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.2 12 4l9 7.2v8.3a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 19.5v-8.3Z"/><path d="M9 21v-6h6v6"/></svg></span><span class="tab-label">Dashboard</span></button>
+    <button class="tab-btn" data-tab="ledger"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5h2M10 5h9M5 12h2M10 12h9M5 19h2M10 19h9"/><path d="M4 4h.01M4 11h.01M4 18h.01"/></svg></span><span class="tab-label">Ledger</span></button>
+    <button class="tab-btn" data-tab="analysis"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v9h9A9 9 0 1 0 12 3Z"/><path d="M14 3a9 9 0 0 1 7 7h-7V3Z"/></svg></span><span class="tab-label">Summary</span></button>
+    <button class="tab-btn" data-tab="plan"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 20v-7M12 20V9M19 20V4"/></svg></span><span class="tab-label">Projections</span></button>
+    <button class="tab-btn" data-tab="calendar"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span><span class="tab-label">Calendar</span></button>
+    <button class="tab-btn" data-tab="budget"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M16 9h5v6h-5a3 3 0 1 1 0-6Z"/><circle cx="16" cy="12" r=".8"/></svg></span><span class="tab-label">Budget</span></button>
   </nav>
 
   <main>
     <section id="dash" class="active">
-      <div class="modern-dashboard-overview">
-        <div class="modern-overview-head">
-          <div>
-            <h2>Monthly Overview</h2>
-            <div class="modern-month-row">
-              <span class="modern-calendar-icon">▣</span>
-              <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
-            </div>
-          </div>
-          <div class="this-month-pill"><span>▣</span> This Month</div>
-        </div>
-        <div class="dashboard-stats modern-overview-stats" id="dashboardStats"></div>
-        <div class="modern-savings-line"><span>Monthly savings</span><strong id="dashboardSavings">—</strong></div>
+      <div class="total-balance-banner">
+        <div class="tb-label">Total Current Balance</div>
+        <div class="tb-amount" id="totalBalanceFull">—</div>
       </div>
-
-      <div class="modern-dashboard-card recent-transactions-card">
-        <div class="modern-card-head"><h2>Recent Transactions</h2><button class="modern-view-all" id="dashboardViewAll">View All <span>→</span></button></div>
-        <div id="dashboardRecentTransactions" class="recent-transactions-list"></div>
-      </div>
-
-      <div class="modern-dashboard-card quick-actions-card">
-        <h2>Quick Actions</h2>
-        <div class="quick-actions-grid">
-          <button class="quick-action income" id="quickAddIncome"><span class="qa-icon">+</span><span>Add Income</span></button>
-          <button class="quick-action expense" id="quickAddExpense"><span class="qa-icon">+</span><span>Add Expense</span></button>
-          <button class="quick-action transfer" id="quickAddTransfer"><span class="qa-icon">↔</span><span>Add Transfer</span></button>
-          <button class="quick-action reports" id="quickViewReports"><span class="qa-icon">▤</span><span>View Reports</span></button>
-        </div>
-      </div>
-
-      <div class="modern-dashboard-card accounts-modern-card">
-        <div class="modern-card-head"><h2>Accounts</h2></div>
-        <div class="accounts-grid" id="accountsGrid"></div>
-      </div>
-
-      <div class="modern-dashboard-quote">
-        <div class="quote-mark">“</div>
-        <div>“A small step today leads to a bigger tomorrow.”</div>
-        <small>Keep tracking. Keep growing.</small>
-      </div>
-
+      <div class="dashboard-stats" id="dashboardStats"></div>
+      <div class="section-title">Accounts</div>
+      <div class="accounts-grid" id="accountsGrid"></div>
       <div class="dashboard-monthly-projection">
         <h3 class="dashboard-main-projection-title">Monthly Projection</h3>
+        <div class="dashboard-month-select-wrap">
+          <input type="month" id="dashboardProjectionMonth" aria-label="Projection month">
+        </div>
 
         <div class="dashboard-projection-panel">
           <div id="dashboardUpcoming"></div>
@@ -2737,32 +2612,9 @@ function renderDashboard(){
   const savings=income-expense;
   const stats=document.getElementById('dashboardStats');
   if(stats) stats.innerHTML=`
-    <div class="dashboard-stat income"><div class="stat-icon">↑</div><div class="label">Income</div><div class="value">${fmtMoney(income)}</div></div>
-    <div class="dashboard-stat expense"><div class="stat-icon">↓</div><div class="label">Expenses</div><div class="value">${fmtMoney(expense)}</div></div>
-    <div class="dashboard-stat balance"><div class="stat-icon">▣</div><div class="label">Balance</div><div class="value">${fmtMoney(totalBalanceForDisplay())}</div></div>`;
-  const savingsEl=document.getElementById('dashboardSavings');
-  if(savingsEl) savingsEl.textContent=fmtMoney(savings);
-
-  const recentEl=document.getElementById('dashboardRecentTransactions');
-  if(recentEl){
-    const recent=TXNS.filter(t=>isRealFlow(t)&&t.date).slice().sort((a,b)=>{
-      const d=b.date.localeCompare(a.date);
-      return d || ((b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
-    }).slice(0,5);
-    const iconFor=t=>isRealIncome(t)?'↗':'−';
-    recentEl.innerHTML=recent.length ? recent.map(t=>{
-      const incomeTxn=isRealIncome(t);
-      return `<div class="recent-txn-row" data-txn-id="${escapeHtml(t.id||'')}">
-        <div class="recent-txn-icon ${incomeTxn?'income':'expense'}">${iconFor(t)}</div>
-        <div class="recent-txn-main"><div class="recent-txn-title">${escapeHtml(t.description || t.category || (incomeTxn?'Income':'Expense'))}</div><div class="recent-txn-meta">${escapeHtml(fmtDateLabel(t.date))} · ${escapeHtml(t.account||'')}</div></div>
-        <div class="recent-txn-amount ${incomeTxn?'income':'expense'}">${incomeTxn?'+':'−'}${fmtMoney(Math.abs(t.amount))}</div>
-      </div>`;
-    }).join('') : '<div class="modern-empty">No transactions yet.</div>';
-    recentEl.querySelectorAll('.recent-txn-row').forEach(row=>row.addEventListener('click',()=>{
-      const id=row.dataset.txnId;
-      if(id){switchTab('ledger'); renderLedger(); openEditSheet(id);}
-    }));
-  }
+    <div class="dashboard-stat income"><div class="label">This month income</div><div class="value">${fmtMoney(income)}</div><div class="hint">Recorded</div></div>
+    <div class="dashboard-stat expense"><div class="label">This month expenses</div><div class="value">${fmtMoney(expense)}</div><div class="hint">Recorded</div></div>
+    <div class="dashboard-stat saving"><div class="label">Monthly savings</div><div class="value">${fmtMoney(savings)}</div><div class="hint">Income − expenses</div></div>`;
 
   const todayStr=localDateIso();
   const todayDate=new Date(todayStr+'T00:00:00');
@@ -3674,12 +3526,6 @@ function closeSheet(){ overlay.classList.remove('show'); clearProjectionConversi
 document.getElementById('closeSheet').addEventListener('click', closeSheet);
 overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSheet(); });
 document.getElementById('fabAdd').addEventListener('click', openAddSheet);
-function openQuickEntry(type){ switchTab('ledger'); openAddSheet(); setType(type); }
-document.getElementById('quickAddIncome')?.addEventListener('click',()=>openQuickEntry('income'));
-document.getElementById('quickAddExpense')?.addEventListener('click',()=>openQuickEntry('expense'));
-document.getElementById('quickAddTransfer')?.addEventListener('click',()=>openQuickEntry('transfer'));
-document.getElementById('quickViewReports')?.addEventListener('click',()=>{ switchTab('analysis'); renderAnalysis(document.querySelector('#rangeBtns button.active')?.dataset.range || 'month'); });
-document.getElementById('dashboardViewAll')?.addEventListener('click',()=>{ switchTab('ledger'); renderLedger(); });
 
 function addMonths(ym, n){
   const [y,m] = ym.split('-').map(Number);
