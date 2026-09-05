@@ -1765,8 +1765,8 @@ nav.tabs button.active{font-weight:700!important;}
           <div class="field"><label>Repeat</label>
             <select id="planRepeat">
               <option value="none">One time</option>
-              <option value="weekly">Every week</option>
               <option value="monthly">Every month</option>
+              <option value="quarterly">Every 3 months</option>
               <option value="yearly">Every year</option>
             </select>
           </div>
@@ -2652,7 +2652,7 @@ function populatePlanAccountList(){
 }
 
 function planRepeatLabel(repeat){
-  return repeat==='weekly' ? 'Every week' : repeat==='monthly' ? 'Every month' : repeat==='yearly' ? 'Every year' : 'One time';
+  return repeat==='quarterly' ? 'Every 3 months' : repeat==='monthly' ? 'Every month' : repeat==='yearly' ? 'Every year' : 'One time';
 }
 function refreshPlanRepeatUI(){
   const repeat = document.getElementById('planRepeat').value;
@@ -2673,10 +2673,13 @@ function expandPlanOccurrences(plan, fromDate, toDate){
     if(cur >= from && (!until || cur <= until)){
       out.push({...plan, date:`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`});
     }
-    if(plan.repeat==='weekly') {
-      cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate()+7);
-    } else if(plan.repeat==='monthly') {
+    if(plan.repeat==='monthly') {
       const monthsFromStart = guard;
+      const target = new Date(start.getFullYear(), start.getMonth()+monthsFromStart, 1);
+      const last = new Date(target.getFullYear(), target.getMonth()+1, 0).getDate();
+      cur = new Date(target.getFullYear(), target.getMonth(), Math.min(anchorDay,last));
+    } else if(plan.repeat==='quarterly') {
+      const monthsFromStart = guard * 3;
       const target = new Date(start.getFullYear(), start.getMonth()+monthsFromStart, 1);
       const last = new Date(target.getFullYear(), target.getMonth()+1, 0).getDate();
       cur = new Date(target.getFullYear(), target.getMonth(), Math.min(anchorDay,last));
