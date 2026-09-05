@@ -1632,6 +1632,21 @@ nav.tabs button.active{font-weight:700!important;}
 #budget .budget-field-open .budget-dropdown.show{display:block!important;}
 #budget .budget-option{touch-action:manipulation!important;}
 </style>
+
+<style id="projection-actual-linking-fix">
+  .projection-occurrences{margin:8px 12px 12px;padding:8px 0;border-top:1px dashed var(--line);}
+  .projection-occurrence{display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid rgba(207,197,162,.45);}
+  .projection-occurrence:last-child{border-bottom:0;}
+  .projection-occurrence .occ-main{flex:1;min-width:0;}
+  .projection-occurrence .occ-date{font-weight:700;font-size:11px;color:var(--green-dark);}
+  .projection-occurrence .occ-status{font-size:9.5px;color:var(--muted);margin-top:2px;}
+  .projection-occurrence .occ-status.done{color:var(--green);font-weight:700;}
+  .projection-convert-btn{border:1px solid var(--green);background:#fff;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer;}
+  .projection-convert-btn:active{transform:translateY(1px);}
+  .projection-completed-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:4px 7px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:800;white-space:nowrap;}
+  .projection-link-note{margin:0 0 10px;padding:9px 10px;border-radius:10px;background:#EEF7F3;border:1px solid #CDE7DC;color:var(--green-dark);font-size:10.5px;line-height:1.35;}
+  .projection-link-note strong{font-weight:800;}
+</style>
 </head>
 <body>
 <div id="authGate">
@@ -1981,6 +1996,7 @@ let PLANS = [];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
+let convertingProjection = null; // {seriesId, occurrenceId, scheduledDate, plan}
 let currentType = 'expense';
 let accessToken = null;
 let tokenClient = null;
@@ -2554,7 +2570,7 @@ function renderDashboard(){
   const projectionTo=selectedEnd>horizonStr ? selectedEnd : horizonStr;
   const allOccurrences=PLANS.flatMap(p=>expandPlanOccurrences(p,projectionFrom,projectionTo));
   const selectedEntries=allOccurrences
-    .filter(p=>p.date>=selectedStart && p.date<=selectedEnd)
+    .filter(p=>!p.completed && p.date>=selectedStart && p.date<=selectedEnd)
     .sort((a,b)=>a.date.localeCompare(b.date));
 
   const upEl=document.getElementById('dashboardUpcoming');
@@ -2690,7 +2706,40 @@ function refreshPlanRepeatUI(){
   const repeat = document.getElementById('planRepeat').value;
   document.getElementById('planUntilWrap').style.display = repeat==='none' ? 'none' : 'block';
 }
-function expandPlanOccurrences(plan, fromDate, toDate){
+function projectionOccurrenceId(plan, dateStr){
+  return `${plan.id}::${dateStr}`;
+}
+function getCompletedProjection(plan, occurrenceId){
+  const list = Array.isArray(plan?.completedOccurrences) ? plan.completedOccurrences : [];
+  return list.find(x => (typeof x === 'string' ? x : x?.occurrenceId) === occurrenceId) || null;
+}
+function isProjectionOccurrenceCompleted(plan, occurrenceId){
+  return !!getCompletedProjection(plan, occurrenceId);
+}
+function markProjectionOccurrenceCompleted(seriesId, occurrenceId, transactionId, actualDate){
+  const idx=PLANS.findIndex(p=>p.id===seriesId);
+  if(idx<0) return false;
+  const p={...PLANS[idx]};
+  const list=Array.isArray(p.completedOccurrences)?p.completedOccurrences.filter(Boolean):[];
+  const existing=list.findIndex(x=>(typeof x==='string'?x:x?.occurrenceId)===occurrenceId);
+  const rec={occurrenceId, transactionId, actualDate, completedAt:Date.now()};
+  if(existing>=0) list[existing]=rec; else list.push(rec);
+  p.completedOccurrences=list;
+  PLANS[idx]=p;
+  return true;
+}
+function uncompleteProjectionOccurrence(seriesId, occurrenceId){
+  const idx=PLANS.findIndex(p=>p.id===seriesId);
+  if(idx<0) return false;
+  const p={...PLANS[idx]};
+  const list=Array.isArray(p.completedOccurrences)?p.completedOccurrences.filter(Boolean):[];
+  const next=list.filter(x=>(typeof x==='string'?x:x?.occurrenceId)!==occurrenceId);
+  if(next.length===list.length) return false;
+  p.completedOccurrences=next;
+  PLANS[idx]=p;
+  return true;
+}
+function expandPlanOccurrences(plan, fromDate, toDate, includeCompleted=false){
   if(!plan || !plan.date) return [];
   const start = new Date(plan.date+'T00:00:00');
   if(isNaN(start)) return [];
@@ -2703,7 +2752,12 @@ function expandPlanOccurrences(plan, fromDate, toDate){
   let guard=0;
   while(cur <= to && guard++ < 2400){
     if(cur >= from && (!until || cur <= until)){
-      out.push({...plan, date:`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`});
+      const date=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}-${String(cur.getDate()).padStart(2,'0')}`;
+      const occurrenceId=projectionOccurrenceId(plan,date);
+      const completed=getCompletedProjection(plan,occurrenceId);
+      if(includeCompleted || !completed){
+        out.push({...plan, date, occurrenceId, completed:!!completed, completion:completed || null});
+      }
     }
     if(plan.repeat==='monthly') {
       const monthsFromStart = guard;
@@ -2726,22 +2780,48 @@ function expandPlanOccurrences(plan, fromDate, toDate){
 }
 
 function renderPlanList(){
+  const horizon=new Date();
+  horizon.setMonth(horizon.getMonth()+12);
+  const from=localDateIso();
+  const to=localDateIso(horizon);
   const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   const el = document.getElementById('planList');
   el.innerHTML = sorted.map(p=>{
     const isCredit = p.credit > 0;
     const amt = isCredit ? p.credit : p.debit;
-    return `<div class="txn" data-id="${p.id}" style="cursor:pointer;">
+    const occurrences=expandPlanOccurrences(p,from,to,true);
+    const occurrenceHtml=occurrences.length ? `
+      <div class="projection-occurrences">
+        <div style="font-size:9.5px;color:var(--muted);font-weight:700;margin:0 4px 5px;">${p.repeat && p.repeat!=='none' ? 'Monthly occurrences' : 'Projection occurrence'} — tap Convert to Actual for the specific entry</div>
+        ${occurrences.map(o=>{
+          const done=!!o.completed;
+          const paid=o.completion?.actualDate ? ` · paid ${fmtDateLabel(o.completion.actualDate)}` : '';
+          return `<div class="projection-occurrence">
+            <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${done?'✓ Completed'+escapeHtml(paid):'Projected'}</div></div>
+            ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="projection-convert-btn" data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}">Convert to Actual</button>`}
+          </div>`;
+        }).join('')}
+      </div>` : '';
+    const next=occurrences.find(o=>!o.completed);
+    return `<div class="txn projection-master" data-id="${escapeHtml(p.id)}" style="cursor:pointer;">
       <div class="dot ${isCredit?'pos':'neg'}"></div>
       <div class="mid">
         <div class="cat">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
         <div class="meta">${escapeHtml(p.account||'No account')} · ${escapeHtml(fmtDateLabel(p.date))}${p.repeat && p.repeat!=='none' ? ' · '+escapeHtml(planRepeatLabel(p.repeat))+(p.until?' until '+escapeHtml(fmtDateLabel(p.until)):'') : ''}</div>
       </div>
       <div class="amt" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
+      ${p.repeat && p.repeat!=='none' && next ? `<div style="width:100%;padding:0 4px 7px;font-size:9.5px;color:var(--muted);">Next: <strong>${escapeHtml(fmtDateLabel(next.date))}</strong></div>` : ''}
+      ${occurrenceHtml}
     </div>`;
   }).join('') || `<div class="empty-note">No planned entries yet — add one above.</div>`;
-  el.querySelectorAll('.txn').forEach(row=>{
-    row.addEventListener('click', ()=> openPlanForEdit(row.dataset.id));
+  el.querySelectorAll('.projection-master').forEach(row=>{
+    row.addEventListener('click', e=>{ if(e.target.closest('.projection-convert-btn')) return; openPlanForEdit(row.dataset.id); });
+  });
+  el.querySelectorAll('.projection-convert-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation();
+      openProjectionConversion(btn.dataset.seriesId, btn.dataset.occurrenceId, btn.dataset.date);
+    });
   });
 }
 
@@ -2828,12 +2908,14 @@ document.getElementById('planAddBtn').addEventListener('click', ()=>{
   if(!account){ showToast('Pick or type an account'); return; }
   if(repeat!=='none' && untilRaw && !until){ document.getElementById('planUntil').focus(); showToast('Enter a valid repeat-until date'); return; }
   if(until && until < date){ document.getElementById('planUntil').focus(); showToast('Repeat-until date must be on or after the start date'); return; }
+  const existingPlan=editingPlanId ? PLANS.find(p=>p.id===editingPlanId) : null;
   const entry = {
     id: editingPlanId || uid(),
     updatedAt: Date.now(), date, account,
     debit: currentPlanType==='debit' ? amt : 0,
     credit: currentPlanType==='credit' ? amt : 0,
-    description: desc, repeat, until
+    description: desc, repeat, until,
+    completedOccurrences: Array.isArray(existingPlan?.completedOccurrences) ? existingPlan.completedOccurrences : []
   };
   if(editingPlanId){
     const idx = PLANS.findIndex(p=>p.id===editingPlanId);
@@ -3265,7 +3347,41 @@ function setType(type){
 }
 document.querySelectorAll('#overlay .type-btn').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.type)));
 
+function openProjectionConversion(seriesId, occurrenceId, scheduledDate){
+  const plan=PLANS.find(p=>p.id===seriesId);
+  if(!plan) return;
+  const occ=expandPlanOccurrences(plan,scheduledDate,scheduledDate,true).find(o=>o.occurrenceId===occurrenceId);
+  if(!occ) return;
+  if(occ.completed){ showToast('This projection occurrence is already completed'); return; }
+  convertingProjection={seriesId,occurrenceId,scheduledDate,planId:plan.id};
+  editingId=null;
+  sheetTitle.innerHTML = 'Convert projection to actual <button class="x" id="closeSheet2">×</button>';
+  populateDatalists();
+  fAmount.value = Math.abs((occ.credit||0)>0 ? occ.credit : occ.debit);
+  fDate.value = isoToDisplayDate(scheduledDate);
+  fAccount.value = plan.account || '';
+  fToAccount.value=''; fCategory.value=''; fSubcategory.value='';
+  fDesc.value = plan.description || '';
+  fApplicableMonth.value = scheduledDate.slice(0,7);
+  fSpanMonths.value = 1;
+  fSpanMonths.disabled = true;
+  setType((occ.credit||0)>0 ? 'income' : 'expense');
+  delBtn.style.display = 'none';
+  const note=document.createElement('div');
+  note.id='projectionLinkNote';
+  note.className='projection-link-note';
+  note.innerHTML=`<strong>Linked to projection:</strong> ${escapeHtml(fmtDateLabel(scheduledDate))}. You can change the actual payment date if it was paid early or late. This exact monthly occurrence will be marked completed after saving.`;
+  const saveBtn=document.getElementById('saveBtn');
+  saveBtn.parentElement.insertBefore(note,saveBtn);
+  overlay.classList.add('show');
+  bindCloseX();
+}
+function clearProjectionConversion(){
+  convertingProjection=null;
+  document.getElementById('projectionLinkNote')?.remove();
+}
 function openAddSheet(){
+  clearProjectionConversion();
   editingId = null;
   sheetTitle.innerHTML = 'Add entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
@@ -3273,12 +3389,14 @@ function openAddSheet(){
   fAccount.value=''; fToAccount.value=''; fCategory.value=''; fSubcategory.value=''; fDesc.value='';
   fApplicableMonth.value = new Date().toISOString().slice(0,7);
   fSpanMonths.value = 1;
+  fSpanMonths.disabled = false;
   setType('expense');
   delBtn.style.display = 'none';
   overlay.classList.add('show');
   bindCloseX();
 }
 function openEditSheet(id){
+  clearProjectionConversion();
   const t = TXNS.find(x=>x.id===id);
   if(!t) return;
   editingId = id;
@@ -3291,6 +3409,7 @@ function openEditSheet(id){
   fDesc.value = t.description || '';
   fApplicableMonth.value = t.appliedMonth || (t.date || localDateIso()).slice(0,7);
   fSpanMonths.value = 1;
+  fSpanMonths.disabled = false;
   setType(t.amount >= 0 ? 'income' : 'expense');
   fCategory.value = t.category || '';
   populateSubcatFor(fCategory.value);
@@ -3300,7 +3419,7 @@ function openEditSheet(id){
   bindCloseX();
 }
 function bindCloseX(){ const btn = document.getElementById('closeSheet2'); if(btn) btn.addEventListener('click', closeSheet); }
-function closeSheet(){ overlay.classList.remove('show'); }
+function closeSheet(){ overlay.classList.remove('show'); clearProjectionConversion(); }
 document.getElementById('closeSheet').addEventListener('click', closeSheet);
 overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeSheet(); });
 document.getElementById('fabAdd').addEventListener('click', openAddSheet);
@@ -3399,19 +3518,30 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
       if(categoryConfigChanged) saveCategoryConfig();
     }
 
+    let oldEditedTxn=null;
     if(editingId){
-      const old = TXNS.find(t=>t.id===editingId);
-      if(old){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [old.id]:Date.now()}; setSyncMeta(m); }
+      oldEditedTxn = TXNS.find(t=>t.id===editingId) || null;
+      if(oldEditedTxn){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [oldEditedTxn.id]:Date.now()}; setSyncMeta(m); }
       TXNS = TXNS.filter(t=>t.id!==editingId);
     }
 
     if(spanMonths <= 1){
       const signedAmt = currentType==='income' ? Math.abs(amt) : -Math.abs(amt);
-      TXNS.push({
+      const txn={
         id: uid(), date, amount: signedAmt, category, subcategory, account: acct,
         description: baseDesc,
         appliedMonth: applicableStart !== date.slice(0,7) ? applicableStart : undefined
-      });
+      };
+      if(convertingProjection){
+        txn.projectionSeriesId=convertingProjection.seriesId;
+        txn.projectionOccurrenceId=convertingProjection.occurrenceId;
+        txn.projectionScheduledDate=convertingProjection.scheduledDate;
+      } else if(oldEditedTxn?.projectionSeriesId && oldEditedTxn?.projectionOccurrenceId){
+        txn.projectionSeriesId=oldEditedTxn.projectionSeriesId;
+        txn.projectionOccurrenceId=oldEditedTxn.projectionOccurrenceId;
+        txn.projectionScheduledDate=oldEditedTxn.projectionScheduledDate || oldEditedTxn.date;
+      }
+      TXNS.push(txn);
     } else {
       const per = Math.round((amt/spanMonths)*100)/100;
       let allocated = 0;
@@ -3429,14 +3559,29 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
       }
     }
   }
+  if(convertingProjection){
+    const link={...convertingProjection};
+    markProjectionOccurrenceCompleted(link.seriesId,link.occurrenceId,TXNS.at(-1)?.id,date);
+    savePlans();
+  } else if(oldEditedTxn?.projectionSeriesId && oldEditedTxn?.projectionOccurrenceId){
+    markProjectionOccurrenceCompleted(oldEditedTxn.projectionSeriesId,oldEditedTxn.projectionOccurrenceId,TXNS.at(-1)?.id,date);
+    savePlans();
+  }
   saveData(); closeSheet(); refreshAll();
+  renderPlanList(); renderProjectionGraph();
 });
 delBtn.addEventListener('click', ()=>{
   if(!editingId) return;
   const old = TXNS.find(t=>t.id===editingId);
-  if(old){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [old.id]:Date.now()}; setSyncMeta(m); }
+  if(old){
+    const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [old.id]:Date.now()}; setSyncMeta(m);
+    if(old.projectionSeriesId && old.projectionOccurrenceId){
+      if(uncompleteProjectionOccurrence(old.projectionSeriesId,old.projectionOccurrenceId)) savePlans();
+    }
+  }
   TXNS = TXNS.filter(t=>t.id!==editingId);
   saveData(); closeSheet(); refreshAll();
+  renderPlanList(); renderProjectionGraph();
 });
 
 function refreshAll(){
