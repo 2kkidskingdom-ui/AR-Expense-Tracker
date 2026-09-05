@@ -1267,6 +1267,39 @@ nav.tabs button{
 .cal-in,.cal-out,.cal-bal{font-family:'IBM Plex Mono',monospace!important;font-size:8.5px!important;line-height:1.15!important;}
 </style>
 
+
+<style id="final-tab-visibility-fix">
+/* Tab labels: keep every label fully visible on mobile. Typography/visibility only. */
+nav.tabs{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:stretch!important;
+  gap:2px!important;
+  overflow-x:visible!important;
+  padding-left:3px!important;
+  padding-right:3px!important;
+}
+nav.tabs button{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  white-space:nowrap!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:10.5px!important;
+  font-weight:600!important;
+  letter-spacing:-.025em!important;
+  line-height:1.2!important;
+  padding-left:6px!important;
+  padding-right:6px!important;
+}
+@media(max-width:380px){
+  nav.tabs{gap:0!important;padding-left:1px!important;padding-right:1px!important;}
+  nav.tabs button{font-size:9.7px!important;padding-left:4px!important;padding-right:4px!important;letter-spacing:-.03em!important;}
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
