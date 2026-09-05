@@ -428,6 +428,17 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 }
 
 
+
+/* Add category/subcategory directly from the Add Entry screen. These controls only
+   update the category configuration; the normal entry fields and saving flow remain unchanged. */
+.entry-add-meta-btn{
+  border:0;background:transparent;color:var(--green);font-size:10.5px;font-weight:700;
+  padding:7px 2px 0;cursor:pointer;text-align:left;display:inline-flex;align-items:center;gap:3px;
+}
+.entry-add-meta-btn:hover{color:#075E4A;text-decoration:underline;}
+.entry-add-meta-btn:active{transform:translateY(1px);}
+@media (max-width:520px){.entry-add-meta-btn{font-size:10px;padding-top:6px;}}
+
 /* ---------- Enhancements: category manager, dashboard overview, projection outlook ---------- */
 .dashboard-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
 .dashboard-stat{background:#fff;border:1px solid var(--line);border-radius:15px;padding:13px 12px;box-shadow:var(--shadow);min-width:0}
@@ -692,6 +703,25 @@ nav.tabs button.active{
 
 <!-- Enhancements: consistent controls across all tabs -->
 <style>
+/* Summary category directory */
+.summary-directory{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+.summary-directory-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:17px;box-shadow:var(--shadow);min-width:0;}
+.summary-directory-title{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green-dark);line-height:1.25;margin-bottom:12px;}
+.summary-directory-icon{width:30px;height:30px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;font-size:17px;font-weight:800;flex:none;}
+.income-directory .summary-directory-icon{background:#DDF7EC;color:#0B8F62;}
+.expense-directory .summary-directory-icon{background:#FDE8EB;color:#D84A5A;}
+.summary-category-list{display:grid;gap:9px;}
+.summary-category-item{border:1px solid var(--line);border-radius:13px;padding:11px 12px;background:linear-gradient(135deg,#fff,#F8FCFA);cursor:pointer;}
+.summary-category-item:hover{box-shadow:0 5px 14px rgba(23,65,82,.08);}
+.summary-category-name{font-size:13px;font-weight:800;color:var(--ink);line-height:1.25;}
+.summary-subcategory-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+.summary-subcategory-chip{display:inline-flex;align-items:center;padding:5px 8px;border-radius:999px;font-size:10.5px;font-weight:700;line-height:1.15;}
+.income-directory .summary-subcategory-chip{background:#E9F8F1;color:#168A68;}
+.expense-directory .summary-subcategory-chip{background:#FFF0F2;color:#C84656;}
+.summary-no-sub{font-size:10.5px;color:var(--muted);margin-top:6px;}
+.summary-directory-empty{padding:14px;border:1px dashed var(--line);border-radius:13px;text-align:center;color:var(--muted);font-size:11px;}
+@media(max-width:700px){.summary-directory{grid-template-columns:1fr;gap:12px;}.summary-directory-title{font-size:17px;}.summary-category-name{font-size:13px;}}
+
 /* Consistent, polished form controls across Dashboard, Ledger, Summary, Projections, Calendar and Settings. */
 main input:not([type="checkbox"]):not([type="radio"]),
 main select,
@@ -1479,6 +1509,57 @@ nav.tabs button.active{font-weight:700!important;}
   nav.tabs button{font-size:9.9px!important;}
   .dashboard-stat .label{font-size:11.2px!important;}
 }
+
+/* Clear selected-state styling for Income / Expense / Transfer in both Entry and Projections. */
+#overlay .type-switch .type-btn,
+#plan .type-switch .type-btn {
+  position:relative;
+  border-width:2px !important;
+  font-weight:800 !important;
+  transition:background .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+#overlay .type-switch .type-btn:not(.active),
+#plan .type-switch .type-btn:not(.active) {
+  background:#fff !important;
+  color:#68757C !important;
+  border-color:#D7E0E3 !important;
+  box-shadow:none !important;
+}
+#overlay .type-switch .type-btn.active.income,
+#plan .type-switch .type-btn.active.income {
+  background:#0F9D78 !important;
+  color:#fff !important;
+  border-color:#0F9D78 !important;
+  box-shadow:0 6px 16px rgba(15,157,120,.24) !important;
+  transform:translateY(-1px);
+}
+#overlay .type-switch .type-btn.active.expense,
+#plan .type-switch .type-btn.active.expense {
+  background:#D83D4A !important;
+  color:#fff !important;
+  border-color:#D83D4A !important;
+  box-shadow:0 6px 16px rgba(216,61,74,.24) !important;
+  transform:translateY(-1px);
+}
+#overlay .type-switch .type-btn.active.transfer {
+  background:#7048D8 !important;
+  color:#fff !important;
+  border-color:#7048D8 !important;
+  box-shadow:0 6px 16px rgba(112,72,216,.22) !important;
+  transform:translateY(-1px);
+}
+#overlay .type-switch .type-btn.active::after,
+#plan .type-switch .type-btn.active::after {
+  content:'✓';
+  position:absolute;
+  top:5px;
+  right:7px;
+  font-size:11px;
+  line-height:1;
+  font-weight:900;
+  color:inherit;
+  opacity:.95;
+}
 </style>
 </head>
 <body>
@@ -1597,20 +1678,16 @@ nav.tabs button.active{font-weight:700!important;}
       <div id="trendChartSvg" class="trend-chart"></div>
       <div id="summaryTable" class="summary-table" style="display:none;"></div>
 
-      <div class="summary-two-col">
-        <div class="summary-card">
-          <div class="summary-card-title">Spending by category</div>
-          <div id="expenseDonut" class="expense-donut-wrap"></div>
+      <div class="summary-directory">
+        <div class="summary-directory-card income-directory">
+          <div class="summary-directory-title"><span class="summary-directory-icon">↑</span><span>Income Categories &amp; Subcategories</span></div>
+          <div id="analysisIncomeDirectory" class="summary-category-list"></div>
         </div>
-        <div class="summary-card">
-          <div class="summary-card-title">Top 5 expense categories</div>
-          <div id="analysisCats"></div>
-        </div>
-      </div>
 
-      <div class="summary-card summary-income-card">
-        <div class="summary-card-title">Income by category</div>
-        <div id="analysisIncomeCats"></div>
+        <div class="summary-directory-card expense-directory">
+          <div class="summary-directory-title"><span class="summary-directory-icon">↓</span><span>Expense Categories &amp; Subcategories</span></div>
+          <div id="analysisExpenseDirectory" class="summary-category-list"></div>
+        </div>
       </div>
     </section>
 
@@ -1714,11 +1791,13 @@ nav.tabs button.active{font-weight:700!important;}
         <label>Category</label>
         <input list="categoryList" id="fCategory" placeholder="Select or type category" autocomplete="off">
         <datalist id="categoryList"></datalist>
+        <button type="button" class="entry-add-meta-btn" id="addEntryCategoryBtn">＋ Add category</button>
       </div>
       <div class="field">
         <label>Subcategory</label>
         <input list="subcategoryList" id="fSubcategory" placeholder="Select or type subcategory" autocomplete="off">
         <datalist id="subcategoryList"></datalist>
+        <button type="button" class="entry-add-meta-btn" id="addEntrySubcategoryBtn">＋ Add subcategory</button>
       </div>
     </div>
     <div class="field"><label>Description</label><input type="text" id="fDesc" placeholder="Notes..."></div>
@@ -2850,24 +2929,30 @@ function renderAnalysis(range){
   document.getElementById('statNetPct').textContent=income>0?(net/income*100).toFixed(1)+'% of income':'';
   document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{let size=13;el.style.fontSize=size+'px';while(el.scrollWidth>el.clientWidth&&size>7){size-=.5;el.style.fontSize=size+'px';}});
 
-  const byCat={}; list.filter(isRealExpense).forEach(t=>byCat[t.category]=(byCat[t.category]||0)+Math.abs(t.amount));
-  const sorted=Object.entries(byCat).sort((a,b)=>b[1]-a[1]), top5=sorted.slice(0,5), maxTop=top5.length?top5[0][1]:1;
-  document.getElementById('analysisCats').innerHTML=top5.map(([cat,amt],i)=>`<div class="summary-top-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;"><div><div class="summary-top-name">${i+1}. ${escapeHtml(cat)}</div><div class="summary-top-bar"><div class="summary-top-fill" style="width:${Math.max(4,amt/maxTop*100)}%"></div></div></div><div class="summary-top-meta"><span>${fmtMoney(amt)}</span><span>${absExpense>0?(amt/absExpense*100).toFixed(1)+'%':''}</span></div></div>`).join('')||`<div class="empty-note">No expenses recorded in this range.</div>`;
-  document.querySelectorAll('#analysisCats .summary-top-row').forEach(row=>row.addEventListener('click',()=>{document.getElementById('filterCategory').value=row.dataset.cat;document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}));
-
-  const byIncomeSrc={}; list.filter(isRealIncome).forEach(t=>{const key=t.category||'Other';byIncomeSrc[key]=(byIncomeSrc[key]||0)+t.amount;});
-  const sortedIncome=Object.entries(byIncomeSrc).sort((a,b)=>b[1]-a[1]),maxIncome=sortedIncome.length?sortedIncome[0][1]:1;
-  document.getElementById('analysisIncomeCats').innerHTML=sortedIncome.map(([src,amt])=>`<div class="cat-row"><div class="cname">${escapeHtml(src)}</div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.max(4,amt/maxIncome*100)}%;background:var(--green);"></div></div><div class="cat-amt">${fmtMoney(amt)}</div></div>`).join('')||`<div class="empty-note">No income recorded in this range.</div>`;
-
-  // Donut chart for expense distribution.
-  const donut=document.getElementById('expenseDonut');
-  if(!sorted.length){donut.innerHTML='<div class="empty-note">No expenses recorded in this range.</div>';} else {
-    const cx=105,cy=105,r=70,circ=2*Math.PI*r, topColors=['#1F4A3D','#D84A5A','#2878C8','#E0A51B','#7A45C5','#7F8B86','#B86B3E','#5D77A8'];
-    let offset=0, arcs='', legend='';
-    sorted.slice(0,8).forEach(([cat,amt],i)=>{const len=circ*(amt/absExpense);arcs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${topColors[i%topColors.length]}" stroke-width="28" stroke-dasharray="${len} ${circ-len}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" style="cursor:pointer" data-cat="${escapeHtml(cat)}"/>`;offset+=len;legend+=`<div class="cat-row" data-cat="${escapeHtml(cat)}" style="cursor:pointer;padding:5px 0;"><div class="cname" style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${topColors[i%topColors.length]};display:inline-block"></span>${escapeHtml(cat)}</div><div class="cat-amt">${fmtMoney(amt)} (${(amt/absExpense*100).toFixed(1)}%)</div></div>`;});
-    donut.innerHTML=`<div><svg viewBox="0 0 210 210" aria-label="Expense category donut">${arcs}<circle cx="${cx}" cy="${cy}" r="55" fill="#fff"/><text x="${cx}" y="101" text-anchor="middle" font-size="12" fill="#65736D" font-family="Inter,sans-serif">Total expense</text><text x="${cx}" y="121" text-anchor="middle" font-size="14" font-weight="700" fill="#1F4A3D" font-family="IBM Plex Mono,monospace">${fmtMoney(absExpense)}</text></svg>${legend}</div>`;
-    donut.querySelectorAll('[data-cat]').forEach(node=>node.addEventListener('click',()=>{document.getElementById('filterCategory').value=node.dataset.cat;document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}));
+  function renderSummaryCategoryDirectory(type,targetId){
+    const target=document.getElementById(targetId);
+    if(!target) return;
+    const source=type==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
+    const cats=Object.keys(source).sort((a,b)=>a.localeCompare(b));
+    if(!cats.length){
+      target.innerHTML=`<div class="summary-directory-empty">No ${type} categories available yet. Add them from Add Entry or Settings.</div>`;
+      return;
+    }
+    target.innerHTML=cats.map(cat=>{
+      const subs=[...(source[cat]||[])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+      return `<div class="summary-category-item" data-summary-cat="${escapeHtml(cat)}">
+        <div class="summary-category-name">${escapeHtml(cat)}</div>
+        ${subs.length?`<div class="summary-subcategory-list">${subs.map(sub=>`<span class="summary-subcategory-chip">${escapeHtml(sub)}</span>`).join('')}</div>`:`<div class="summary-no-sub">No subcategories</div>`}
+      </div>`;
+    }).join('');
+    target.querySelectorAll('[data-summary-cat]').forEach(row=>row.addEventListener('click',()=>{
+      const filter=document.getElementById('filterCategory');
+      if(filter){filter.value=row.dataset.summaryCat||'';document.getElementById('filterAccount').value='';switchTab('ledger');renderLedger();}
+    }));
   }
+
+  renderSummaryCategoryDirectory('income','analysisIncomeDirectory');
+  renderSummaryCategoryDirectory('expense','analysisExpenseDirectory');
 
   const table=document.getElementById('summaryTable');
   table.innerHTML=`<table><thead><tr><th>Period</th><th>Income</th><th>Expense</th></tr></thead><tbody>${buildChartBuckets(range,list,curYM,customFrom,customTo).map(d=>`<tr><td>${escapeHtml(d.label)}</td><td>${fmtMoney(d.income)}</td><td>${fmtMoney(d.expense)}</td></tr>`).join('')}</tbody></table>`;
@@ -3073,6 +3158,54 @@ function addMonths(ym, n){
   return `${ny}-${String(nm).padStart(2,'0')}`;
 }
 
+function addCategoryFromEntryScreen(){
+  if(currentType==='transfer') return;
+  const cat=fCategory.value.trim();
+  if(!cat){ fCategory.focus(); showToast('Enter a category name first'); return; }
+  if(cat==='Income' || cat==='Account Transfer' || cat==='Initial Balance'){
+    showToast('That category is reserved by the app'); return;
+  }
+  const source=currentType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
+  if(!source[cat]){
+    source[cat]=new Set();
+    saveCategoryConfig();
+    showToast(`${currentType==='income'?'Income':'Expense'} category added`);
+  }else{
+    showToast('Category already exists');
+  }
+  refreshCategoryAndSubcategoryLists();
+  fCategory.value=cat;
+  populateSubcatFor(cat);
+}
+
+function addSubcategoryFromEntryScreen(){
+  if(currentType==='transfer') return;
+  const cat=fCategory.value.trim();
+  const sub=fSubcategory.value.trim();
+  if(!cat){ fCategory.focus(); showToast('Enter/select a category first'); return; }
+  if(!sub){ fSubcategory.focus(); showToast('Enter a subcategory name first'); return; }
+  if(cat==='Income' || cat==='Account Transfer' || cat==='Initial Balance' || sub==='Account Transfer' || sub==='Initial Balance'){
+    showToast('That name is reserved by the app'); return;
+  }
+  const source=currentType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
+  if(!source[cat]) source[cat]=new Set();
+  if(source[cat].has(sub)){
+    showToast('Subcategory already exists');
+    populateSubcatFor(cat);
+    return;
+  }
+  source[cat].add(sub);
+  saveCategoryConfig();
+  showToast(`${currentType==='income'?'Income':'Expense'} subcategory added`);
+  refreshCategoryAndSubcategoryLists();
+  fCategory.value=cat;
+  populateSubcatFor(cat);
+  fSubcategory.value=sub;
+}
+
+document.getElementById('addEntryCategoryBtn')?.addEventListener('click', addCategoryFromEntryScreen);
+document.getElementById('addEntrySubcategoryBtn')?.addEventListener('click', addSubcategoryFromEntryScreen);
+
 document.getElementById('saveBtn').addEventListener('click', ()=>{
   const amt = parseFloat(fAmount.value);
   if(isNaN(amt) || amt===0){ fAmount.focus(); return; }
@@ -3098,6 +3231,19 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     const baseDesc = fDesc.value.trim();
     const category = fCategory.value.trim() || (currentType==='income' ? 'Uncategorized Income' : 'Uncategorized Expense');
     const subcategory = fSubcategory.value.trim();
+
+    // If the user typed a new category/subcategory while entering the transaction,
+    // register it in the shared category configuration as well. This makes the new
+    // values available in future entries, Settings, Budget and on other synced devices.
+    if(category && category!=='Income' && category!=='Account Transfer' && category!=='Initial Balance'){
+      const source=currentType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
+      let categoryConfigChanged=false;
+      if(!source[category]){ source[category]=new Set(); categoryConfigChanged=true; }
+      if(subcategory && subcategory!=='Account Transfer' && subcategory!=='Initial Balance' && !source[category].has(subcategory)){
+        source[category].add(subcategory); categoryConfigChanged=true;
+      }
+      if(categoryConfigChanged) saveCategoryConfig();
+    }
 
     if(editingId){
       const old = TXNS.find(t=>t.id===editingId);
