@@ -1748,6 +1748,91 @@ nav.tabs button.active{font-weight:700!important;}
 .reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:22px;height:22px;}
 }
 </style>
+
+<style id="final-reference-match-v3">
+/* Final visual-only alignment pass — based on the approved reference. No application logic changed. */
+.reference-header{
+  padding:20px 8px 16px!important;
+  background:linear-gradient(135deg,#ffffff 0%,#f4fffb 58%,#f2f8ff 100%)!important;
+}
+.reference-brand-row{
+  grid-template-columns:82px minmax(0,1fr) 54px!important;
+  gap:13px!important;
+  align-items:center!important;
+}
+.reference-logo{width:78px!important;height:78px!important;}
+.reference-title{gap:10px!important;align-items:center!important;}
+.reference-ar{
+  min-width:58px!important;height:44px!important;padding:0 10px!important;
+  border:2px solid #d8aa27!important;border-radius:15px!important;
+  background:linear-gradient(145deg,#effffb 0%,#ffffff 100%)!important;
+  background-color:#fff!important;
+  color:#075a49!important;
+  font-family:'Inter',Arial,sans-serif!important;
+  font-size:31px!important;font-weight:900!important;
+  letter-spacing:-.09em!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.9)!important;
+  box-shadow:0 3px 8px rgba(18,48,38,.07)!important;
+}
+.reference-main{
+  font-family:'Inter',Arial,sans-serif!important;
+  font-size:clamp(25px,4.2vw,35px)!important;
+  font-weight:800!important;
+  letter-spacing:-.045em!important;
+  color:#071a3a!important;
+}
+.reference-tagline{
+  margin-top:9px!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:11.5px!important;font-weight:500!important;color:#718392!important;
+}
+.reference-sync{margin-top:8px!important;font-family:'Inter',Arial,sans-serif!important;}
+.reference-settings{width:54px!important;height:54px!important;font-size:27px!important;}
+.reference-tabs{
+  padding:6px 7px 5px!important;margin:0 -8px!important;gap:3px!important;
+  justify-content:space-around!important;
+  background:rgba(255,255,255,.96)!important;
+  border-bottom:1px solid #dce8ed!important;
+  box-shadow:0 4px 14px rgba(31,87,106,.05)!important;
+}
+.reference-tabs .tab-btn{
+  min-height:68px!important;flex:1 1 0!important;
+  padding:7px 3px 8px!important;border:0!important;border-radius:14px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  gap:5px!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:11px!important;font-weight:800!important;line-height:1.1!important;
+  letter-spacing:-.01em!important;
+}
+.reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:26px!important;height:26px!important;}
+.reference-tabs .tab-btn:nth-child(1){color:#167a61!important;}
+.reference-tabs .tab-btn:nth-child(2){color:#2e78b7!important;}
+.reference-tabs .tab-btn:nth-child(3){color:#7655a6!important;}
+.reference-tabs .tab-btn:nth-child(4){color:#c47a22!important;}
+.reference-tabs .tab-btn:nth-child(5){color:#278a8a!important;}
+.reference-tabs .tab-btn:nth-child(6){color:#b16b28!important;}
+.reference-tabs .tab-btn.active{
+  color:#075a49!important;
+  background:linear-gradient(180deg,#e4f8f1,#f3fcf9)!important;
+  box-shadow:0 4px 11px rgba(7,150,105,.10)!important;
+}
+@media(max-width:520px){
+  .reference-header{padding:15px 5px 13px!important;}
+  .reference-brand-row{grid-template-columns:58px minmax(0,1fr) 43px!important;gap:7px!important;}
+  .reference-logo{width:56px!important;height:56px!important;}
+  .reference-title{gap:6px!important;}
+  .reference-ar{
+    min-width:42px!important;height:33px!important;padding:0 7px!important;
+    border-radius:10px!important;font-size:23px!important;
+  }
+  .reference-main{font-size:clamp(20px,6vw,28px)!important;letter-spacing:-.055em!important;}
+  .reference-tagline{font-size:9px!important;margin-top:6px!important;white-space:nowrap!important;}
+  .reference-sync{font-size:9px!important;margin-top:6px!important;}
+  .reference-settings{width:42px!important;height:42px!important;font-size:21px!important;}
+  .reference-tabs{padding:5px 2px 4px!important;margin-left:-5px!important;margin-right:-5px!important;gap:1px!important;}
+  .reference-tabs .tab-btn{min-height:59px!important;padding:5px 1px 6px!important;font-size:9.5px!important;border-radius:11px!important;gap:3px!important;}
+  .reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:22px!important;height:22px!important;}
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -1783,7 +1868,7 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div class="reference-title-block">
         <h1 class="app-title"><span class="reference-ar">AR</span><span class="reference-main">Expenses Tracker</span></h1>
-        <div class="reference-tagline">Track Today <span>•</span> Plan Tomorrow <span>•</span> Build a Better Future</div>
+        <div class="reference-tagline">Track Today <span>•</span> Plan Tomorrow <span>•</span> Build a Better You</div>
         <div class="reference-sync"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span></div>
       </div>
       <button class="reference-settings" id="openSettings" title="Settings" aria-label="Settings">⚙</button>
