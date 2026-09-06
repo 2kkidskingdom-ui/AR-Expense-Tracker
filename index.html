@@ -1872,18 +1872,25 @@ nav.tabs button.active{font-weight:700!important;}
   }
   /* Final header-only adjustments: AR colors/size and compact sync wording. */
   .app-header-titleblock .app-title{font-size:37px;}
-  .app-title .app-title-ar{min-width:78px;height:64px;padding:0 10px;font-size:1em;display:inline-flex;align-items:center;justify-content:center;gap:0;}
+  .app-title .app-title-ar{min-width:78px;height:64px;padding:0 10px;font-size:1.2em;display:inline-flex;align-items:center;justify-content:center;gap:0;}
   .app-title .app-title-ar .ar-a{color:#087A4B;}
   .app-title .app-title-ar .ar-r{color:#0B5F45;}
   .header-sync{font-size:11.5px;font-weight:600;}
+  .header-sync.syncing{color:#D83A4A;}
+  .header-sync.syncing .sync-dot{background:#D83A4A;box-shadow:0 0 0 3px rgba(216,58,74,.12);}
+  .header-sync.synced{color:#0B8F62;}
+  .header-sync.synced .sync-dot{background:#0B8F62;box-shadow:0 0 0 3px rgba(11,143,98,.12);}
+  .header-sync.error{color:#D83A4A;}
+  .header-sync.error .sync-dot{background:#D83A4A;box-shadow:0 0 0 3px rgba(216,58,74,.12);}
+
   @media(max-width:620px){
     .app-header-titleblock .app-title{font-size:25px;}
-    .app-title .app-title-ar{min-width:58px;height:47px;padding:0 7px;}
+    .app-title .app-title-ar{min-width:58px;height:47px;padding:0 7px;font-size:1.2em;}
     .header-sync{font-size:9.5px;}
   }
   @media(max-width:430px){
     .app-header-titleblock .app-title{font-size:20px;}
-    .app-title .app-title-ar{min-width:48px;height:39px;padding:0 5px;}
+    .app-title .app-title-ar{min-width:48px;height:39px;padding:0 5px;font-size:1.2em;}
     .header-sync{font-size:8.5px;}
   }
 </style>
@@ -4045,6 +4052,10 @@ function updateSyncUI(state){
   const isConnected = state === true;
   const hasError = state === 'error';
   document.getElementById('syncDot').classList.toggle('on', isConnected);
+  const headerSync = document.querySelector('.header-sync');
+  headerSync.classList.toggle('syncing', syncing);
+  headerSync.classList.toggle('synced', isConnected && !syncing);
+  headerSync.classList.toggle('error', hasError || connecting);
   document.getElementById('syncLabel').textContent = connecting ? 'Reconnecting…' : syncing ? 'Syncing...' : hasError ? 'Sync issue' : (isConnected ? 'Synced' : 'Not connected');
   document.getElementById('driveDot').classList.toggle('on', isConnected);
   document.getElementById('driveStatusText').textContent = connecting ? 'Reconnecting to Google Drive…' : syncing ? 'Syncing with Google Drive…' : hasError ? (lastDriveError ? `Drive error: ${lastDriveError}` : 'Sync needs attention') : (isConnected ? `Google Drive · ${syncAgeLabel()}` : 'Google Drive not connected');
