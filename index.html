@@ -2075,6 +2075,151 @@ nav.tabs button.active{font-weight:700!important;}
 }
 </style>
 
+
+<style id="approved-design-exact-final">
+/* Approved reference visual match. Visual-only; application logic is untouched. */
+.reference-header{
+  padding:15px 7px 13px!important;
+  background:linear-gradient(135deg,#ffffff 0%,#f3fffb 55%,#eef8ff 100%)!important;
+}
+.reference-brand-row{
+  grid-template-columns:68px minmax(0,1fr) 46px!important;
+  column-gap:8px!important;
+  align-items:center!important;
+}
+.reference-logo{width:64px!important;height:64px!important;}
+.reference-title{gap:8px!important;}
+.reference-ar{
+  min-width:56px!important;height:40px!important;padding:0 8px!important;
+  border:2px solid #d8aa27!important;border-radius:12px!important;
+  background:linear-gradient(145deg,#f7fffc 0%,#ffffff 100%)!important;
+  color:#075a49!important;
+  font-family:'Inter',Arial,sans-serif!important;font-size:28px!important;
+  font-weight:900!important;letter-spacing:-.09em!important;line-height:1!important;
+  box-shadow:0 2px 7px rgba(18,48,38,.08)!important;
+}
+.reference-main{
+  font-family:'Inter',Arial,sans-serif!important;color:#07183b!important;
+  font-size:clamp(24px,6.6vw,31px)!important;font-weight:800!important;
+  letter-spacing:-.06em!important;line-height:1!important;white-space:nowrap!important;
+}
+.reference-tagline{margin-top:7px!important;font:500 10px/1.2 'Inter',Arial,sans-serif!important;color:#718392!important;white-space:nowrap!important;}
+.reference-sync{margin-top:7px!important;font:500 10px/1 'Inter',Arial,sans-serif!important;color:#647a8c!important;}
+.reference-settings{width:46px!important;height:46px!important;font-size:23px!important;}
+.reference-tabs{padding:6px 3px 5px!important;margin-left:-5px!important;margin-right:-5px!important;gap:2px!important;}
+.reference-tabs .tab-btn{min-height:66px!important;padding:6px 2px 7px!important;font-size:10.5px!important;gap:4px!important;border-radius:12px!important;}
+.reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:25px!important;height:25px!important;}
+@media(max-width:380px){
+  .reference-header{padding:14px 5px 12px!important;}
+  .reference-brand-row{grid-template-columns:61px minmax(0,1fr) 43px!important;column-gap:7px!important;}
+  .reference-logo{width:58px!important;height:58px!important;}
+  .reference-title{gap:6px!important;}
+  .reference-ar{min-width:51px!important;height:37px!important;padding:0 7px!important;font-size:26px!important;border-radius:11px!important;}
+  .reference-main{font-size:clamp(22px,6.3vw,29px)!important;}
+  .reference-tagline,.reference-sync{font-size:9.5px!important;}
+  .reference-settings{width:43px!important;height:43px!important;font-size:21px!important;}
+  .reference-tabs{padding:5px 2px 4px!important;gap:1px!important;}
+  .reference-tabs .tab-btn{min-height:63px!important;font-size:10px!important;gap:3px!important;}
+  .reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:24px!important;height:24px!important;}
+}
+</style>
+
+<style id="approved-design-final-visual">
+/* Approved reference design — visual-only override. No application logic changes. */
+.reference-header{
+  padding:18px 8px 14px!important;
+  background:linear-gradient(135deg,#FFFFFF 0%,#F2FFFA 56%,#EEF8FF 100%)!important;
+  border-bottom:0!important;
+}
+.reference-brand-row{
+  display:grid!important;
+  grid-template-columns:100px minmax(0,1fr) 70px!important;
+  align-items:center!important;
+  column-gap:10px!important;
+  width:100%!important;
+}
+.reference-logo{width:88px!important;height:88px!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.reference-logo svg{width:88px!important;height:88px!important;display:block!important;}
+.reference-title-block{min-width:0!important;align-self:center!important;}
+.reference-title-block .app-title{
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  gap:10px!important;margin:0!important;white-space:nowrap!important;
+  font-family:'Inter',Arial,sans-serif!important;font-weight:800!important;
+  letter-spacing:-.045em!important;line-height:1!important;color:#07133F!important;
+}
+.reference-title-block .reference-ar{
+  flex:0 0 auto!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:104px!important;min-width:104px!important;height:58px!important;padding:0!important;
+  box-sizing:border-box!important;border:2px solid #D8AA27!important;border-radius:15px!important;
+  background:linear-gradient(145deg,#F8FFFD 0%,#FFFFFF 100%)!important;
+  color:#075A49!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:42px!important;font-weight:900!important;letter-spacing:-.085em!important;line-height:1!important;
+  box-shadow:0 3px 8px rgba(18,48,38,.08)!important;
+}
+.reference-title-block .reference-main{
+  display:inline-block!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:31px!important;font-weight:800!important;letter-spacing:-.045em!important;
+  color:#07133F!important;line-height:1!important;
+}
+.reference-tagline{
+  margin-top:9px!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:15px!important;font-weight:500!important;letter-spacing:-.01em!important;
+  color:#667589!important;white-space:nowrap!important;
+}
+.reference-tagline span{color:#9AA8B7!important;padding:0 3px!important;}
+.reference-sync{
+  display:flex!important;align-items:center!important;gap:8px!important;
+  margin-top:7px!important;font-family:'Inter',Arial,sans-serif!important;
+  font-size:14px!important;font-weight:500!important;color:#657581!important;
+}
+.reference-sync .sync-dot{width:10px!important;height:10px!important;box-shadow:0 0 0 6px rgba(7,150,105,.10)!important;flex:none!important;}
+.reference-settings{
+  width:70px!important;height:70px!important;border:0!important;border-radius:50%!important;
+  background:linear-gradient(145deg,#E4FBF3,#DDF7EE)!important;
+  color:#087A5D!important;font-size:29px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  box-shadow:0 5px 15px rgba(7,150,105,.08)!important;justify-self:end!important;
+}
+.reference-tabs{
+  padding:7px 8px 6px!important;margin:0 -8px!important;gap:4px!important;
+  background:rgba(255,255,255,.97)!important;border:0!important;border-bottom:1px solid #DCE8ED!important;
+  box-shadow:0 4px 14px rgba(31,87,106,.05)!important;justify-content:space-around!important;
+}
+.reference-tabs .tab-btn{
+  min-width:0!important;min-height:78px!important;flex:1 1 0!important;
+  padding:7px 3px 8px!important;border:0!important;border-radius:15px!important;
+  background:transparent!important;display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;gap:5px!important;
+  font-family:'Inter',Arial,sans-serif!important;font-size:13px!important;font-weight:800!important;
+  line-height:1.05!important;letter-spacing:-.015em!important;transition:.16s ease!important;
+}
+.reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:28px!important;height:28px!important;}
+.reference-tabs .tab-icon svg{stroke-width:2.2!important;}
+.reference-tabs .tab-btn:nth-child(1){color:#167A61!important;}
+.reference-tabs .tab-btn:nth-child(2){color:#2376D8!important;}
+.reference-tabs .tab-btn:nth-child(3){color:#8144D9!important;}
+.reference-tabs .tab-btn:nth-child(4){color:#E66F00!important;}
+.reference-tabs .tab-btn:nth-child(5){color:#11A9AA!important;}
+.reference-tabs .tab-btn:nth-child(6){color:#D59500!important;}
+.reference-tabs .tab-btn.active{
+  color:#075A49!important;background:linear-gradient(180deg,#E0F8F0,#F4FCF9)!important;
+  box-shadow:0 5px 13px rgba(7,150,105,.10)!important;
+}
+@media(max-width:520px){
+  .reference-header{padding:14px 5px 12px!important;}
+  .reference-brand-row{grid-template-columns:100px minmax(0,1fr) 58px!important;column-gap:7px!important;}
+  .reference-logo,.reference-logo svg{width:82px!important;height:82px!important;}
+  .reference-title-block .app-title{gap:8px!important;}
+  .reference-title-block .reference-ar{width:82px!important;min-width:82px!important;height:55px!important;font-size:39px!important;border-radius:14px!important;}
+  .reference-title-block .reference-main{font-size:29px!important;letter-spacing:-.05em!important;}
+  .reference-tagline{font-size:13.5px!important;margin-top:8px!important;}
+  .reference-sync{font-size:13.5px!important;margin-top:6px!important;}
+  .reference-settings{width:58px!important;height:58px!important;font-size:25px!important;}
+  .reference-tabs{padding:6px 3px 5px!important;margin-left:-5px!important;margin-right:-5px!important;gap:2px!important;}
+  .reference-tabs .tab-btn{min-height:72px!important;padding:6px 2px 7px!important;font-size:11.5px!important;gap:4px!important;border-radius:13px!important;}
+  .reference-tabs .tab-icon,.reference-tabs .tab-icon svg{width:26px!important;height:26px!important;}
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
