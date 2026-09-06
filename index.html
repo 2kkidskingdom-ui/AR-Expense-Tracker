@@ -1923,6 +1923,16 @@ nav.tabs button.active{font-weight:700!important;}
 .goal-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:10.5px;color:var(--muted);}
 .goal-foot .pct{font-weight:700;color:var(--green-dark);}
 .goal-empty-note{padding:13px;font-size:11px;color:var(--muted);}
+.debt-card{margin-top:10px;}
+.debt-card.paid-off{opacity:.75;}
+.debt-pay-row{display:flex;gap:8px;margin-top:11px;}
+.debt-pay-row select{flex:1;min-height:38px;border:1px solid var(--line-strong);border-radius:10px;background:#fff;color:var(--ink);padding:6px 9px;font:12.5px Inter,sans-serif;}
+.debt-pay-btn{flex:none;background:var(--green-dark);color:#fff;border:none;border-radius:10px;padding:0 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.debt-pay-btn:disabled{background:#B9C7C0;cursor:default;}
+.debt-paid-badge{display:inline-block;margin-top:11px;font-size:11px;font-weight:700;color:#0F9D78;}
+.debt-history-toggle{display:block;margin-top:8px;font-size:10.5px;color:var(--muted);text-decoration:underline;background:none;border:none;cursor:pointer;padding:0;}
+.debt-history{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:10.5px;color:var(--muted);}
+.debt-history-row{display:flex;justify-content:space-between;padding:2px 0;}
 </style>
 </head>
 <body>
@@ -2051,6 +2061,29 @@ nav.tabs button.active{font-weight:700!important;}
         <button class="save-btn" id="budgetSaveBtn">Add Budget</button><button type="button" class="budget-cancel-edit" id="budgetCancelEditBtn" style="display:none">Cancel Edit</button>
       </div>
       <div class="budget-summary" id="budgetSummary"></div>
+
+      <div class="section-title">Debts &amp; Loan EMIs</div>
+      <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Keep a list of loans you're repaying. Record each month's EMI and the outstanding principal comes down automatically — it's also logged as an expense in your Ledger.</p>
+      <div class="plan-form" id="debtForm">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong id="debtFormTitle" style="font-family:'Fraunces',serif; color:var(--green-dark); font-size:15px;">Add a debt</strong>
+          <button type="button" id="debtCancelBtn" style="display:none; background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline;">Cancel edit</button>
+        </div>
+        <div class="field"><label>Debt / loan name</label><input type="text" id="debtName" placeholder="e.g. Home Loan - SBI, Car Loan"></div>
+        <div class="field-row">
+          <div class="field"><label>Principal amount (₹)</label><input type="number" step="0.01" id="debtPrincipal" class="amt-input" placeholder="0.00"></div>
+          <div class="field"><label>Outstanding balance (₹)</label><input type="number" step="0.01" id="debtOutstanding" class="amt-input" placeholder="0.00"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Monthly EMI (₹)</label><input type="number" step="0.01" id="debtEmi" class="amt-input" placeholder="0.00"></div>
+          <div class="field"><label>Interest rate % p.a. (optional)</label><input type="number" step="0.01" id="debtRate" placeholder="e.g. 9.5"></div>
+        </div>
+        <div class="field"><label>Next EMI due date</label><input type="text" id="debtDueDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
+        <div class="field"><label>Notes (optional)</label><input type="text" id="debtNotes" placeholder="e.g. Lender, loan account number"></div>
+        <button class="save-btn" id="debtAddBtn">Add debt</button>
+        <button class="del-btn" id="debtDeleteBtn" style="display:none;">Delete debt</button>
+      </div>
+      <div id="debtList"></div>
     </section>
 
     <section id="analysis">
@@ -2307,6 +2340,7 @@ const LS_TXNS = 'ledger.transactions.v1';
 const LS_LAST_MODIFIED = 'ledger.lastModified.v1';
 const LS_PLANS = 'ledger.plans.v1';
 const LS_GOALS = 'ledger.goals.v1';
+const LS_DEBTS = 'ledger.debts.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -2346,6 +2380,7 @@ SEED.forEach(t=>{
 let TXNS = [];
 let PLANS = [];
 let GOALS = [];
+let DEBTS = [];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
@@ -2563,6 +2598,18 @@ function loadGoals(){
 function saveGoals(){
   GOALS = stampChangedRecords(GOALS, LS_GOALS);
   localStorage.setItem(LS_GOALS, JSON.stringify(GOALS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  markLocalDirty();
+  if(accessToken) debouncedBackup();
+}
+function loadDebts(){
+  const raw = localStorage.getItem(LS_DEBTS);
+  if(raw){ try{ DEBTS = JSON.parse(raw); }catch(e){ DEBTS = []; } }
+  else { DEBTS = []; }
+}
+function saveDebts(){
+  DEBTS = stampChangedRecords(DEBTS, LS_DEBTS);
+  localStorage.setItem(LS_DEBTS, JSON.stringify(DEBTS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
@@ -3471,6 +3518,211 @@ document.getElementById('goalAddBtn').addEventListener('click', ()=>{
   showToast(wasEditing ? 'Goal updated' : 'Goal added');
 });
 
+// ---------- Debts & loan EMIs ----------
+let editingDebtId = null;
+
+function addMonthsToDate(iso, n){
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(y, (m-1)+n, 1);
+  const lastDay = new Date(dt.getFullYear(), dt.getMonth()+1, 0).getDate();
+  dt.setDate(Math.min(d, lastDay));
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+}
+
+function populateDebtAccountSelects(){
+  document.querySelectorAll('.debt-pay-account').forEach(sel=>{
+    const cur = sel.value;
+    sel.innerHTML = getAccounts().map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+    if(cur) sel.value = cur;
+  });
+}
+function debtPaidPct(d){
+  const principal = Number(d.principal||0);
+  if(principal<=0) return 0;
+  const paid = principal - Number(d.outstanding||0);
+  return Math.max(0, Math.min(100, (paid/principal)*100));
+}
+function debtEmisLeft(d){
+  const bal = Number(d.outstanding||0), emi = Number(d.emi||0), rate = Number(d.rate||0);
+  if(emi<=0 || bal<=0) return 0;
+  if(rate<=0) return Math.ceil(bal/emi);
+  const r = rate/1200;
+  if(emi <= bal*r) return null; // EMI too small to ever cover interest
+  const n = Math.log(emi/(emi - bal*r)) / Math.log(1+r);
+  return Math.ceil(n);
+}
+function renderDebtList(){
+  const el = document.getElementById('debtList');
+  if(!el) return;
+  const sorted = [...DEBTS].sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
+  if(!sorted.length){ el.innerHTML = `<div class="goal-empty-note">No debts added yet — add a loan above to start tracking its EMIs.</div>`; return; }
+  el.innerHTML = sorted.map(d=>{
+    const outstanding = Number(d.outstanding||0);
+    const paidOff = outstanding <= 0;
+    const pct = debtPaidPct(d);
+    const emisLeft = debtEmisLeft(d);
+    const meta = [
+      d.emi ? `EMI ${fmtMoney(Number(d.emi))}` : null,
+      d.rate ? `${d.rate}% p.a.` : null,
+      d.dueDate ? `Next due ${fmtDateLabel(d.dueDate)}` : null
+    ].filter(Boolean).join(' · ');
+    return `<div class="goal-card debt-card ${paidOff?'paid-off':''}" data-id="${escapeHtml(d.id)}">
+      <div class="goal-head">
+        <div>
+          <div class="goal-name">${escapeHtml(d.name||'Untitled debt')}</div>
+          <div class="goal-meta">${escapeHtml(meta)}</div>
+        </div>
+        <div class="goal-amount">${fmtMoney(outstanding)} / ${fmtMoney(Number(d.principal||0))}</div>
+      </div>
+      <div class="goal-progress"><div class="goal-progress-fill" style="width:${pct}%;"></div></div>
+      <div class="goal-foot">
+        <span>${pct.toFixed(0)}% paid off</span>
+        <span>${paidOff ? '' : (emisLeft===null ? 'EMI too low to clear interest' : emisLeft+' EMI(s) left (approx)')}</span>
+      </div>
+      ${paidOff
+        ? `<div class="debt-paid-badge">Fully paid off ✅</div>`
+        : `<div class="debt-pay-row" data-stop="1">
+             <select class="debt-pay-account"></select>
+             <button type="button" class="debt-pay-btn" data-pay-id="${escapeHtml(d.id)}">Record this month's EMI</button>
+           </div>`
+      }
+      ${(d.payments||[]).length ? `<button type="button" class="debt-history-toggle" data-stop="1" data-history-id="${escapeHtml(d.id)}">View payment history (${d.payments.length})</button><div class="debt-history" id="debtHistory_${escapeHtml(d.id)}" style="display:none;"></div>` : ''}
+    </div>`;
+  }).join('');
+  populateDebtAccountSelects();
+  el.querySelectorAll('.goal-card.debt-card').forEach(card=>{
+    card.addEventListener('click', (e)=>{
+      if(e.target.closest('[data-stop]')) return;
+      openDebtForEdit(card.dataset.id);
+    });
+  });
+  el.querySelectorAll('.debt-pay-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.payId;
+      const card = btn.closest('.debt-card');
+      const acct = card.querySelector('.debt-pay-account').value;
+      recordDebtPayment(id, acct);
+    });
+  });
+  el.querySelectorAll('.debt-history-toggle').forEach(btn=>{
+    btn.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.historyId;
+      const box = document.getElementById('debtHistory_'+id);
+      const d = DEBTS.find(x=>x.id===id);
+      if(!box || !d) return;
+      const isHidden = box.style.display === 'none';
+      if(isHidden){
+        const rows = [...(d.payments||[])].slice(-12).reverse().map(p=>
+          `<div class="debt-history-row"><span>${escapeHtml(fmtDateLabel(p.date))}</span><span>${fmtMoney(p.emi)} (principal ${fmtMoney(p.principalPaid)})</span></div>`
+        ).join('');
+        box.innerHTML = rows || 'No payments recorded yet.';
+      }
+      box.style.display = isHidden ? 'block' : 'none';
+      btn.textContent = (isHidden ? 'Hide' : 'View') + ' payment history (' + (d.payments||[]).length + ')';
+    });
+  });
+}
+function recordDebtPayment(id, account){
+  const d = DEBTS.find(x=>x.id===id);
+  if(!d) return;
+  const emi = Number(d.emi||0);
+  if(emi<=0){ showToast('Set an EMI amount for this debt first'); return; }
+  if(!account){ showToast('Select an account to pay from'); return; }
+  const outstanding = Number(d.outstanding||0);
+  const rate = Number(d.rate||0);
+  const interest = rate>0 ? Math.round(outstanding*(rate/1200)*100)/100 : 0;
+  const principalPaid = Math.min(outstanding, Math.max(0, emi - interest));
+  const newOutstanding = Math.max(0, Math.round((outstanding - principalPaid)*100)/100);
+  const today = localDateIso();
+  d.outstanding = newOutstanding;
+  d.payments = Array.isArray(d.payments) ? d.payments : [];
+  d.payments.push({date:today, emi, interest, principalPaid, balanceAfter:newOutstanding});
+  if(d.payments.length>36) d.payments = d.payments.slice(-36);
+  if(d.dueDate) d.dueDate = addMonthsToDate(d.dueDate, 1);
+  d.updatedAt = Date.now();
+  saveDebts();
+  TXNS.push({id:uid(), date:today, amount:-Math.abs(emi), category:'Loan / EMI', subcategory:d.name||'', account, description:`EMI payment - ${d.name||'Loan'}`});
+  saveData();
+  refreshAll();
+  renderDebtList();
+  showToast(newOutstanding<=0 ? `${d.name} fully paid off! 🎉` : 'EMI recorded and logged in Ledger');
+}
+function openDebtForEdit(id){
+  const d = DEBTS.find(x=>x.id===id);
+  if(!d) return;
+  editingDebtId = id;
+  document.getElementById('debtName').value = d.name || '';
+  document.getElementById('debtPrincipal').value = d.principal || '';
+  document.getElementById('debtOutstanding').value = d.outstanding ?? '';
+  document.getElementById('debtEmi').value = d.emi || '';
+  document.getElementById('debtRate').value = d.rate || '';
+  document.getElementById('debtDueDate').value = d.dueDate ? isoToDisplayDate(d.dueDate) : '';
+  document.getElementById('debtNotes').value = d.notes || '';
+  document.getElementById('debtFormTitle').textContent = 'Edit debt';
+  document.getElementById('debtAddBtn').textContent = 'Save changes';
+  document.getElementById('debtDeleteBtn').style.display = 'block';
+  document.getElementById('debtCancelBtn').style.display = 'block';
+  document.getElementById('debtForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function resetDebtForm(){
+  editingDebtId = null;
+  document.getElementById('debtName').value = '';
+  document.getElementById('debtPrincipal').value = '';
+  document.getElementById('debtOutstanding').value = '';
+  document.getElementById('debtEmi').value = '';
+  document.getElementById('debtRate').value = '';
+  document.getElementById('debtDueDate').value = '';
+  document.getElementById('debtNotes').value = '';
+  document.getElementById('debtFormTitle').textContent = 'Add a debt';
+  document.getElementById('debtAddBtn').textContent = 'Add debt';
+  document.getElementById('debtDeleteBtn').style.display = 'none';
+  document.getElementById('debtCancelBtn').style.display = 'none';
+}
+document.getElementById('debtCancelBtn').addEventListener('click', resetDebtForm);
+document.getElementById('debtDeleteBtn').addEventListener('click', ()=>{
+  if(!editingDebtId) return;
+  if(!confirm('Delete this debt? Its payment history will be removed too (past EMI entries already in your Ledger stay untouched).')) return;
+  const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [editingDebtId]:Date.now()}; setSyncMeta(m);
+  DEBTS = DEBTS.filter(d=>d.id !== editingDebtId);
+  saveDebts();
+  resetDebtForm();
+  renderDebtList();
+  showToast('Debt deleted');
+});
+document.getElementById('debtAddBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('debtName').value.trim();
+  const principal = parseFloat(document.getElementById('debtPrincipal').value);
+  const outstandingRaw = document.getElementById('debtOutstanding').value;
+  const emi = parseFloat(document.getElementById('debtEmi').value) || 0;
+  const rate = parseFloat(document.getElementById('debtRate').value) || 0;
+  const dueDate = displayToIsoDate(document.getElementById('debtDueDate').value.trim());
+  const notes = document.getElementById('debtNotes').value.trim();
+  if(!name){ document.getElementById('debtName').focus(); showToast('Give the debt a name'); return; }
+  if(isNaN(principal) || principal<=0){ document.getElementById('debtPrincipal').focus(); showToast('Enter a valid principal amount'); return; }
+  const outstanding = outstandingRaw !== '' ? parseFloat(outstandingRaw) : principal;
+  const existing = editingDebtId ? DEBTS.find(d=>d.id===editingDebtId) : null;
+  const entry = {
+    id: editingDebtId || uid(),
+    updatedAt: Date.now(),
+    name, principal, outstanding: isNaN(outstanding)?principal:outstanding,
+    emi, rate, dueDate, notes,
+    payments: existing?.payments || []
+  };
+  if(editingDebtId){
+    const idx = DEBTS.findIndex(d=>d.id===editingDebtId);
+    if(idx>=0) DEBTS[idx] = entry;
+  } else {
+    DEBTS.push(entry);
+  }
+  saveDebts();
+  const wasEditing = !!editingDebtId;
+  resetDebtForm();
+  renderDebtList();
+  showToast(wasEditing ? 'Debt updated' : 'Debt added');
+});
+
 function renderProjectionGraph(){
   const el=document.getElementById('projectionChart'); if(!el) return;
   const months=Number(document.getElementById('projectionRange')?.value||6);
@@ -3770,7 +4022,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
-    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); }
+    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); populateDebtAccountSelects(); renderDebtList(); }
   });
 });
 
@@ -4505,6 +4757,7 @@ function getLocalShard(){
     schemaVersion:5, deviceId:DEVICE_ID,
     transactions:TXNS, plans:PLANS, budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],
     goals:Array.isArray(GOALS)?GOALS:[],
+    debts:Array.isArray(DEBTS)?DEBTS:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
@@ -4592,17 +4845,19 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
   GOALS=mergeRecordsFromSources(all,'goals',deleted);
+  DEBTS=mergeRecordsFromSources(all,'debts',deleted);
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
   localStorage.setItem(LS_TXNS,JSON.stringify(TXNS));
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
   localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
+  localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS));
   localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
@@ -4632,10 +4887,11 @@ async function driveSyncMerge(silent, existingMeta){
       TXNS=mergeRecordsFromSources(all,'transactions',deleted);
       PLANS=mergeRecordsFromSources(all,'plans',deleted);
       GOALS=mergeRecordsFromSources(all,'goals',deleted);
+      DEBTS=mergeRecordsFromSources(all,'debts',deleted);
       MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -4651,7 +4907,7 @@ async function driveSyncMerge(silent, existingMeta){
       await writeDriveFile(shardInfo.file.id,shardInfo.name,JSON.stringify(state));
       localStorage.setItem(LS_DRIVE_FILE_ID,shardInfo.file.id); driveFileId=shardInfo.file.id;
     }
-    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
+    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, debts:DEBTS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
     setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:getSyncMeta().deleted||{}});
     updateSyncUI(true); refreshAll();
     if(!silent) showToast('Synced with Google Drive');
@@ -4664,7 +4920,7 @@ async function driveSyncMerge(silent, existingMeta){
 }
 async function driveBackup(silent){
   if(!accessToken) return;
-  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
+  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
   if(!silent) showToast(ok?'Backup saved to Drive':'Backup could not be saved');
 }
 async function driveRestore(silent){
@@ -4675,10 +4931,10 @@ async function driveRestore(silent){
     if(sorted.length){
       const data=await driveGetFileJson(sorted[0].id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
@@ -4772,12 +5028,14 @@ bindDateTextInput('planDate');
 bindDateTextInput('planUntil');
 bindDateTextInput('fDate');
 bindDateTextInput('goalTargetDate');
+bindDateTextInput('debtDueDate');
 
 // ---------- Init ----------
 (function init(){
   loadData();
   loadPlans();
   loadGoals();
+  loadDebts();
   loadCategoryConfig();
   initBudgetUI();
   if(ensureRecordTimestamps()){
