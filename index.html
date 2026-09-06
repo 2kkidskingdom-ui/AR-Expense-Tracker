@@ -2153,7 +2153,17 @@ nav.tabs button.active{font-weight:700!important;}
     </div>
     <div class="field">
       <label>Amount (₹)</label>
-      <input type="number" step="0.01" id="fAmount" class="amt-input" placeholder="0.00">
+      <input type="text" id="fAmount" class="amt-input" placeholder="0.00" inputmode="none" autocomplete="off" readonly aria-label="Amount or calculation">
+      <div class="amount-calculator" id="amountCalculator" aria-label="Amount calculator">
+        <div class="calc-display"><div class="calc-expression" id="calcExpression">0</div><div class="calc-result" id="calcResult">₹ 0.00</div></div>
+        <div class="calc-grid">
+          <button type="button" data-calc="clear">AC</button><button type="button" data-calc="backspace">⌫</button><button type="button" data-calc="operator" data-value="/">÷</button><button type="button" data-calc="operator" data-value="*">×</button>
+          <button type="button" data-calc="digit" data-value="7">7</button><button type="button" data-calc="digit" data-value="8">8</button><button type="button" data-calc="digit" data-value="9">9</button><button type="button" data-calc="operator" data-value="-">−</button>
+          <button type="button" data-calc="digit" data-value="4">4</button><button type="button" data-calc="digit" data-value="5">5</button><button type="button" data-calc="digit" data-value="6">6</button><button type="button" data-calc="operator" data-value="+">+</button>
+          <button type="button" data-calc="digit" data-value="1">1</button><button type="button" data-calc="digit" data-value="2">2</button><button type="button" data-calc="digit" data-value="3">3</button><button type="button" class="calc-equals" data-calc="equals">=</button>
+          <button type="button" data-calc="digit" data-value=".">.</button><button type="button" data-calc="digit" data-value="0">0</button><button type="button" class="calc-ok" data-calc="ok">OK</button>
+        </div>
+      </div>
     </div>
     <div class="field-row">
       <div class="field"><label>Date</label><input type="text" id="fDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
@@ -3603,6 +3613,10 @@ document.getElementById('customTo').addEventListener('change', ()=> renderAnalys
 document.getElementById('filterAccount').addEventListener('change', renderLedger);
 document.getElementById('filterCategory').addEventListener('change', renderLedger);
 
+/* Amount calculator */
+.amount-calculator{display:none;margin-top:8px;border:1px solid var(--line);border-radius:16px;background:#F7FAF8;overflow:hidden;box-shadow:0 8px 22px rgba(20,70,55,.07)}
+.amount-calculator.show{display:block}.calc-display{padding:10px 13px 9px;background:#fff;border-bottom:1px solid var(--line);text-align:right}.calc-expression{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--ink);min-height:23px;word-break:break-all}.calc-result{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--green);margin-top:3px;min-height:16px}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#DCE5E0}.calc-grid button{border:0;background:#fff;min-height:52px;font-family:Inter,sans-serif;font-size:20px;font-weight:600;color:#65716C;cursor:pointer;-webkit-tap-highlight-color:transparent}.calc-grid button:active{background:#EAF4F0;transform:scale(.98)}.calc-grid button[data-calc="operator"],.calc-grid button[data-calc="backspace"]{background:#F1F3F2}.calc-grid .calc-equals{color:var(--green);background:#F1FAF6}.calc-grid .calc-ok{background:var(--green-dark);color:#fff;font-size:16px}@media(max-width:520px){.amount-calculator{margin-left:-2px;margin-right:-2px}.calc-grid button{min-height:50px;font-size:20px}.calc-expression{font-size:17px}}
+
 // ---------- Add / Edit sheet ----------
 const overlay = document.getElementById('overlay');
 const fAmount = document.getElementById('fAmount');
@@ -3682,6 +3696,27 @@ function setType(type){
 }
 document.querySelectorAll('#overlay .type-btn').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.type)));
 
+// ---------- Amount calculator ----------
+let calcExpressionValue = '';
+let calcJustEvaluated = false;
+const amountCalculator = document.getElementById('amountCalculator');
+const calcExpressionEl = document.getElementById('calcExpression');
+const calcResultEl = document.getElementById('calcResult');
+function safeCalculate(expr){
+  const clean=String(expr||'').replace(/\s+/g,'');
+  if(!clean || !/^[0-9+\-*/.]+$/.test(clean) || /[+\-*/.]$/.test(clean) || /(^|[+\-*/])\./.test(clean)) return null;
+  const parts=clean.split(/([+\-*/])/); let total=Number(parts[0]); if(!Number.isFinite(total)) return null;
+  for(let i=1;i<parts.length;i+=2){const op=parts[i],n=Number(parts[i+1]);if(!Number.isFinite(n))return null;if(op==='+')total+=n;else if(op==='-')total-=n;else if(op==='*')total*=n;else{if(n===0)return null;total/=n;}}
+  return Number.isFinite(total)?total:null;
+}
+function syncCalculatorDisplay(){const expr=calcExpressionValue||'0';calcExpressionEl.textContent=expr;const result=safeCalculate(calcExpressionValue);calcResultEl.textContent=result===null?'—':`₹ ${result.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;if(result!==null&&calcExpressionValue)fAmount.value=String(result);else if(!calcExpressionValue)fAmount.value='';}
+function openAmountCalculator(){amountCalculator.classList.add('show');syncCalculatorDisplay();}
+function appendCalcValue(v){if(calcJustEvaluated){calcExpressionValue='';calcJustEvaluated=false;}if(v==='.') {const part=calcExpressionValue.split(/[+\-*/]/).pop();if(part.includes('.'))return;if(!part)calcExpressionValue+='0';}calcExpressionValue+=v;syncCalculatorDisplay();}
+function appendCalcOperator(op){if(!calcExpressionValue)return;calcExpressionValue=/[+\-*/]$/.test(calcExpressionValue)?calcExpressionValue.slice(0,-1)+op:calcExpressionValue+op;calcJustEvaluated=false;syncCalculatorDisplay();}
+function evaluateCalculator(){const result=safeCalculate(calcExpressionValue);if(result===null)return;calcExpressionValue=String(Math.round(result*100)/100);calcJustEvaluated=true;syncCalculatorDisplay();}
+amountCalculator.addEventListener('click',(e)=>{const btn=e.target.closest('button[data-calc]');if(!btn)return;const a=btn.dataset.calc;if(a==='digit')appendCalcValue(btn.dataset.value);else if(a==='operator')appendCalcOperator(btn.dataset.value);else if(a==='clear'){calcExpressionValue='';calcJustEvaluated=false;syncCalculatorDisplay();}else if(a==='backspace'){calcExpressionValue=calcExpressionValue.slice(0,-1);calcJustEvaluated=false;syncCalculatorDisplay();}else if(a==='equals'||a==='ok')evaluateCalculator();});
+fAmount.addEventListener('focus',openAmountCalculator);
+
 function openProjectionConversion(seriesId, occurrenceId, scheduledDate){
   const plan=PLANS.find(p=>p.id===seriesId);
   if(!plan) return;
@@ -3692,7 +3727,7 @@ function openProjectionConversion(seriesId, occurrenceId, scheduledDate){
   editingId=null;
   sheetTitle.innerHTML = 'Convert projection to actual <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = Math.abs((occ.credit||0)>0 ? occ.credit : occ.debit);
+  fAmount.value = Math.abs((occ.credit||0)>0 ? occ.credit : occ.debit); calcExpressionValue=String(fAmount.value); calcJustEvaluated=true; syncCalculatorDisplay();
   fDate.value = isoToDisplayDate(scheduledDate);
   fAccount.value = plan.account || '';
   fToAccount.value=''; fCategory.value=''; fSubcategory.value='';
@@ -3720,7 +3755,7 @@ function openAddSheet(){
   editingId = null;
   sheetTitle.innerHTML = 'Add entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = ''; fDate.value = isoToDisplayDate(localDateIso());
+  fAmount.value = ''; calcExpressionValue=''; calcJustEvaluated=false; syncCalculatorDisplay(); fDate.value = isoToDisplayDate(localDateIso());
   fAccount.value=''; fToAccount.value=''; fCategory.value=''; fSubcategory.value=''; fDesc.value='';
   fApplicableMonth.value = new Date().toISOString().slice(0,7);
   fSpanMonths.value = 1;
@@ -3737,7 +3772,7 @@ function openEditSheet(id){
   editingId = id;
   sheetTitle.innerHTML = 'Edit entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = Math.abs(t.amount); fDate.value = isoToDisplayDate(t.date || '');
+  fAmount.value = Math.abs(t.amount); calcExpressionValue=String(Math.abs(t.amount)); calcJustEvaluated=true; syncCalculatorDisplay(); fDate.value = isoToDisplayDate(t.date || '');
   fAccount.value = t.account || ''; fToAccount.value='';
   fCategory.value = '';
   fSubcategory.value = '';
@@ -3816,8 +3851,10 @@ document.getElementById('addEntrySubcategoryBtn')?.addEventListener('click', add
 
 document.getElementById('saveBtn').addEventListener('click', ()=>{
   let oldEditedTxn=null;
-  const amt = parseFloat(fAmount.value);
-  if(isNaN(amt) || amt===0){ fAmount.focus(); return; }
+  const calculatedAmount = safeCalculate(calcExpressionValue || fAmount.value);
+  const amt = calculatedAmount===null ? parseFloat(fAmount.value) : calculatedAmount;
+  if(!Number.isFinite(amt) || amt===0){ fAmount.focus(); openAmountCalculator(); return; }
+  fAmount.value = String(Math.round(amt*100)/100);
   const date = displayToIsoDate(fDate.value) || localDateIso();
   if(!displayToIsoDate(fDate.value) && fDate.value.trim()){ fDate.focus(); return; }
   const day = date.slice(8,10);
