@@ -1870,13 +1870,29 @@ nav.tabs button.active{font-weight:700!important;}
     .app-header-top .settings-icon{width:36px;height:36px;}
     .app-header-top .settings-icon svg{width:16px;height:16px;}
   }
+  /* Final header-only adjustments: AR colors/size and compact sync wording. */
+  .app-header-titleblock .app-title{font-size:37px;}
+  .app-title .app-title-ar{min-width:78px;height:64px;padding:0 10px;font-size:1em;display:inline-flex;align-items:center;justify-content:center;gap:0;}
+  .app-title .app-title-ar .ar-a{color:#087A4B;}
+  .app-title .app-title-ar .ar-r{color:#0B5F45;}
+  .header-sync{font-size:11.5px;font-weight:600;}
+  @media(max-width:620px){
+    .app-header-titleblock .app-title{font-size:25px;}
+    .app-title .app-title-ar{min-width:58px;height:47px;padding:0 7px;}
+    .header-sync{font-size:9.5px;}
+  }
+  @media(max-width:430px){
+    .app-header-titleblock .app-title{font-size:20px;}
+    .app-title .app-title-ar{min-width:48px;height:39px;padding:0 5px;}
+    .header-sync{font-size:8.5px;}
+  }
 </style>
 
 </head>
 <body>
 <div id="authGate">
   <div class="gate-card">
-    <h1 class="app-title"><span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span></h1>
+    <h1 class="app-title"><span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expenses Tracker</span></h1>
     <p class="gate-sub">Private household ledger</p>
     <div id="gateClientIdStep">
       <p class="gate-hint">Enter the Google OAuth Client ID once to enable sign-in.</p>
@@ -1908,7 +1924,7 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div class="app-header-titleblock">
         <h1 class="app-title">
-          <span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span>
+          <span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expenses Tracker</span>
         </h1>
         <div class="app-tagline">Track Today&nbsp; &bull; &nbsp;Plan Tomorrow&nbsp; &bull; &nbsp;Build a Better Future</div>
       </div>
@@ -4029,7 +4045,7 @@ function updateSyncUI(state){
   const isConnected = state === true;
   const hasError = state === 'error';
   document.getElementById('syncDot').classList.toggle('on', isConnected);
-  document.getElementById('syncLabel').textContent = connecting ? 'Reconnecting…' : syncing ? 'Syncing…' : hasError ? 'Sync issue' : (isConnected ? `Synced ${syncAgeLabel()}` : 'Not connected');
+  document.getElementById('syncLabel').textContent = connecting ? 'Reconnecting…' : syncing ? 'Syncing...' : hasError ? 'Sync issue' : (isConnected ? 'Synced' : 'Not connected');
   document.getElementById('driveDot').classList.toggle('on', isConnected);
   document.getElementById('driveStatusText').textContent = connecting ? 'Reconnecting to Google Drive…' : syncing ? 'Syncing with Google Drive…' : hasError ? (lastDriveError ? `Drive error: ${lastDriveError}` : 'Sync needs attention') : (isConnected ? `Google Drive · ${syncAgeLabel()}` : 'Google Drive not connected');
   document.getElementById('connectDriveBtn').style.display = (isConnected || connecting || syncing) ? 'none' : 'block';
