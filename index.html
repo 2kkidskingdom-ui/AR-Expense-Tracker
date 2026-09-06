@@ -1685,17 +1685,17 @@ nav.tabs button.active{font-weight:700!important;}
   }
   .app-title .app-title-ar{
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:42px; height:34px; padding:0 8px;
-    border:1px solid var(--gold); border-radius:10px;
+    min-width:52px; height:42px; padding:0 10px;
+    border:2px solid var(--gold); border-radius:11px;
     background:linear-gradient(135deg,var(--green-dark),var(--green));
     color:#fff; font-family:'IBM Plex Mono',monospace;
-    font-size:.62em; font-weight:800; letter-spacing:-.04em;
+    font-size:.85em; font-weight:800; letter-spacing:-.02em;
     box-shadow:0 3px 10px rgba(18,48,38,.14);
   }
   .app-title .app-title-main{font-size:1em;}
   @media(max-width:520px){
     .app-title{gap:7px;font-size:clamp(25px,7.2vw,34px);}
-    .app-title .app-title-ar{min-width:38px;height:31px;padding:0 7px;}
+    .app-title .app-title-ar{min-width:44px;height:36px;padding:0 8px;}
   }
 </style>
 
@@ -1734,28 +1734,29 @@ nav.tabs button.active{font-weight:700!important;}
     background:#fff; border-radius:16px; box-shadow:0 2px 10px rgba(43,38,32,0.06);
   }
   nav.tabs .tab-btn{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:10.5px; background:none; border:none;
-    cursor:pointer; padding:8px 6px; border-radius:12px; color:var(--muted);
-    white-space:nowrap; flex:1; top:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; background:none; border:none;
+    cursor:pointer; padding:7px 4px; border-radius:12px;
+    white-space:nowrap; flex:1; top:0; transition:transform .15s ease;
   }
   nav.tabs .tab-btn svg{ display:block; }
-  nav.tabs .tab-btn[data-tab="dash"]{ color:#1F4A3D; }
-  nav.tabs .tab-btn[data-tab="ledger"]{ color:#2F6FED; }
-  nav.tabs .tab-btn[data-tab="analysis"]{ color:#9B3FE0; }
-  nav.tabs .tab-btn[data-tab="plan"]{ color:#F0701F; }
-  nav.tabs .tab-btn[data-tab="calendar"]{ color:#12A594; }
-  nav.tabs .tab-btn[data-tab="budget"]{ color:#F2A93B; }
-  nav.tabs .tab-btn.active{ background:#E4F5EC; }
-  nav.tabs .tab-btn.active[data-tab="ledger"]{ background:#E7EFFE; }
-  nav.tabs .tab-btn.active[data-tab="analysis"]{ background:#F4E9FC; }
-  nav.tabs .tab-btn.active[data-tab="plan"]{ background:#FDEBE0; }
-  nav.tabs .tab-btn.active[data-tab="calendar"]{ background:#DFF5F2; }
-  nav.tabs .tab-btn.active[data-tab="budget"]{ background:#FCF0DA; }
+  nav.tabs .tab-btn .tab-ico{
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--tab-tint,#EEF1EA); transition:background .15s ease;
+  }
+  nav.tabs .tab-btn[data-tab="dash"]{ color:#178A5C; --tab-tint:#E4F5EC; }
+  nav.tabs .tab-btn[data-tab="ledger"]{ color:#2F6FED; --tab-tint:#E7EFFE; }
+  nav.tabs .tab-btn[data-tab="analysis"]{ color:#9B3FE0; --tab-tint:#F4E9FC; }
+  nav.tabs .tab-btn[data-tab="plan"]{ color:#F0701F; --tab-tint:#FDEBE0; }
+  nav.tabs .tab-btn[data-tab="calendar"]{ color:#0E9C8E; --tab-tint:#DFF5F2; }
+  nav.tabs .tab-btn[data-tab="budget"]{ color:#DB9B1C; --tab-tint:#FCF0DA; }
+  nav.tabs .tab-btn.active{ transform:translateY(-1px); }
+  nav.tabs .tab-btn.active .tab-ico{ box-shadow:0 3px 8px rgba(0,0,0,0.10); }
   @media(max-width:520px){
     nav.tabs{ border-radius:14px; }
-    nav.tabs .tab-btn{ font-size:9px; padding:7px 3px; gap:3px; }
-    nav.tabs .tab-btn svg{ width:17px; height:17px; }
+    nav.tabs .tab-btn{ font-size:9px; padding:6px 2px; gap:3px; }
+    nav.tabs .tab-btn .tab-ico{ width:28px; height:28px; }
+    nav.tabs .tab-btn svg{ width:16px; height:16px; }
   }
 </style>
 
@@ -1782,21 +1783,29 @@ nav.tabs button.active{font-weight:700!important;}
   <header class="app-header">
     <div class="app-header-top">
       <div class="app-header-logo" aria-hidden="true">
-        <svg viewBox="0 0 44 44" width="40" height="40">
-          <path d="M4 30 L4 38 L11 38 L11 24 L4 24 Z" fill="#1B9E6E"/>
-          <path d="M15 30 L15 38 L22 38 L22 18 L15 18 Z" fill="#2FBE8A"/>
-          <path d="M26 30 L26 38 L33 38 L33 12 L26 12 Z" fill="#1B9E6E"/>
-          <path d="M4 22 L15 13 L22 17 L34 5" stroke="#1B9E6E" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M27 5 L35 5 L35 13" stroke="#1B9E6E" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="34" cy="30" r="9" fill="#F2A93B"/>
-          <text x="34" y="34.5" font-family="Inter,sans-serif" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">₹</text>
+        <svg viewBox="0 0 48 48" width="42" height="42">
+          <defs>
+            <linearGradient id="logoBadgeGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#2FBE8A"/>
+              <stop offset="1" stop-color="#12513F"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="2" width="36" height="36" rx="11" fill="url(#logoBadgeGrad)"/>
+          <path d="M9 27 L16.5 19 L22 24 L31 12.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M25 12.5 L31 12.5 L31 18.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="27" r="2" fill="#fff"/>
+          <circle cx="16.5" cy="19" r="2" fill="#fff"/>
+          <circle cx="22" cy="24" r="2" fill="#fff"/>
+          <circle cx="36" cy="36" r="10.5" fill="#fff"/>
+          <circle cx="36" cy="36" r="9" fill="#F2A93B"/>
+          <text x="36" y="40.2" font-family="Inter,sans-serif" font-size="11.5" font-weight="800" fill="#fff" text-anchor="middle">₹</text>
         </svg>
       </div>
       <div class="app-header-titleblock">
         <h1 class="app-title">
           <span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span>
         </h1>
-        <div class="app-tagline">Track Today&nbsp; &bull; &nbsp;Plan Tomorrow&nbsp; &bull; &nbsp;Build a Better You</div>
+        <div class="app-tagline">Track Today&nbsp; &bull; &nbsp;Plan Tomorrow&nbsp; &bull; &nbsp;Build a Better Future</div>
         <div class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span></div>
       </div>
       <button class="settings-icon" id="openSettings" title="Settings">
@@ -1811,27 +1820,27 @@ nav.tabs button.active{font-weight:700!important;}
 
   <nav class="tabs">
     <button class="tab-btn active" data-tab="dash">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>
       <span>Dashboard</span>
     </button>
     <button class="tab-btn" data-tab="ledger">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M9 6h11M9 12h11M9 18h11"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M9 6h11M9 12h11M9 18h11"/></svg></span>
       <span>Ledger</span>
     </button>
     <button class="tab-btn" data-tab="analysis">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="currentColor"/><path d="M12 12 L12 2 A10 10 0 0 0 3.5 17 Z" fill="currentColor" opacity="0.55"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="currentColor"/><path d="M12 12 L12 2 A10 10 0 0 0 3.5 17 Z" fill="currentColor" opacity="0.55"/></svg></span>
       <span>Summary</span>
     </button>
     <button class="tab-btn" data-tab="plan">
-      <svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="14" width="3" height="7" rx="1" fill="currentColor"/><rect x="10.5" y="10" width="3" height="11" rx="1" fill="currentColor"/><rect x="17" y="5" width="3" height="16" rx="1" fill="currentColor"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="14" width="3" height="7" rx="1" fill="currentColor"/><rect x="10.5" y="10" width="3" height="11" rx="1" fill="currentColor"/><rect x="17" y="5" width="3" height="16" rx="1" fill="currentColor"/></svg></span>
       <span>Projections</span>
     </button>
     <button class="tab-btn" data-tab="calendar">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17"/><path d="M8 3v3.5M16 3v3.5"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></span>
       <span>Calendar</span>
     </button>
     <button class="tab-btn" data-tab="budget">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></span>
       <span>Budget</span>
     </button>
   </nav>
