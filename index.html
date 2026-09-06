@@ -1736,6 +1736,142 @@ nav.tabs button.active{font-weight:700!important;}
   }
 </style>
 
+
+<style id="reference-header-final">
+  /* Header matched to the supplied reference: large logo, large AR mark,
+     single-line title, and compact sync status above Settings. */
+  header.app-header{
+    background:linear-gradient(180deg,#F4FBF8 0%,#F8FCFA 100%);
+    border-radius:18px;
+    padding:18px 18px 16px;
+    margin:10px 6px 0;
+  }
+  .app-header-top{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    width:100%;
+  }
+  .app-header-logo{
+    flex:0 0 auto;
+    margin-top:1px;
+  }
+  .app-header-logo svg{
+    display:block;
+    width:82px;
+    height:82px;
+  }
+  .app-header-titleblock{
+    flex:1 1 auto;
+    min-width:0;
+    padding-top:1px;
+  }
+  .app-header-titleblock .app-title{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:10px;
+    width:max-content;
+    max-width:100%;
+    white-space:nowrap;
+    font-size:31px;
+    line-height:1;
+  }
+  .app-title .app-title-ar{
+    flex:0 0 auto;
+    min-width:68px;
+    height:58px;
+    padding:0 11px;
+    border:3px solid var(--ar-gold);
+    border-radius:15px;
+    font-size:1em;
+    line-height:1;
+    letter-spacing:-.02em;
+  }
+  .app-title .app-title-main{
+    flex:0 0 auto;
+    font-size:1em;
+    white-space:nowrap;
+  }
+  .app-tagline{
+    font-size:12px;
+    color:var(--tagline-gray);
+    margin-top:12px;
+    font-weight:500;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .app-header-titleblock .sub{
+    display:none;
+  }
+  .header-actions{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    min-width:58px;
+  }
+  .header-sync{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    width:100%;
+    min-height:16px;
+    font-size:9px;
+    line-height:1.1;
+    color:var(--tagline-gray);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .header-sync .sync-dot{
+    width:5px;
+    height:5px;
+    flex:0 0 5px;
+    box-shadow:0 0 0 3px rgba(11,143,98,.08);
+  }
+  .app-header-top .settings-icon{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:#D8F4E7;
+    color:#045A38;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:0;
+    margin:0;
+  }
+  @media(max-width:620px){
+    header.app-header{padding:15px 12px 14px;}
+    .app-header-top{gap:9px;}
+    .app-header-logo svg{width:62px;height:62px;}
+    .app-header-titleblock .app-title{gap:7px;font-size:22px;}
+    .app-title .app-title-ar{min-width:52px;height:43px;padding:0 7px;border-width:2.5px;border-radius:11px;}
+    .app-tagline{font-size:10px;margin-top:9px;}
+    .header-actions{min-width:44px;gap:3px;}
+    .header-sync{font-size:7.5px;gap:3px;max-width:58px;}
+    .header-sync .sync-dot{width:4px;height:4px;flex-basis:4px;}
+    .app-header-top .settings-icon{width:40px;height:40px;}
+    .app-header-top .settings-icon svg{width:18px;height:18px;}
+  }
+  @media(max-width:430px){
+    header.app-header{padding-left:9px;padding-right:9px;}
+    .app-header-top{gap:7px;}
+    .app-header-logo svg{width:54px;height:54px;}
+    .app-header-titleblock .app-title{font-size:18px;gap:5px;}
+    .app-title .app-title-ar{min-width:44px;height:37px;padding:0 5px;border-width:2px;border-radius:9px;}
+    .app-tagline{font-size:8.5px;margin-top:7px;}
+    .header-actions{min-width:38px;}
+    .header-sync{font-size:6.5px;max-width:50px;}
+    .app-header-top .settings-icon{width:36px;height:36px;}
+    .app-header-top .settings-icon svg{width:16px;height:16px;}
+  }
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -1775,14 +1911,16 @@ nav.tabs button.active{font-weight:700!important;}
           <span class="app-title-ar">AR</span><span class="app-title-main">Expenses Tracker</span>
         </h1>
         <div class="app-tagline">Track Today&nbsp; &bull; &nbsp;Plan Tomorrow&nbsp; &bull; &nbsp;Build a Better Future</div>
-        <div class="sub"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span></div>
       </div>
-      <button class="settings-icon" id="openSettings" title="Settings">
+      <div class="header-actions">
+        <div class="header-sync"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Not connected</span></div>
+        <button class="settings-icon" id="openSettings" title="Settings">
         <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"></circle>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
-      </button>
+        </button>
+      </div>
     </div>
     <button id="resumeSyncBtn" style="display:none; width:100%; margin-top:12px; padding:10px; border:1px solid var(--gold); background:var(--gold-soft); color:var(--green-dark); font-weight:700; font-size:12.5px; border-radius:6px; cursor:pointer;">↻ Tap to resume Google Drive sync</button>
   </header>
