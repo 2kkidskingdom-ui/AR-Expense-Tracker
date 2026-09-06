@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>AR Expenses Tracker</title>
+<title>AR Expense Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1908,11 +1908,27 @@ nav.tabs button.active{font-weight:700!important;}
 .amount-calculator{display:none;margin-top:8px;border:1px solid var(--line);border-radius:16px;background:#F7FAF8;overflow:hidden;box-shadow:0 8px 22px rgba(20,70,55,.07)}
 .amount-calculator.show{display:block}.calc-display{padding:10px 13px 9px;background:#fff;border-bottom:1px solid var(--line);text-align:right}.calc-expression{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--ink);min-height:23px;word-break:break-all}.calc-result{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--green);margin-top:3px;min-height:16px}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#DCE5E0}.calc-grid button{border:0;background:#fff;min-height:52px;font-family:Inter,sans-serif;font-size:20px;font-weight:600;color:#65716C;cursor:pointer;-webkit-tap-highlight-color:transparent}.calc-grid button:active{background:#EAF4F0;transform:scale(.98)}.calc-grid button[data-calc="operator"],.calc-grid button[data-calc="backspace"]{background:#F1F3F2}.calc-grid .calc-equals{color:var(--green);background:#F1FAF6}.calc-grid .calc-ok{background:var(--green-dark);color:#fff;font-size:16px}@media(max-width:520px){.amount-calculator{margin-left:-2px;margin-right:-2px}.calc-grid button{min-height:50px;font-size:20px}.calc-expression{font-size:17px}}
 </style>
+
+<style id="goals-feature-style">
+.goal-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);margin-top:10px;cursor:pointer;}
+.goal-card.overdue{border-color:#F0C6C6;}
+.goal-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.goal-name{font-size:14.5px;font-weight:800;color:var(--green-dark);}
+.goal-meta{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.45;}
+.goal-amount{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;white-space:nowrap;color:var(--green-dark);}
+.goal-progress{height:9px;background:#EAF3F9;border-radius:10px;overflow:hidden;margin-top:11px;}
+.goal-progress-fill{height:100%;background:linear-gradient(90deg,#0F9D78,#10B981);border-radius:10px;}
+.goal-progress-fill.done{background:linear-gradient(90deg,#0F9D78,#10B981);}
+.goal-progress-fill.overdue{background:linear-gradient(90deg,#E0857E,#E04450);}
+.goal-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:10.5px;color:var(--muted);}
+.goal-foot .pct{font-weight:700;color:var(--green-dark);}
+.goal-empty-note{padding:13px;font-size:11px;color:var(--muted);}
+</style>
 </head>
 <body>
 <div id="authGate">
   <div class="gate-card">
-    <h1 class="app-title"><span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expenses Tracker</span></h1>
+    <h1 class="app-title"><span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expense Tracker</span></h1>
     <p class="gate-sub">Private household ledger</p>
     <div id="gateClientIdStep">
       <p class="gate-hint">Enter the Google OAuth Client ID once to enable sign-in.</p>
@@ -1944,7 +1960,7 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div class="app-header-titleblock">
         <h1 class="app-title">
-          <span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expenses Tracker</span>
+          <span class="app-title-ar"><span class="ar-a">A</span><span class="ar-r">R</span></span><span class="app-title-main">Expense Tracker</span>
         </h1>
         <div class="app-tagline">Track Today&nbsp; &bull; &nbsp;Plan Tomorrow&nbsp; &bull; &nbsp;Build a Better Future</div>
       </div>
@@ -2140,6 +2156,29 @@ nav.tabs button.active{font-weight:700!important;}
       <div class="projection-tools"><span class="hint">Based on your recurring and one-time plans.</span><select id="projectionRange" class="projection-range"><option value="3">3 months</option><option value="6" selected>6 months</option><option value="12">1 year</option></select></div>
       <div class="projection-chart" id="projectionChart"></div>
       <div class="projection-legend"><span>● Projected balance</span><span id="projectionEndLabel">—</span></div>
+
+      <div class="section-title">Long-Term Financial Goals</div>
+      <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Set a savings target with a deadline. Track it manually, or link an account so progress updates automatically as its balance grows.</p>
+      <div class="plan-form" id="goalForm">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong id="goalFormTitle" style="font-family:'Fraunces',serif; color:var(--green-dark); font-size:15px;">Add a goal</strong>
+          <button type="button" id="goalCancelBtn" style="display:none; background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline;">Cancel edit</button>
+        </div>
+        <div class="field"><label>Goal name</label><input type="text" id="goalName" placeholder="e.g. Emergency fund, Goa trip, New laptop"></div>
+        <div class="field-row">
+          <div class="field"><label>Target amount (₹)</label><input type="number" step="0.01" id="goalTargetAmount" class="amt-input" placeholder="0.00"></div>
+          <div class="field"><label>Target date</label><input type="text" id="goalTargetDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
+        </div>
+        <div class="field">
+          <label>Track progress via</label>
+          <select id="goalTrackVia"><option value="">Manual amount</option></select>
+        </div>
+        <div class="field" id="goalManualWrap"><label>Current saved amount (₹)</label><input type="number" step="0.01" id="goalCurrentAmount" class="amt-input" placeholder="0.00"></div>
+        <div class="field"><label>Notes (optional)</label><input type="text" id="goalNotes" placeholder="e.g. 20% of every bonus"></div>
+        <button class="save-btn" id="goalAddBtn">Add goal</button>
+        <button class="del-btn" id="goalDeleteBtn" style="display:none;">Delete goal</button>
+      </div>
+      <div id="goalList"></div>
     </section>
   </main>
 </div>
@@ -2267,6 +2306,7 @@ nav.tabs button.active{font-weight:700!important;}
 const LS_TXNS = 'ledger.transactions.v1';
 const LS_LAST_MODIFIED = 'ledger.lastModified.v1';
 const LS_PLANS = 'ledger.plans.v1';
+const LS_GOALS = 'ledger.goals.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -2305,6 +2345,7 @@ SEED.forEach(t=>{
 
 let TXNS = [];
 let PLANS = [];
+let GOALS = [];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
@@ -2510,6 +2551,18 @@ function loadPlans(){
 function savePlans(){
   PLANS = stampChangedRecords(PLANS, LS_PLANS);
   localStorage.setItem(LS_PLANS, JSON.stringify(PLANS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  markLocalDirty();
+  if(accessToken) debouncedBackup();
+}
+function loadGoals(){
+  const raw = localStorage.getItem(LS_GOALS);
+  if(raw){ try{ GOALS = JSON.parse(raw); }catch(e){ GOALS = []; } }
+  else { GOALS = []; }
+}
+function saveGoals(){
+  GOALS = stampChangedRecords(GOALS, LS_GOALS);
+  localStorage.setItem(LS_GOALS, JSON.stringify(GOALS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
@@ -3271,6 +3324,153 @@ document.getElementById('planAddBtn').addEventListener('click', ()=>{
   showToast(wasEditing ? 'Planned entry updated' : 'Planned entry added');
 });
 
+// ---------- Long-term financial goals ----------
+let editingGoalId = null;
+
+function populateGoalAccountSelect(){
+  const sel = document.getElementById('goalTrackVia');
+  if(!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Manual amount</option>' + getAccounts().map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+  sel.value = cur;
+  refreshGoalTrackViaUI();
+}
+function refreshGoalTrackViaUI(){
+  const via = document.getElementById('goalTrackVia').value;
+  document.getElementById('goalManualWrap').style.display = via ? 'none' : '';
+}
+document.getElementById('goalTrackVia').addEventListener('change', refreshGoalTrackViaUI);
+
+function goalCurrentAmount(g){
+  return g.linkedAccount ? accountBalance(g.linkedAccount) : Number(g.currentAmount||0);
+}
+function goalProgressPct(g){
+  const cur = goalCurrentAmount(g);
+  const target = Number(g.targetAmount||0);
+  if(target<=0) return 0;
+  return Math.max(0, Math.min(100, (cur/target)*100));
+}
+function daysBetween(fromIso, toIso){
+  const a = new Date(fromIso+'T00:00:00'), b = new Date(toIso+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+function goalTimeLabel(g){
+  if(!g.targetDate) return '';
+  const today = localDateIso();
+  const d = daysBetween(today, g.targetDate);
+  if(d < 0) return `Past due by ${Math.abs(d)} day${Math.abs(d)===1?'':'s'}`;
+  if(d === 0) return 'Due today';
+  if(d < 31) return `${d} day${d===1?'':'s'} left`;
+  const months = Math.round(d/30.44);
+  return `${months} month${months===1?'':'s'} left`;
+}
+function renderGoalList(){
+  const el = document.getElementById('goalList');
+  if(!el) return;
+  const sorted = [...GOALS].sort((a,b)=>(a.targetDate||'').localeCompare(b.targetDate||''));
+  if(!sorted.length){ el.innerHTML = `<div class="goal-empty-note">No goals yet — add one above to start tracking a savings target.</div>`; return; }
+  const today = localDateIso();
+  el.innerHTML = sorted.map(g=>{
+    const cur = goalCurrentAmount(g);
+    const pct = goalProgressPct(g);
+    const done = pct >= 100;
+    const overdue = !done && g.targetDate && g.targetDate < today;
+    const remaining = Math.max(0, Number(g.targetAmount||0) - cur);
+    const via = g.linkedAccount ? `Linked to ${escapeHtml(g.linkedAccount)}` : 'Manual tracking';
+    return `<div class="goal-card ${overdue?'overdue':''}" data-id="${escapeHtml(g.id)}">
+      <div class="goal-head">
+        <div>
+          <div class="goal-name">${escapeHtml(g.name||'Untitled goal')}</div>
+          <div class="goal-meta">${via}${g.targetDate?' · Target '+escapeHtml(fmtDateLabel(g.targetDate)):''}</div>
+        </div>
+        <div class="goal-amount">${fmtMoney(cur)} / ${fmtMoney(Number(g.targetAmount||0))}</div>
+      </div>
+      <div class="goal-progress"><div class="goal-progress-fill ${done?'done':overdue?'overdue':''}" style="width:${pct}%;"></div></div>
+      <div class="goal-foot">
+        <span>${done ? 'Goal reached 🎉' : fmtMoney(remaining)+' to go'}</span>
+        <span>${done ? '' : escapeHtml(goalTimeLabel(g))}</span>
+        <span class="pct">${pct.toFixed(0)}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.goal-card').forEach(card=>{
+    card.addEventListener('click', ()=> openGoalForEdit(card.dataset.id));
+  });
+}
+function openGoalForEdit(id){
+  const g = GOALS.find(x=>x.id===id);
+  if(!g) return;
+  editingGoalId = id;
+  populateGoalAccountSelect();
+  document.getElementById('goalName').value = g.name || '';
+  document.getElementById('goalTargetAmount').value = g.targetAmount || '';
+  document.getElementById('goalTargetDate').value = g.targetDate ? isoToDisplayDate(g.targetDate) : '';
+  document.getElementById('goalTrackVia').value = g.linkedAccount || '';
+  document.getElementById('goalCurrentAmount').value = g.currentAmount || '';
+  document.getElementById('goalNotes').value = g.notes || '';
+  refreshGoalTrackViaUI();
+  document.getElementById('goalFormTitle').textContent = 'Edit goal';
+  document.getElementById('goalAddBtn').textContent = 'Save changes';
+  document.getElementById('goalDeleteBtn').style.display = 'block';
+  document.getElementById('goalCancelBtn').style.display = 'block';
+  document.getElementById('goalForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function resetGoalForm(){
+  editingGoalId = null;
+  document.getElementById('goalName').value = '';
+  document.getElementById('goalTargetAmount').value = '';
+  document.getElementById('goalTargetDate').value = '';
+  document.getElementById('goalTrackVia').value = '';
+  document.getElementById('goalCurrentAmount').value = '';
+  document.getElementById('goalNotes').value = '';
+  refreshGoalTrackViaUI();
+  document.getElementById('goalFormTitle').textContent = 'Add a goal';
+  document.getElementById('goalAddBtn').textContent = 'Add goal';
+  document.getElementById('goalDeleteBtn').style.display = 'none';
+  document.getElementById('goalCancelBtn').style.display = 'none';
+}
+document.getElementById('goalCancelBtn').addEventListener('click', resetGoalForm);
+document.getElementById('goalDeleteBtn').addEventListener('click', ()=>{
+  if(!editingGoalId) return;
+  if(!confirm('Delete this goal?')) return;
+  const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [editingGoalId]:Date.now()}; setSyncMeta(m);
+  GOALS = GOALS.filter(g=>g.id !== editingGoalId);
+  saveGoals();
+  resetGoalForm();
+  renderGoalList();
+  showToast('Goal deleted');
+});
+document.getElementById('goalAddBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('goalName').value.trim();
+  const targetAmount = parseFloat(document.getElementById('goalTargetAmount').value);
+  const targetDate = displayToIsoDate(document.getElementById('goalTargetDate').value.trim());
+  const linkedAccount = document.getElementById('goalTrackVia').value;
+  const currentAmount = parseFloat(document.getElementById('goalCurrentAmount').value) || 0;
+  const notes = document.getElementById('goalNotes').value.trim();
+  if(!name){ document.getElementById('goalName').focus(); showToast('Give the goal a name'); return; }
+  if(isNaN(targetAmount) || targetAmount<=0){ document.getElementById('goalTargetAmount').focus(); showToast('Enter a valid target amount'); return; }
+  if(!targetDate){ document.getElementById('goalTargetDate').focus(); showToast('Pick a target date'); return; }
+  const entry = {
+    id: editingGoalId || uid(),
+    updatedAt: Date.now(),
+    name, targetAmount, targetDate,
+    linkedAccount: linkedAccount || '',
+    currentAmount: linkedAccount ? 0 : currentAmount,
+    notes
+  };
+  if(editingGoalId){
+    const idx = GOALS.findIndex(g=>g.id===editingGoalId);
+    if(idx>=0) GOALS[idx] = entry;
+  } else {
+    GOALS.push(entry);
+  }
+  saveGoals();
+  const wasEditing = !!editingGoalId;
+  resetGoalForm();
+  renderGoalList();
+  showToast(wasEditing ? 'Goal updated' : 'Goal added');
+});
+
 function renderProjectionGraph(){
   const el=document.getElementById('projectionChart'); if(!el) return;
   const months=Number(document.getElementById('projectionRange')?.value||6);
@@ -3569,7 +3769,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     switchTab(b.dataset.tab);
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
-    if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); }
+    if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
     if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); }
   });
 });
@@ -4304,6 +4504,7 @@ function getLocalShard(){
   return {
     schemaVersion:5, deviceId:DEVICE_ID,
     transactions:TXNS, plans:PLANS, budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],
+    goals:Array.isArray(GOALS)?GOALS:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
@@ -4391,15 +4592,17 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
+  GOALS=mergeRecordsFromSources(all,'goals',deleted);
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
   localStorage.setItem(LS_TXNS,JSON.stringify(TXNS));
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
+  localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
   localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
@@ -4428,10 +4631,11 @@ async function driveSyncMerge(silent, existingMeta){
       const all=sources;
       TXNS=mergeRecordsFromSources(all,'transactions',deleted);
       PLANS=mergeRecordsFromSources(all,'plans',deleted);
+      GOALS=mergeRecordsFromSources(all,'goals',deleted);
       MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -4447,7 +4651,7 @@ async function driveSyncMerge(silent, existingMeta){
       await writeDriveFile(shardInfo.file.id,shardInfo.name,JSON.stringify(state));
       localStorage.setItem(LS_DRIVE_FILE_ID,shardInfo.file.id); driveFileId=shardInfo.file.id;
     }
-    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
+    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
     setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:getSyncMeta().deleted||{}});
     updateSyncUI(true); refreshAll();
     if(!silent) showToast('Synced with Google Drive');
@@ -4460,7 +4664,7 @@ async function driveSyncMerge(silent, existingMeta){
 }
 async function driveBackup(silent){
   if(!accessToken) return;
-  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
+  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
   if(!silent) showToast(ok?'Backup saved to Drive':'Backup could not be saved');
 }
 async function driveRestore(silent){
@@ -4471,10 +4675,10 @@ async function driveRestore(silent){
     if(sorted.length){
       const data=await driveGetFileJson(sorted[0].id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
@@ -4567,11 +4771,13 @@ bindDateTextInput('customTo');
 bindDateTextInput('planDate');
 bindDateTextInput('planUntil');
 bindDateTextInput('fDate');
+bindDateTextInput('goalTargetDate');
 
 // ---------- Init ----------
 (function init(){
   loadData();
   loadPlans();
+  loadGoals();
   loadCategoryConfig();
   initBudgetUI();
   if(ensureRecordTimestamps()){
