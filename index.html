@@ -1903,6 +1903,11 @@ nav.tabs button.active{font-weight:700!important;}
   }
 </style>
 
+<style id="amount-calculator-styles">
+/* Amount calculator */
+.amount-calculator{display:none;margin-top:8px;border:1px solid var(--line);border-radius:16px;background:#F7FAF8;overflow:hidden;box-shadow:0 8px 22px rgba(20,70,55,.07)}
+.amount-calculator.show{display:block}.calc-display{padding:10px 13px 9px;background:#fff;border-bottom:1px solid var(--line);text-align:right}.calc-expression{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--ink);min-height:23px;word-break:break-all}.calc-result{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--green);margin-top:3px;min-height:16px}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#DCE5E0}.calc-grid button{border:0;background:#fff;min-height:52px;font-family:Inter,sans-serif;font-size:20px;font-weight:600;color:#65716C;cursor:pointer;-webkit-tap-highlight-color:transparent}.calc-grid button:active{background:#EAF4F0;transform:scale(.98)}.calc-grid button[data-calc="operator"],.calc-grid button[data-calc="backspace"]{background:#F1F3F2}.calc-grid .calc-equals{color:var(--green);background:#F1FAF6}.calc-grid .calc-ok{background:var(--green-dark);color:#fff;font-size:16px}@media(max-width:520px){.amount-calculator{margin-left:-2px;margin-right:-2px}.calc-grid button{min-height:50px;font-size:20px}.calc-expression{font-size:17px}}
+</style>
 </head>
 <body>
 <div id="authGate">
@@ -3612,10 +3617,6 @@ document.getElementById('customFrom').addEventListener('change', ()=> renderAnal
 document.getElementById('customTo').addEventListener('change', ()=> renderAnalysis('custom'));
 document.getElementById('filterAccount').addEventListener('change', renderLedger);
 document.getElementById('filterCategory').addEventListener('change', renderLedger);
-
-/* Amount calculator */
-.amount-calculator{display:none;margin-top:8px;border:1px solid var(--line);border-radius:16px;background:#F7FAF8;overflow:hidden;box-shadow:0 8px 22px rgba(20,70,55,.07)}
-.amount-calculator.show{display:block}.calc-display{padding:10px 13px 9px;background:#fff;border-bottom:1px solid var(--line);text-align:right}.calc-expression{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--ink);min-height:23px;word-break:break-all}.calc-result{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--green);margin-top:3px;min-height:16px}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#DCE5E0}.calc-grid button{border:0;background:#fff;min-height:52px;font-family:Inter,sans-serif;font-size:20px;font-weight:600;color:#65716C;cursor:pointer;-webkit-tap-highlight-color:transparent}.calc-grid button:active{background:#EAF4F0;transform:scale(.98)}.calc-grid button[data-calc="operator"],.calc-grid button[data-calc="backspace"]{background:#F1F3F2}.calc-grid .calc-equals{color:var(--green);background:#F1FAF6}.calc-grid .calc-ok{background:var(--green-dark);color:#fff;font-size:16px}@media(max-width:520px){.amount-calculator{margin-left:-2px;margin-right:-2px}.calc-grid button{min-height:50px;font-size:20px}.calc-expression{font-size:17px}}
 
 // ---------- Add / Edit sheet ----------
 const overlay = document.getElementById('overlay');
