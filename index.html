@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AR Expenses Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
@@ -30,6 +30,10 @@
     --gold-soft:#EFE2BE;
     --card:#FBF8EE;
     --shadow: 0 1px 0 rgba(43,38,32,0.06);
+    --title-navy:#0B0B2E;
+    --ar-green:#077349;
+    --ar-gold:#F9B000;
+    --tagline-gray:#84839A;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;overflow-x:hidden;}
@@ -919,28 +923,6 @@ body{
   background:linear-gradient(180deg,#F8FDFF 0%,#EFFAF7 48%,#F8F8FF 100%)!important;
 }
 .wrap{max-width:680px!important;padding:0 8px!important}
-header{padding:24px 8px 18px!important;background:linear-gradient(135deg,#FFFFFF 0%,#F1FFFA 55%,#EEF8FF 100%)!important;border-bottom:0!important}
-.brand h1{font-size:29px!important;color:#075A49!important;letter-spacing:-.025em!important}
-.brand .sub{margin-top:8px!important;font-size:11px!important;letter-spacing:.13em!important}
-.sync-dot{width:9px!important;height:9px!important;box-shadow:0 0 0 5px rgba(7,150,105,.10)!important}
-.sync-dot.on{background:#0AAF7B!important}
-.settings-icon{font-size:20px!important;color:#526B73!important}
-nav.tabs{
-  position:sticky!important;top:0!important;z-index:20!important;
-  margin:0 -8px!important;padding:7px 10px!important;
-  background:rgba(255,255,255,.94)!important;backdrop-filter:blur(12px)!important;
-  border:0!important;border-bottom:1px solid #D9E9F0!important;
-  box-shadow:0 4px 16px rgba(31,87,106,.06)!important;
-  justify-content:space-around!important;gap:5px!important;
-}
-nav.tabs button{
-  min-height:40px!important;padding:8px 13px!important;border:0!important;border-radius:13px!important;
-  font-size:12px!important;color:#71808A!important;transition:.18s ease!important;
-}
-nav.tabs button.active{
-  color:#075A49!important;background:linear-gradient(135deg,#D9F8EC,#E5FAF4)!important;
-  border-bottom:0!important;box-shadow:0 4px 12px rgba(7,150,105,.12)!important;
-}
 main{padding:20px 8px 80px!important}
 .section-title{font-size:21px!important;margin:24px 0 11px!important;color:#075A49!important}
 .total-balance-banner{
@@ -999,10 +981,6 @@ main input,main select,.sheet input,.sheet select,.sheet textarea{min-height:46p
 .income,.credit,.positive{color:#079669!important}.expense,.debit,.negative{color:#E04450!important}.net,.savings{color:#3182CE!important}
 @media(max-width:520px){
   .wrap{padding:0 5px!important} main{padding-left:7px!important;padding-right:7px!important}
-  header{padding-left:5px!important;padding-right:5px!important}
-  .brand h1{font-size:27px!important}
-  nav.tabs{margin-left:-5px!important;margin-right:-5px!important;padding-left:5px!important;padding-right:5px!important}
-  nav.tabs button{font-size:11px!important;padding-left:9px!important;padding-right:9px!important;min-height:38px!important}
   .dashboard-stats{grid-template-columns:1fr 1fr!important}
 }
 </style>
@@ -1677,25 +1655,23 @@ nav.tabs button.active{font-weight:700!important;}
 
 <style id="fancy-app-title">
   .app-title{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    margin:0; color:var(--green-dark);
-    font-family:'Fraunces', Georgia, serif; font-weight:800;
-    letter-spacing:-0.035em; line-height:1.05;
-    text-shadow:0 1px 0 rgba(255,255,255,.8);
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    margin:0; color:var(--title-navy);
+    font-family:'Inter', sans-serif; font-weight:800;
+    letter-spacing:-0.02em; line-height:1.05;
   }
   .app-title .app-title-ar{
     display:inline-flex; align-items:center; justify-content:center;
-    min-width:52px; height:42px; padding:0 10px;
-    border:2px solid var(--gold); border-radius:11px;
-    background:linear-gradient(135deg,var(--green-dark),var(--green));
-    color:#fff; font-family:'IBM Plex Mono',monospace;
-    font-size:.85em; font-weight:800; letter-spacing:-.02em;
-    box-shadow:0 3px 10px rgba(18,48,38,.14);
+    min-width:56px; height:44px; padding:0 10px;
+    border:3px solid var(--ar-gold); border-radius:12px;
+    background:#fff;
+    color:var(--ar-green); font-family:'Inter', sans-serif;
+    font-size:.78em; font-weight:800; letter-spacing:-.01em;
   }
   .app-title .app-title-main{font-size:1em;}
   @media(max-width:520px){
     .app-title{gap:7px;font-size:clamp(25px,7.2vw,34px);}
-    .app-title .app-title-ar{min-width:44px;height:36px;padding:0 8px;}
+    .app-title .app-title-ar{min-width:46px;height:38px;padding:0 8px;border-width:2.5px;}
   }
 </style>
 
@@ -1709,14 +1685,14 @@ nav.tabs button.active{font-weight:700!important;}
   .app-header-titleblock{ flex:1; min-width:0; }
   .app-header-titleblock .app-title{ justify-content:flex-start; text-align:left; }
   .app-tagline{
-    font-size:12px; color:#8A94A6; margin-top:2px; font-weight:500;
+    font-size:12px; color:var(--tagline-gray); margin-top:2px; font-weight:500;
     white-space:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
   }
   .app-tagline::-webkit-scrollbar{ display:none; }
-  .app-header-titleblock .sub{ justify-content:flex-start; margin-top:6px; font-size:12px; }
+  .app-header-titleblock .sub{ justify-content:flex-start; margin-top:6px; font-size:12px; color:var(--tagline-gray); }
   .app-header-top .settings-icon{
-    flex:none; width:40px; height:40px; border-radius:50%;
-    background:#DCF2E6; color:var(--green-dark);
+    flex:none; width:44px; height:44px; border-radius:50%;
+    background:#D8F4E7; color:#045A38;
     display:flex; align-items:center; justify-content:center;
     font-size:0; margin-top:2px;
   }
@@ -1725,38 +1701,38 @@ nav.tabs button.active{font-weight:700!important;}
     .app-header-logo svg{ width:32px; height:32px; }
     .app-header-titleblock .app-title{ font-size:clamp(20px,6.4vw,26px); }
     .app-tagline{ font-size:10.5px; }
-    .app-header-top .settings-icon{ width:34px; height:34px; }
+    .app-header-top .settings-icon{ width:36px; height:36px; }
   }
 
   nav.tabs{
-    display:flex; justify-content:space-between; gap:2px; margin:12px 6px 0;
-    padding:8px 6px; border-bottom:none; overflow-x:auto;
-    background:#fff; border-radius:16px; box-shadow:0 2px 10px rgba(43,38,32,0.06);
+    display:flex!important; justify-content:space-between!important; gap:2px!important;
+    margin:12px 6px 0!important; align-items:stretch!important;
+    padding:10px 8px!important; border:0!important; border-bottom:none!important; overflow-x:auto!important;
+    background:#fff!important; border-radius:18px!important; box-shadow:0 2px 10px rgba(43,38,32,0.06)!important;
+    position:static!important; width:auto!important;
   }
   nav.tabs .tab-btn{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
-    font-family:'Inter',sans-serif; font-weight:800; font-size:10.5px; background:none; border:none;
-    cursor:pointer; padding:7px 4px; border-radius:12px;
-    white-space:nowrap; flex:1; top:0; transition:transform .15s ease;
+    display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; gap:6px!important;
+    font-family:'Inter',sans-serif!important; font-weight:800!important; font-size:11px!important; background:none!important; border:none!important;
+    cursor:pointer!important; padding:9px 8px!important; border-radius:14px!important;
+    white-space:nowrap!important; flex:1 1 0!important; width:auto!important; min-width:0!important; max-width:none!important;
+    letter-spacing:normal!important; line-height:1.3!important; min-height:0!important; top:0!important;
   }
-  nav.tabs .tab-btn svg{ display:block; }
-  nav.tabs .tab-btn .tab-ico{
-    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-    background:var(--tab-tint,#EEF1EA); transition:background .15s ease;
-  }
-  nav.tabs .tab-btn[data-tab="dash"]{ color:#178A5C; --tab-tint:#E4F5EC; }
-  nav.tabs .tab-btn[data-tab="ledger"]{ color:#2F6FED; --tab-tint:#E7EFFE; }
-  nav.tabs .tab-btn[data-tab="analysis"]{ color:#9B3FE0; --tab-tint:#F4E9FC; }
-  nav.tabs .tab-btn[data-tab="plan"]{ color:#F0701F; --tab-tint:#FDEBE0; }
-  nav.tabs .tab-btn[data-tab="calendar"]{ color:#0E9C8E; --tab-tint:#DFF5F2; }
-  nav.tabs .tab-btn[data-tab="budget"]{ color:#DB9B1C; --tab-tint:#FCF0DA; }
-  nav.tabs .tab-btn.active{ transform:translateY(-1px); }
-  nav.tabs .tab-btn.active .tab-ico{ box-shadow:0 3px 8px rgba(0,0,0,0.10); }
+  nav.tabs .tab-btn svg{ display:block!important; }
+  nav.tabs .tab-btn[data-tab="dash"]{ color:#045A38!important; }
+  nav.tabs .tab-btn[data-tab="ledger"]{ color:#1257F8!important; }
+  nav.tabs .tab-btn[data-tab="analysis"]{ color:#9A1EF7!important; }
+  nav.tabs .tab-btn[data-tab="plan"]{ color:#F15A00!important; }
+  nav.tabs .tab-btn[data-tab="calendar"]{ color:#009B96!important; }
+  nav.tabs .tab-btn[data-tab="budget"]{ color:#EE9500!important; }
+  nav.tabs .tab-btn.active{ background:#E3FAF0!important; font-weight:800!important; }
   @media(max-width:520px){
-    nav.tabs{ border-radius:14px; }
-    nav.tabs .tab-btn{ font-size:9px; padding:6px 2px; gap:3px; }
-    nav.tabs .tab-btn .tab-ico{ width:28px; height:28px; }
-    nav.tabs .tab-btn svg{ width:16px; height:16px; }
+    nav.tabs{ border-radius:14px!important; padding:8px 5px!important; gap:2px!important; }
+    nav.tabs .tab-btn{ font-size:9px!important; padding:7px 3px!important; gap:4px!important; }
+    nav.tabs .tab-btn svg{ width:18px!important; height:18px!important; }
+  }
+  @media(max-width:380px){
+    nav.tabs .tab-btn{ font-size:8.3px!important; padding:6px 2px!important; }
   }
 </style>
 
@@ -1783,22 +1759,15 @@ nav.tabs button.active{font-weight:700!important;}
   <header class="app-header">
     <div class="app-header-top">
       <div class="app-header-logo" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="42" height="42">
-          <defs>
-            <linearGradient id="logoBadgeGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#2FBE8A"/>
-              <stop offset="1" stop-color="#12513F"/>
-            </linearGradient>
-          </defs>
-          <rect x="2" y="2" width="36" height="36" rx="11" fill="url(#logoBadgeGrad)"/>
-          <path d="M9 27 L16.5 19 L22 24 L31 12.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M25 12.5 L31 12.5 L31 18.5" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="9" cy="27" r="2" fill="#fff"/>
-          <circle cx="16.5" cy="19" r="2" fill="#fff"/>
-          <circle cx="22" cy="24" r="2" fill="#fff"/>
-          <circle cx="36" cy="36" r="10.5" fill="#fff"/>
-          <circle cx="36" cy="36" r="9" fill="#F2A93B"/>
-          <text x="36" y="40.2" font-family="Inter,sans-serif" font-size="11.5" font-weight="800" fill="#fff" text-anchor="middle">₹</text>
+        <svg viewBox="0 0 44 44" width="42" height="42">
+          <rect x="3" y="26" width="8" height="14" rx="1.5" fill="#12A6B4"/>
+          <rect x="14" y="17" width="8" height="23" rx="1.5" fill="#0EA0B0"/>
+          <rect x="25" y="8" width="8" height="32" rx="1.5" fill="#0A96A8"/>
+          <path d="M2 24 L13 14 L20 19 L33 4" stroke="#10CE84" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M25 4 L34 4 L34 13" stroke="#10CE84" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="33" cy="29" r="10.5" fill="#fff"/>
+          <circle cx="33" cy="29" r="9" fill="#FAB003"/>
+          <text x="33" y="33.4" font-family="Inter,sans-serif" font-size="11.5" font-weight="800" fill="#fff" text-anchor="middle">₹</text>
         </svg>
       </div>
       <div class="app-header-titleblock">
@@ -1820,27 +1789,27 @@ nav.tabs button.active{font-weight:700!important;}
 
   <nav class="tabs">
     <button class="tab-btn active" data-tab="dash">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21"><path d="M12 2.5 L22 11 L19.5 11 L19.5 21 L4.5 21 L4.5 11 L2 11 Z" fill="currentColor"/><rect x="10" y="15" width="4" height="6" rx="0.8" fill="#fff"/></svg>
       <span>Dashboard</span>
     </button>
     <button class="tab-btn" data-tab="ledger">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.1" fill="currentColor" stroke="none"/><path d="M9 6h11M9 12h11M9 18h11"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.15" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.15" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.15" fill="currentColor" stroke="none"/><path d="M9.5 6h11M9.5 12h11M9.5 18h11"/></svg>
       <span>Ledger</span>
     </button>
     <button class="tab-btn" data-tab="analysis">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2 A10 10 0 0 1 22 12 L12 12 Z" fill="currentColor"/><path d="M12 12 L12 2 A10 10 0 0 0 3.5 17 Z" fill="currentColor" opacity="0.55"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21"><circle cx="12" cy="12" r="9" fill="currentColor"/><path d="M12 12 V4M12 12 H19.5" stroke="#fff" stroke-width="2.1" stroke-linecap="round"/></svg>
       <span>Summary</span>
     </button>
     <button class="tab-btn" data-tab="plan">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20"><rect x="4" y="14" width="3" height="7" rx="1" fill="currentColor"/><rect x="10.5" y="10" width="3" height="11" rx="1" fill="currentColor"/><rect x="17" y="5" width="3" height="16" rx="1" fill="currentColor"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21"><rect x="2.5" y="16" width="3.4" height="5" rx="1" fill="currentColor"/><rect x="8.3" y="11" width="3.4" height="10" rx="1" fill="currentColor"/><rect x="14.1" y="4" width="3.4" height="17" rx="1" fill="currentColor"/><rect x="19.9" y="9.5" width="3.4" height="11.5" rx="1" fill="currentColor"/></svg>
       <span>Projections</span>
     </button>
     <button class="tab-btn" data-tab="calendar">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17"/><path d="M8 3v3.5M16 3v3.5"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17"/><path d="M8 3v3.5M16 3v3.5"/></svg>
       <span>Calendar</span>
     </button>
     <button class="tab-btn" data-tab="budget">
-      <span class="tab-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></span>
+      <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor"/></svg>
       <span>Budget</span>
     </button>
   </nav>
