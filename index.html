@@ -539,13 +539,15 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .budget-summary-card.over-budget .budget-progress-fill{background:linear-gradient(90deg,#D83D4A,#EF6B76)}
 .budget-spent-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:6px}.budget-delete{border:1px solid #F0A7AE;background:#fff0f2;color:#D83D4A;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-top:9px}.budget-empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:12px}@media(max-width:520px){.budget-month-row{flex-direction:column;align-items:stretch}.budget-total-box{text-align:left;min-width:0}}
 /* Overall Actual vs Budget summary */
-.budget-overview-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-top:10px}
-.budget-overview-row{display:flex;gap:10px;justify-content:space-between}
+.budget-overview-card{border-radius:18px;padding:16px;margin-top:10px;background:linear-gradient(135deg,#075A49,#0F9D78);box-shadow:0 8px 18px rgba(7,150,105,.18)}
+.budget-overview-row{display:flex;gap:6px;justify-content:space-between}
 .budget-overview-col{flex:1;min-width:0;text-align:center;padding:0 4px}
-.budget-overview-col+.budget-overview-col{border-left:1px solid var(--line)}
-.budget-overview-amt{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--green-dark);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.budget-overview-amt.over{color:#D83D4A}
-.budget-overview-card .budget-progress{margin-top:13px}
+.budget-overview-col+.budget-overview-col{border-left:1px solid rgba(255,255,255,.25)}
+.budget-overview-card .budget-small-label{color:#D8FFF1;font-weight:800;letter-spacing:.08em}
+.budget-overview-amt{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:#fff;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.budget-overview-amt.over{color:#FFD3D3}
+.budget-overview-card .budget-progress{margin-top:13px;background:rgba(255,255,255,.22)}
+.budget-overview-pct{text-align:center;font-size:11px;font-weight:700;color:#D8FFF1;margin-top:8px;letter-spacing:.03em}
 @media(max-width:380px){.budget-overview-amt{font-size:13px}}
 
 
@@ -2062,7 +2064,6 @@ nav.tabs button.active{font-weight:700!important;}
       <div class="budget-card">
         <div class="budget-month-row">
           <div class="field" style="margin:0;flex:1;"><label for="budgetMonth">VIEW MONTH</label><input type="month" id="budgetMonth"></div>
-          <div class="budget-total-box"><div class="budget-small-label">TOTAL BUDGET</div><div class="budget-total" id="budgetTotal">₹0.00</div></div>
         </div>
         <div class="field"><label>EXPENSE CATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetCategoryBtn">Select categories</button><div class="budget-dropdown" id="budgetCategoryDropdown"></div></div></div>
         <div class="field"><label>EXPENSE SUBCATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetSubcategoryBtn">Select subcategories</button><div class="budget-dropdown" id="budgetSubcategoryDropdown"></div></div></div>
@@ -2076,6 +2077,7 @@ nav.tabs button.active{font-weight:700!important;}
           <div class="budget-overview-col"><div class="budget-small-label" id="budgetOverviewDiffLabel">REMAINING</div><div class="budget-overview-amt" id="budgetOverviewDiff">₹0.00</div></div>
         </div>
         <div class="budget-progress"><div class="budget-progress-fill" id="budgetOverviewFill" style="width:0%"></div></div>
+        <div class="budget-overview-pct" id="budgetOverviewPct">0% of budget used</div>
       </div>
       <div class="budget-summary" id="budgetSummary"></div>
 
@@ -3885,7 +3887,6 @@ function currentBudgetMonth(){const e=document.getElementById('budgetMonth');ret
 function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
 function renderBudgetSummary(){
   const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
-  document.getElementById('budgetTotal').textContent=fmtMoney(tot);
   const overviewCard=document.getElementById('budgetOverviewCard');
   if(!list.length){
     w.innerHTML='<div class="budget-empty">No budget added yet.</div>';
@@ -3907,7 +3908,8 @@ function renderBudgetSummary(){
   if(overviewCard){
     const totalSpent=budgetRows.reduce((a,r)=>a+r.spent,0);
     const overallOver=tot>0&&totalSpent>tot;
-    const overallPct=tot?Math.min(100,Math.max(0,totalSpent/tot*100)):0;
+    const rawOverallPct=tot?(totalSpent/tot*100):0;
+    const overallPct=Math.min(100,Math.max(0,rawOverallPct));
     const diff=tot-totalSpent;
     overviewCard.style.display='block';
     document.getElementById('budgetOverviewBudget').textContent=fmtMoney(tot);
@@ -3921,6 +3923,7 @@ function renderBudgetSummary(){
     const fillEl=document.getElementById('budgetOverviewFill');
     fillEl.style.width=overallPct+'%';
     fillEl.classList.toggle('over',overallOver);
+    document.getElementById('budgetOverviewPct').textContent=(tot?rawOverallPct.toFixed(1):'0')+'% of budget used';
   }
   // Show the budget with the highest percentage spent first.
   // Keep the original array untouched so Edit/Delete indexes remain correct.
