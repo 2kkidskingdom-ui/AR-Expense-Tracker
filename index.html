@@ -3591,13 +3591,53 @@ function debtChangeInfo(d){
   const pct = ((cur.balance - prev.balance) / prev.balance) * 100;
   return { pct, curBalance:cur.balance, prevBalance:prev.balance, prevMonth:prev.month };
 }
+function debtGrandTotals(){
+  const monthsSet = new Set();
+  DEBTS.forEach(d=> (d.entries||[]).forEach(e=> monthsSet.add(e.month)));
+  const months = [...monthsSet].sort();
+  return months.map(month=>{
+    let total = 0;
+    DEBTS.forEach(d=>{
+      const e = (d.entries||[]).find(en=>en.month===month);
+      if(e) total += Number(e.balance)||0;
+    });
+    return {month, total};
+  });
+}
+function renderDebtSummaryCard(){
+  const totals = debtGrandTotals();
+  if(!totals.length) return '';
+  const rows = [...totals].reverse().map((t,i,arr)=>{
+    const prev = arr[i+1];
+    let changeHtml = '<span class="debt-change flat">—</span>';
+    if(prev && prev.total){
+      const pct = ((t.total-prev.total)/prev.total)*100;
+      const dir = pct < -0.05 ? 'down' : pct > 0.05 ? 'up' : 'flat';
+      const arrow = dir==='down' ? '↓' : dir==='up' ? '↑' : '→';
+      changeHtml = `<span class="debt-change ${dir}">${arrow} ${Math.abs(pct).toFixed(2)}%</span>`;
+    }
+    return `<div class="debt-history-row"><span>${escapeHtml(monthLabel(t.month))}</span><span style="display:flex;align-items:center;gap:10px;">${fmtMoney(t.total)}${changeHtml}</span></div>`;
+  }).join('');
+  const latest = totals[totals.length-1];
+  return `<div class="goal-card debt-card" style="border:2px solid var(--green);margin-bottom:12px;">
+    <div class="goal-head">
+      <div>
+        <div class="goal-name">Total across all loans</div>
+        <div class="goal-meta">As of ${escapeHtml(monthLabel(latest.month))}</div>
+      </div>
+      <div class="goal-amount">${fmtMoney(latest.total)}</div>
+    </div>
+    <div class="debt-history" style="display:block;">${rows}</div>
+  </div>`;
+}
 function renderDebtList(){
   const el = document.getElementById('debtList');
   if(!el) return;
   populateDebtNameList();
   const sorted = [...DEBTS].sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   if(!sorted.length){ el.innerHTML = `<div class="goal-empty-note">No debts added yet — add a loan above to start tracking its balance.</div>`; return; }
-  el.innerHTML = sorted.map(d=>{
+  const summaryHtml = renderDebtSummaryCard();
+  el.innerHTML = summaryHtml + sorted.map(d=>{
     const entries = sortedDebtEntries(d);
     const latest = entries[entries.length-1];
     const change = debtChangeInfo(d);
@@ -3608,7 +3648,7 @@ function renderDebtList(){
       changeHtml = `<span class="debt-change ${dir}">${arrow} ${Math.abs(change.pct).toFixed(1)}% vs ${escapeHtml(monthLabel(change.prevMonth))}</span>`;
     }
     const historyRows = [...entries].reverse().map(e=>
-      `<div class="debt-history-row" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}"><span>${escapeHtml(monthLabel(e.month))}</span><span style="display:flex;align-items:center;gap:8px;">${fmtMoney(e.balance)}<button type="button" class="debt-entry-delete" data-stop="1" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}" title="Delete this month's entry" style="background:none;border:none;color:#D83D4A;cursor:pointer;font-size:12px;line-height:1;padding:2px;">✕</button></span></div>`
+      `<div class="debt-history-row" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}"><span>${escapeHtml(monthLabel(e.month))}</span><span style="display:flex;align-items:center;gap:8px;">${fmtMoney(e.balance)}<button type="button" class="budget-edit" data-stop="1" data-edit-debt="${escapeHtml(d.id)}" data-edit-month="${escapeHtml(e.month)}" style="padding:4px 8px;font-size:9.5px;">Edit</button><button type="button" class="budget-delete" data-stop="1" data-del-debt="${escapeHtml(d.id)}" data-del-month="${escapeHtml(e.month)}" style="padding:4px 8px;font-size:9.5px;margin-top:0;">Delete</button></span></div>`
     ).join('');
     return `<div class="goal-card debt-card" data-id="${escapeHtml(d.id)}">
       <div class="goal-head">
@@ -3618,11 +3658,12 @@ function renderDebtList(){
         </div>
         <div class="goal-amount">${fmtMoney(latest.balance)}</div>
       </div>
-      ${entries.length>1 ? `<button type="button" class="debt-history-toggle" data-stop="1" data-history-id="${escapeHtml(d.id)}">View monthly history (${entries.length})</button><div class="debt-history" id="debtHistory_${escapeHtml(d.id)}" style="display:none;">${historyRows}</div>` : ''}
+      <button type="button" class="debt-history-toggle" data-stop="1" data-history-id="${escapeHtml(d.id)}">${entries.length>1?`View monthly history (${entries.length})`:'View entry'}</button>
+      <div class="debt-history" id="debtHistory_${escapeHtml(d.id)}" style="display:none;">${historyRows}</div>
       <button type="button" class="debt-delete-link" data-stop="1" data-delete-id="${escapeHtml(d.id)}">Delete debt</button>
     </div>`;
   }).join('');
-  el.querySelectorAll('.goal-card.debt-card').forEach(card=>{
+  el.querySelectorAll('.goal-card.debt-card[data-id]').forEach(card=>{
     card.addEventListener('click', (e)=>{
       if(e.target.closest('[data-stop]')) return;
       const d = DEBTS.find(x=>x.id===card.dataset.id);
@@ -3641,26 +3682,28 @@ function renderDebtList(){
       const isHidden = box.style.display === 'none';
       box.style.display = isHidden ? 'block' : 'none';
       const d = DEBTS.find(x=>x.id===btn.dataset.historyId);
-      btn.textContent = (isHidden?'Hide':'View') + ' monthly history (' + (d?.entries||[]).length + ')';
+      const count = (d?.entries||[]).length;
+      btn.textContent = (isHidden?'Hide':'View') + (count>1 ? ` monthly history (${count})` : ' entry');
     });
   });
-  el.querySelectorAll('.debt-history-row').forEach(row=>{
-    row.addEventListener('click', (e)=>{
+  el.querySelectorAll('[data-edit-debt]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
       e.stopPropagation();
-      const d = DEBTS.find(x=>x.id===row.dataset.debt);
+      const d = DEBTS.find(x=>x.id===btn.dataset.editDebt);
       if(!d) return;
-      const entry = (d.entries||[]).find(en=>en.month===row.dataset.month);
+      const entry = (d.entries||[]).find(en=>en.month===btn.dataset.editMonth);
       if(!entry) return;
       document.getElementById('debtName').value = d.name;
       document.getElementById('debtMonth').value = entry.month;
       document.getElementById('debtBalance').value = entry.balance;
       document.getElementById('debtForm').scrollIntoView({behavior:'smooth', block:'start'});
+      document.getElementById('debtBalance').focus();
     });
   });
-  el.querySelectorAll('.debt-entry-delete').forEach(btn=>{
+  el.querySelectorAll('[data-del-debt]').forEach(btn=>{
     btn.addEventListener('click', (e)=>{
       e.stopPropagation();
-      const id = btn.dataset.debt, month = btn.dataset.month;
+      const id = btn.dataset.delDebt, month = btn.dataset.delMonth;
       const d = DEBTS.find(x=>x.id===id);
       if(!d) return;
       if(!confirm(`Delete the ${monthLabel(month)} entry for "${d.name}"?`)) return;
