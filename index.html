@@ -1934,6 +1934,14 @@ nav.tabs button.active{font-weight:700!important;}
 .goal-foot{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font-size:10.5px;color:var(--muted);}
 .goal-foot .pct{font-weight:700;color:var(--green-dark);}
 .goal-empty-note{padding:13px;font-size:11px;color:var(--muted);}
+.task-checkbox{width:22px;height:22px;border:2px solid var(--line-strong);border-radius:7px;flex:none;cursor:pointer;background:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;padding:0;}
+.task-checkbox.checked{background:var(--green);border-color:var(--green);}
+.task-title{font-size:14.5px;font-weight:800;color:var(--green-dark);word-break:break-word;}
+.task-card.done .task-title{text-decoration:line-through;color:var(--muted);}
+.task-notes{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.4;word-break:break-word;}
+.task-followup{font-size:10.5px;color:var(--muted);margin-top:9px;font-weight:600;}
+.task-followup.overdue{color:var(--red);font-weight:700;}
+.task-card.done .task-followup{color:var(--green);}
 .debt-card{margin-top:10px;cursor:pointer;}
 .debt-change{font-weight:800;}
 .debt-change.down{color:#0F9D78;}
@@ -2022,6 +2030,10 @@ nav.tabs button.active{font-weight:700!important;}
     <button class="tab-btn" data-tab="budget">
       <svg viewBox="0 0 24 24" width="21" height="21"><rect x="3.5" y="3.5" width="17" height="17" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor"/></svg>
       <span>Budget</span>
+    </button>
+    <button class="tab-btn" data-tab="tasks">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M7.5 12l2.5 2.5 6-6"/></svg>
+      <span>Tasks</span>
     </button>
   </nav>
 
@@ -2221,6 +2233,25 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div id="goalList"></div>
     </section>
+
+    <section id="tasks">
+      <div class="section-title">To-Do Tasks</div>
+      <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Add tasks with an optional follow-up date. Tap the checkbox to mark a task done, or tap the task to edit it.</p>
+      <div class="plan-form" id="taskForm">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong id="taskFormTitle" style="font-family:'Fraunces',serif; color:var(--green-dark); font-size:15px;">Add a task</strong>
+          <button type="button" id="taskCancelBtn" style="display:none; background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; text-decoration:underline;">Cancel edit</button>
+        </div>
+        <div class="field"><label>Task title</label><input type="text" id="taskTitle" placeholder="e.g. Call insurance agent, Renew RD"></div>
+        <div class="field-row">
+          <div class="field"><label>Follow-up date (optional)</label><input type="text" id="taskFollowUp" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
+        </div>
+        <div class="field"><label>Notes (optional)</label><input type="text" id="taskNotes" placeholder="e.g. Ask about premium renewal"></div>
+        <button class="save-btn" id="taskAddBtn">Add task</button>
+        <button class="del-btn" id="taskDeleteBtn" style="display:none;">Delete task</button>
+      </div>
+      <div id="taskList"></div>
+    </section>
   </main>
 </div>
 
@@ -2349,6 +2380,7 @@ const LS_LAST_MODIFIED = 'ledger.lastModified.v1';
 const LS_PLANS = 'ledger.plans.v1';
 const LS_GOALS = 'ledger.goals.v1';
 const LS_DEBTS = 'ledger.debts.v1';
+const LS_TASKS = 'ledger.tasks.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -2389,6 +2421,7 @@ let TXNS = [];
 let PLANS = [];
 let GOALS = [];
 let DEBTS = [];
+let TASKS = [];
 // Starting values for the Debts & Loan EMIs page (Dept & Loan report), Jan'26-Jun'26.
 // Used only to seed the page the first time it loads on a device with no saved debts yet.
 const DEBT_SEED = [
@@ -2661,6 +2694,18 @@ function loadDebts(){
 function saveDebts(){
   DEBTS = stampChangedRecords(DEBTS, LS_DEBTS);
   localStorage.setItem(LS_DEBTS, JSON.stringify(DEBTS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  markLocalDirty();
+  if(accessToken) debouncedBackup();
+}
+function loadTasks(){
+  const raw = localStorage.getItem(LS_TASKS);
+  if(raw){ try{ TASKS = JSON.parse(raw); }catch(e){ TASKS = []; } }
+  else { TASKS = []; }
+}
+function saveTasks(){
+  TASKS = stampChangedRecords(TASKS, LS_TASKS);
+  localStorage.setItem(LS_TASKS, JSON.stringify(TASKS));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
@@ -3569,6 +3614,121 @@ document.getElementById('goalAddBtn').addEventListener('click', ()=>{
   showToast(wasEditing ? 'Goal updated' : 'Goal added');
 });
 
+// ---------- To-do tasks & follow-ups ----------
+let editingTaskId = null;
+function taskFollowUpLabel(t){
+  if(!t.followUpDate) return '';
+  if(t.done) return 'Followed up · ' + fmtDateLabel(t.followUpDate);
+  const today = localDateIso();
+  const d = daysBetween(today, t.followUpDate);
+  if(d < 0) return `Overdue by ${Math.abs(d)} day${Math.abs(d)===1?'':'s'}`;
+  if(d === 0) return 'Follow up today';
+  if(d === 1) return 'Follow up tomorrow';
+  return `Follow up in ${d} days`;
+}
+function renderTaskList(){
+  const el = document.getElementById('taskList');
+  if(!el) return;
+  const today = localDateIso();
+  const sorted = [...TASKS].sort((a,b)=>{
+    if(!!a.done !== !!b.done) return a.done ? 1 : -1;
+    const ad = a.followUpDate || '9999-99-99', bd = b.followUpDate || '9999-99-99';
+    if(ad !== bd) return ad.localeCompare(bd);
+    return (b.updatedAt||0) - (a.updatedAt||0);
+  });
+  if(!sorted.length){ el.innerHTML = `<div class="goal-empty-note">No tasks yet — add one above to get started.</div>`; return; }
+  el.innerHTML = sorted.map(t=>{
+    const overdue = !t.done && t.followUpDate && t.followUpDate < today;
+    const label = taskFollowUpLabel(t);
+    return `<div class="goal-card task-card ${overdue?'overdue':''} ${t.done?'done':''}" data-id="${escapeHtml(t.id)}">
+      <div class="goal-head">
+        <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0;">
+          <button type="button" class="task-checkbox ${t.done?'checked':''}" data-id="${escapeHtml(t.id)}" aria-label="Toggle task done">${t.done?'✓':''}</button>
+          <div style="min-width:0;flex:1;">
+            <div class="task-title">${escapeHtml(t.title||'Untitled task')}</div>
+            ${t.notes?`<div class="task-notes">${escapeHtml(t.notes)}</div>`:''}
+          </div>
+        </div>
+      </div>
+      ${label?`<div class="task-followup ${overdue?'overdue':''}">${escapeHtml(label)}</div>`:''}
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.task-checkbox').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleTaskDone(btn.dataset.id); });
+  });
+  el.querySelectorAll('.task-card').forEach(card=>{
+    card.addEventListener('click', ()=> openTaskForEdit(card.dataset.id));
+  });
+}
+function toggleTaskDone(id){
+  const t = TASKS.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  t.updatedAt = Date.now();
+  saveTasks();
+  renderTaskList();
+  showToast(t.done ? 'Task marked done' : 'Task reopened');
+}
+function openTaskForEdit(id){
+  const t = TASKS.find(x=>x.id===id);
+  if(!t) return;
+  editingTaskId = id;
+  document.getElementById('taskTitle').value = t.title || '';
+  document.getElementById('taskNotes').value = t.notes || '';
+  document.getElementById('taskFollowUp').value = t.followUpDate ? isoToDisplayDate(t.followUpDate) : '';
+  document.getElementById('taskFormTitle').textContent = 'Edit task';
+  document.getElementById('taskAddBtn').textContent = 'Save changes';
+  document.getElementById('taskDeleteBtn').style.display = 'block';
+  document.getElementById('taskCancelBtn').style.display = 'block';
+  document.getElementById('taskForm').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function resetTaskForm(){
+  editingTaskId = null;
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskNotes').value = '';
+  document.getElementById('taskFollowUp').value = '';
+  document.getElementById('taskFormTitle').textContent = 'Add a task';
+  document.getElementById('taskAddBtn').textContent = 'Add task';
+  document.getElementById('taskDeleteBtn').style.display = 'none';
+  document.getElementById('taskCancelBtn').style.display = 'none';
+}
+document.getElementById('taskCancelBtn').addEventListener('click', resetTaskForm);
+document.getElementById('taskDeleteBtn').addEventListener('click', ()=>{
+  if(!editingTaskId) return;
+  if(!confirm('Delete this task?')) return;
+  const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [editingTaskId]:Date.now()}; setSyncMeta(m);
+  TASKS = TASKS.filter(t=>t.id !== editingTaskId);
+  saveTasks();
+  resetTaskForm();
+  renderTaskList();
+  showToast('Task deleted');
+});
+document.getElementById('taskAddBtn').addEventListener('click', ()=>{
+  const title = document.getElementById('taskTitle').value.trim();
+  const notes = document.getElementById('taskNotes').value.trim();
+  const followUpDate = displayToIsoDate(document.getElementById('taskFollowUp').value.trim());
+  if(!title){ document.getElementById('taskTitle').focus(); showToast('Give the task a title'); return; }
+  const prev = editingTaskId ? TASKS.find(t=>t.id===editingTaskId) : null;
+  const entry = {
+    id: editingTaskId || uid(),
+    updatedAt: Date.now(),
+    title, notes,
+    followUpDate: followUpDate || '',
+    done: prev ? !!prev.done : false
+  };
+  if(editingTaskId){
+    const idx = TASKS.findIndex(t=>t.id===editingTaskId);
+    if(idx>=0) TASKS[idx] = entry;
+  } else {
+    TASKS.push(entry);
+  }
+  saveTasks();
+  const wasEditing = !!editingTaskId;
+  resetTaskForm();
+  renderTaskList();
+  showToast(wasEditing ? 'Task updated' : 'Task added');
+});
+
 // ---------- Debts & loan EMIs ----------
 function monthLabel(ym){
   if(!ym) return '';
@@ -4081,6 +4241,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
     if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); }
+    if(b.dataset.tab==='tasks'){ renderTaskList(); }
   });
 });
 
@@ -4816,6 +4977,7 @@ function getLocalShard(){
     transactions:TXNS, plans:PLANS, budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],
     goals:Array.isArray(GOALS)?GOALS:[],
     debts:Array.isArray(DEBTS)?DEBTS:[],
+    tasks:Array.isArray(TASKS)?TASKS:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
@@ -4903,12 +5065,13 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
   GOALS=mergeRecordsFromSources(all,'goals',deleted);
   DEBTS=mergeRecordsFromSources(all,'debts',deleted);
+  TASKS=mergeRecordsFromSources(all,'tasks',deleted);
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
@@ -4916,6 +5079,7 @@ function mergeLocalWithCloudSources(sources){
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
   localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
   localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS));
+  localStorage.setItem(LS_TASKS,JSON.stringify(TASKS));
   localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
@@ -4946,10 +5110,11 @@ async function driveSyncMerge(silent, existingMeta){
       PLANS=mergeRecordsFromSources(all,'plans',deleted);
       GOALS=mergeRecordsFromSources(all,'goals',deleted);
       DEBTS=mergeRecordsFromSources(all,'debts',deleted);
+      TASKS=mergeRecordsFromSources(all,'tasks',deleted);
       MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -4965,7 +5130,7 @@ async function driveSyncMerge(silent, existingMeta){
       await writeDriveFile(shardInfo.file.id,shardInfo.name,JSON.stringify(state));
       localStorage.setItem(LS_DRIVE_FILE_ID,shardInfo.file.id); driveFileId=shardInfo.file.id;
     }
-    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, debts:DEBTS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
+    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, debts:DEBTS, tasks:TASKS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
     setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:getSyncMeta().deleted||{}});
     updateSyncUI(true); refreshAll();
     if(!silent) showToast('Synced with Google Drive');
@@ -4978,7 +5143,7 @@ async function driveSyncMerge(silent, existingMeta){
 }
 async function driveBackup(silent){
   if(!accessToken) return;
-  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
+  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
   if(!silent) showToast(ok?'Backup saved to Drive':'Backup could not be saved');
 }
 async function driveRestore(silent){
@@ -4989,10 +5154,10 @@ async function driveRestore(silent){
     if(sorted.length){
       const data=await driveGetFileJson(sorted[0].id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
@@ -5086,6 +5251,7 @@ bindDateTextInput('planDate');
 bindDateTextInput('planUntil');
 bindDateTextInput('fDate');
 bindDateTextInput('goalTargetDate');
+bindDateTextInput('taskFollowUp');
 
 // ---------- Init ----------
 (function init(){
@@ -5093,6 +5259,7 @@ bindDateTextInput('goalTargetDate');
   loadPlans();
   loadGoals();
   loadDebts();
+  loadTasks();
   loadCategoryConfig();
   initBudgetUI();
   if(ensureRecordTimestamps()){
