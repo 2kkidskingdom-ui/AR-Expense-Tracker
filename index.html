@@ -188,7 +188,14 @@
   .day-label{
     font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--muted);
     letter-spacing:0.04em; padding:10px 0 4px; text-transform:uppercase;
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
   }
+  .day-label .day-total{
+    font-family:'IBM Plex Mono', monospace; font-weight:700; letter-spacing:0;
+    text-transform:none; font-size:12px;
+  }
+  .day-label .day-total.pos{ color:var(--green); }
+  .day-label .day-total.neg{ color:var(--red); }
   .txn{
     display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:3px;
     background:var(--card); border:1px solid var(--line); margin-bottom:5px; cursor:pointer;
@@ -3169,7 +3176,9 @@ function renderLedger(){
         <div class="amt" style="color:${pos?'var(--green)':'var(--red)'}">${fmtMoney(t.amount)}</div>
       </div>`;
     }).join('');
-    return `<div class="day-group"><div class="day-label">${formatDateLabel(d)}</div>${rows}</div>`;
+    const dayTotal = groups[d].reduce((s,t)=> s + (Number(t.amount)||0), 0);
+    const dtPos = dayTotal >= 0;
+    return `<div class="day-group"><div class="day-label"><span>${formatDateLabel(d)}</span><span class="day-total ${dtPos?'pos':'neg'}">${dtPos?'+':''}${fmtMoney(dayTotal)}</span></div>${rows}</div>`;
   }).join('');
   container.querySelectorAll('.txn').forEach(el=> el.addEventListener('click', ()=> openEditSheet(el.dataset.id)));
 }
