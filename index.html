@@ -3146,6 +3146,25 @@ function populateFilterSelects(){
   accSel.value = curAcc; catSel.value = curCat;
 }
 
+function computeRunningBalances(accFilter){
+  // Running account balance timeline, independent of category/type/date filters —
+  // this reflects the real balance, so it only ever depends on the account filter.
+  const excluded = new Set(getExcludedAccounts());
+  const relevant = TXNS.filter(t => accFilter ? t.account===accFilter : !excluded.has(t.account));
+  const byDate = {};
+  let noDateSum = 0;
+  relevant.forEach(t=>{
+    const amt = Number(t.amount)||0;
+    if(t.date){ byDate[t.date] = (byDate[t.date]||0) + amt; }
+    else { noDateSum += amt; }
+  });
+  const sortedDates = Object.keys(byDate).sort((a,b)=>a.localeCompare(b));
+  let running = noDateSum;
+  const cum = {};
+  sortedDates.forEach(d=>{ running += byDate[d]; cum[d] = running; });
+  return cum;
+}
+
 function renderLedger(){
   const accFilter = document.getElementById('filterAccount').value;
   const catFilter = document.getElementById('filterCategory').value;
@@ -3164,6 +3183,7 @@ function renderLedger(){
   const dates = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
   const container = document.getElementById('ledgerList');
   if(!dates.length){ container.innerHTML = `<div class="empty-note">No entries match. Tap + to add one.</div>`; return; }
+  const balMap = computeRunningBalances(accFilter);
   container.innerHTML = dates.map(d=>{
     const rows = groups[d].map(t=>{
       const pos = t.amount >= 0;
@@ -3176,9 +3196,11 @@ function renderLedger(){
         <div class="amt" style="color:${pos?'var(--green)':'var(--red)'}">${fmtMoney(t.amount)}</div>
       </div>`;
     }).join('');
-    const dayTotal = groups[d].reduce((s,t)=> s + (Number(t.amount)||0), 0);
-    const dtPos = dayTotal >= 0;
-    return `<div class="day-group"><div class="day-label"><span>${formatDateLabel(d)}</span><span class="day-total ${dtPos?'pos':'neg'}">${dtPos?'+':''}${fmtMoney(dayTotal)}</span></div>${rows}</div>`;
+    const dayBalance = (d!=='No date' && balMap[d]!==undefined)
+      ? balMap[d]
+      : groups[d].reduce((s,t)=> s + (Number(t.amount)||0), 0);
+    const dbPos = dayBalance >= 0;
+    return `<div class="day-group"><div class="day-label"><span>${formatDateLabel(d)}</span><span class="day-total ${dbPos?'pos':'neg'}">${fmtMoney(dayBalance)}</span></div>${rows}</div>`;
   }).join('');
   container.querySelectorAll('.txn').forEach(el=> el.addEventListener('click', ()=> openEditSheet(el.dataset.id)));
 }
