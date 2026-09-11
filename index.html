@@ -2389,6 +2389,39 @@ let TXNS = [];
 let PLANS = [];
 let GOALS = [];
 let DEBTS = [];
+// Starting values for the Debts & Loan EMIs page (Dept & Loan report), Jan'26-Jun'26.
+// Used only to seed the page the first time it loads on a device with no saved debts yet.
+const DEBT_SEED = [
+  { name:'Ashok', entries:[
+    {month:'2026-01', balance:700000},
+    {month:'2026-02', balance:700000},
+    {month:'2026-03', balance:700000},
+    {month:'2026-04', balance:700000},
+    {month:'2026-05', balance:700000},
+    {month:'2026-06', balance:700000}
+  ]},
+  { name:'HDFC Card', entries:[
+    {month:'2026-01', balance:726097},
+    {month:'2026-02', balance:713926},
+    {month:'2026-03', balance:701636},
+    {month:'2026-04', balance:686786},
+    {month:'2026-05', balance:684315},
+    {month:'2026-06', balance:671658}
+  ]},
+  { name:'LIC', entries:[
+    {month:'2026-01', balance:128423},
+    {month:'2026-02', balance:128650},
+    {month:'2026-03', balance:129900},
+    {month:'2026-04', balance:130915}
+  ]},
+  { name:'Jewel Loan', entries:[
+    {month:'2026-01', balance:206625},
+    {month:'2026-02', balance:206625},
+    {month:'2026-03', balance:206625},
+    {month:'2026-05', balance:173000},
+    {month:'2026-06', balance:173000}
+  ]}
+];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
 let editingId = null;
@@ -2614,6 +2647,11 @@ function loadDebts(){
   const raw = localStorage.getItem(LS_DEBTS);
   if(raw){ try{ DEBTS = JSON.parse(raw); }catch(e){ DEBTS = []; } }
   else { DEBTS = []; }
+  // First run on this device (no debts saved yet): pre-load the Dept & Loan starting values.
+  if(!DEBTS.length && Array.isArray(DEBT_SEED) && DEBT_SEED.length){
+    DEBTS = DEBT_SEED.map(d=>({ id: uid(), updatedAt: Date.now(), name: d.name, entries: d.entries.map(e=>({...e})) }));
+    localStorage.setItem(LS_DEBTS, JSON.stringify(DEBTS));
+  }
 }
 function saveDebts(){
   DEBTS = stampChangedRecords(DEBTS, LS_DEBTS);
@@ -3565,7 +3603,7 @@ function renderDebtList(){
       changeHtml = `<span class="debt-change ${dir}">${arrow} ${Math.abs(change.pct).toFixed(1)}% vs ${escapeHtml(monthLabel(change.prevMonth))}</span>`;
     }
     const historyRows = [...entries].reverse().map(e=>
-      `<div class="debt-history-row" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}"><span>${escapeHtml(monthLabel(e.month))}</span><span>${fmtMoney(e.balance)}</span></div>`
+      `<div class="debt-history-row" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}"><span>${escapeHtml(monthLabel(e.month))}</span><span style="display:flex;align-items:center;gap:8px;">${fmtMoney(e.balance)}<button type="button" class="debt-entry-delete" data-stop="1" data-debt="${escapeHtml(d.id)}" data-month="${escapeHtml(e.month)}" title="Delete this month's entry" style="background:none;border:none;color:#D83D4A;cursor:pointer;font-size:12px;line-height:1;padding:2px;">✕</button></span></div>`
     ).join('');
     return `<div class="goal-card debt-card" data-id="${escapeHtml(d.id)}">
       <div class="goal-head">
@@ -3612,6 +3650,25 @@ function renderDebtList(){
       document.getElementById('debtMonth').value = entry.month;
       document.getElementById('debtBalance').value = entry.balance;
       document.getElementById('debtForm').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  el.querySelectorAll('.debt-entry-delete').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.debt, month = btn.dataset.month;
+      const d = DEBTS.find(x=>x.id===id);
+      if(!d) return;
+      if(!confirm(`Delete the ${monthLabel(month)} entry for "${d.name}"?`)) return;
+      d.entries = (d.entries||[]).filter(en=>en.month!==month);
+      if(!d.entries.length){
+        const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [id]:Date.now()}; setSyncMeta(m);
+        DEBTS = DEBTS.filter(x=>x.id!==id);
+      } else {
+        d.updatedAt = Date.now();
+      }
+      saveDebts();
+      renderDebtList();
+      showToast('Entry deleted');
     });
   });
   el.querySelectorAll('.debt-delete-link').forEach(btn=>{
