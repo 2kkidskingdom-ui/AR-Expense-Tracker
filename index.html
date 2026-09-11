@@ -2643,14 +2643,19 @@ function saveGoals(){
   markLocalDirty();
   if(accessToken) debouncedBackup();
 }
+const LS_DEBT_SEED_APPLIED = 'ledger.debtSeedApplied.v1';
 function loadDebts(){
   const raw = localStorage.getItem(LS_DEBTS);
   if(raw){ try{ DEBTS = JSON.parse(raw); }catch(e){ DEBTS = []; } }
   else { DEBTS = []; }
-  // First run on this device (no debts saved yet): pre-load the Dept & Loan starting values.
-  if(!DEBTS.length && Array.isArray(DEBT_SEED) && DEBT_SEED.length){
+  // One-time replace on each device: load the Dept & Loan starting values from the
+  // reference photo, overwriting whatever debts were saved before. Runs only once
+  // per device (tracked by LS_DEBT_SEED_APPLIED) so it never clobbers entries the
+  // user adds or edits afterward.
+  if(!localStorage.getItem(LS_DEBT_SEED_APPLIED) && Array.isArray(DEBT_SEED) && DEBT_SEED.length){
     DEBTS = DEBT_SEED.map(d=>({ id: uid(), updatedAt: Date.now(), name: d.name, entries: d.entries.map(e=>({...e})) }));
     localStorage.setItem(LS_DEBTS, JSON.stringify(DEBTS));
+    localStorage.setItem(LS_DEBT_SEED_APPLIED, '1');
   }
 }
 function saveDebts(){
