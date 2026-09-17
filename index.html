@@ -1960,6 +1960,34 @@ nav.tabs button.active{font-weight:700!important;}
 .debt-history-row:hover{color:var(--green-dark);}
 .debt-delete-link{display:block;margin-top:8px;font-size:10.5px;color:#D83D4A;text-decoration:underline;background:none;border:none;cursor:pointer;padding:0;}
 </style>
+
+<style id="ledger-filter-final-fix">
+#ledger .filters{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  flex-wrap:nowrap!important;
+  gap:10px!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#ledger .filters select{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  min-height:46px!important;
+  height:46px!important;
+  padding:8px 36px 8px 13px!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:14px!important;
+  line-height:20px!important;
+  font-weight:500!important;
+  color:#1E2A35!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -2070,10 +2098,10 @@ nav.tabs button.active{font-weight:700!important;}
     </section>
 
     <section id="ledger">
-      <div class="filters" style="display:flex!important;flex-wrap:nowrap!important;gap:10px!important;width:100%!important;">
-        <select id="filterAccount" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All accounts</option></select>
-        <select id="filterCategory" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All categories</option></select>
-        <select id="filterSubcategory" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All subcategories</option></select>
+      <div class="filters">
+        <select id="filterAccount"><option value="">All accounts</option></select>
+        <select id="filterCategory"><option value="">All categories</option></select>
+        <select id="filterSubcategory"><option value="">All subcategories</option></select>
       </div>
       <div id="dayFilterBanner" style="display:none;"></div>
       <div class="ledger-list" id="ledgerList"></div>
