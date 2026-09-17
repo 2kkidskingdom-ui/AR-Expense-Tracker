@@ -2040,6 +2040,29 @@ nav.tabs button.active{font-weight:700!important;}
 }
 </style>
 
+<style id="finance-improvements">
+.monthly-comparison-card{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);}
+.monthly-comparison-title{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green-dark);}
+.monthly-comparison-subtitle{font-size:10.5px;color:var(--muted);margin-top:3px;}
+.monthly-comparison-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;}
+.monthly-comparison-item{min-width:0;padding:10px 8px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc;}
+.monthly-comparison-label{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--muted);}
+.monthly-comparison-values{display:flex;flex-direction:column;gap:2px;margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--green-dark);white-space:nowrap;overflow:hidden;}
+.monthly-comparison-prev{font-size:10px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;}
+.monthly-comparison-change{font-size:10px;font-weight:800;margin-top:5px;color:var(--muted);}
+.monthly-comparison-change.up{color:var(--red);}.monthly-comparison-change.down{color:var(--green);}.monthly-comparison-change.neutral{color:var(--muted);}
+.quick-add-card{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:var(--shadow);}
+.quick-add-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.quick-add-title{font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green-dark);}
+.quick-add-subtitle{font-size:10.5px;color:var(--muted);margin-top:2px;}
+.quick-add-list{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:10px;}
+.quick-add-btn{border:1px solid #D8E7E1;background:#F7FBF9;border-radius:12px;padding:9px 10px;text-align:left;cursor:pointer;min-width:0;}
+.quick-add-btn .q-name{font-size:12px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.quick-add-btn .q-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--red);margin-top:3px;}
+.quick-add-empty{font-size:11px;color:var(--muted);padding:8px 0;}
+@media(max-width:520px){.monthly-comparison-grid{gap:6px}.monthly-comparison-item{padding:9px 6px}.monthly-comparison-values{font-size:12px}.monthly-comparison-title,.quick-add-title{font-size:17px;}.quick-add-list{grid-template-columns:repeat(2,1fr);}}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -2131,6 +2154,10 @@ nav.tabs button.active{font-weight:700!important;}
         <div class="tb-amount" id="totalBalanceFull">—</div>
       </div>
       <div class="dashboard-stats" id="dashboardStats"></div>
+      <div class="quick-add-card" id="quickAddCard">
+        <div class="quick-add-head"><div><div class="quick-add-title">Quick Add</div><div class="quick-add-subtitle">Tap a common entry to open it pre-filled</div></div></div>
+        <div class="quick-add-list" id="quickAddList"></div>
+      </div>
       <div class="section-title">Accounts</div>
       <div class="accounts-grid" id="accountsGrid"></div>
       <div class="dashboard-monthly-projection">
@@ -2207,9 +2234,19 @@ nav.tabs button.active{font-weight:700!important;}
         <input type="text" id="customTo" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off">
       </div>
       <div class="totals-strip">
-        <div class="tstat"><div class="l">Income</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
-        <div class="tstat"><div class="l">Expenses</div><div class="v" id="statOut" style="color:var(--red)">—</div><div class="sub" id="statOutPct"></div></div>
+        <div class="tstat" title="Tap to view all income transactions"><div class="l">Income</div><div class="v" id="statIn" style="color:var(--green)">—</div></div>
+        <div class="tstat" title="Tap to view all expense transactions"><div class="l">Expenses</div><div class="v" id="statOut" style="color:var(--red)">—</div><div class="sub" id="statOutPct"></div></div>
         <div class="tstat"><div class="l">Net</div><div class="v" id="statNet">—</div><div class="sub" id="statNetPct"></div></div>
+      </div>
+
+      <div class="monthly-comparison-card" id="monthlyComparisonCard">
+        <div class="monthly-comparison-title">Monthly Comparison</div>
+        <div class="monthly-comparison-subtitle" id="monthlyComparisonSubtitle">This month vs last month</div>
+        <div class="monthly-comparison-grid">
+          <div class="monthly-comparison-item"><div class="monthly-comparison-label">INCOME</div><div class="monthly-comparison-values"><span id="compareIncomeCurrent">—</span><span class="monthly-comparison-prev" id="compareIncomePrevious">—</span></div><div class="monthly-comparison-change" id="compareIncomeChange">—</div></div>
+          <div class="monthly-comparison-item"><div class="monthly-comparison-label">EXPENSES</div><div class="monthly-comparison-values"><span id="compareExpenseCurrent">—</span><span class="monthly-comparison-prev" id="compareExpensePrevious">—</span></div><div class="monthly-comparison-change" id="compareExpenseChange">—</div></div>
+          <div class="monthly-comparison-item"><div class="monthly-comparison-label">NET</div><div class="monthly-comparison-values"><span id="compareNetCurrent">—</span><span class="monthly-comparison-prev" id="compareNetPrevious">—</span></div><div class="monthly-comparison-change" id="compareNetChange">—</div></div>
+        </div>
       </div>
 
       <div class="summary-trend-head">
@@ -3141,6 +3178,60 @@ function renderDayFilterBanner(){
   el.className = 'day-filter-banner';
 }
 
+function renderQuickAdd(){
+  const target=document.getElementById('quickAddList');
+  if(!target) return;
+  const seen=new Map();
+  [...TXNS].filter(t=>isRealExpense(t)&&t.category&&t.category!=='Account Transfer').forEach(t=>{
+    const key=(t.category||'')+'|||'+(t.subcategory||'');
+    const prev=seen.get(key);
+    if(!prev || String(t.date||'')>String(prev.date||'')) seen.set(key,t);
+  });
+  const items=[...seen.values()].sort((a,b)=>{
+    const ca=TXNS.filter(t=>isRealExpense(t)&&t.category===a.category&&String(t.subcategory||'')===String(a.subcategory||'')).length;
+    const cb=TXNS.filter(t=>isRealExpense(t)&&t.category===b.category&&String(t.subcategory||'')===String(b.subcategory||'')).length;
+    return cb-ca || String(b.date||'').localeCompare(String(a.date||''));
+  }).slice(0,6);
+  target.innerHTML=items.length?items.map((t,i)=>`<button type="button" class="quick-add-btn" data-quick-index="${i}"><div class="q-name">${escapeHtml(t.category)}${t.subcategory?' · '+escapeHtml(t.subcategory):''}</div><div class="q-meta">${fmtMoney(Math.abs(Number(t.amount)||0))}</div></button>`).join(''):'<div class="quick-add-empty">Add a few expense entries to build your quick-add list.</div>';
+  target.querySelectorAll('[data-quick-index]').forEach((btn,i)=>btn.addEventListener('click',()=>openQuickAdd(items[i])));
+}
+function openQuickAdd(t){
+  if(!t)return;
+  openAddSheet();
+  setType('expense');
+  fAmount.value=String(Math.abs(Number(t.amount)||0));
+  calcExpressionValue=fAmount.value; calcJustEvaluated=true; syncCalculatorDisplay();
+  fAccount.value=t.account||'';
+  fCategory.value=t.category||'';
+  populateSubcatFor(fCategory.value);
+  fSubcategory.value=t.subcategory||'';
+  fDesc.value=t.description||'';
+  showToast('Quick Add pre-filled — review and save');
+}
+function monthMetrics(ym){
+  const rows=TXNS.filter(t=>reportMonth(t)===ym && isRealFlow(t));
+  const income=rows.filter(isRealIncome).reduce((s,t)=>s+Math.abs(Number(t.amount)||0),0);
+  const expense=rows.filter(isRealExpense).reduce((s,t)=>s+Math.abs(Number(t.amount)||0),0);
+  return {income,expense,net:income-expense};
+}
+function percentChange(current,previous){
+  if(previous===0) return current===0?0:null;
+  return ((current-previous)/Math.abs(previous))*100;
+}
+function renderMonthlyComparison(){
+  const now=new Date();
+  const cur=localMonthIso(now);
+  const prev=addMonths(cur,-1);
+  const a=monthMetrics(cur),b=monthMetrics(prev);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=fmtMoney(v);};
+  set('compareIncomeCurrent',a.income); set('compareIncomePrevious',`${fmtMoney(b.income)} · ${fmtMonthLabel(prev)}`);
+  set('compareExpenseCurrent',a.expense); set('compareExpensePrevious',`${fmtMoney(b.expense)} · ${fmtMonthLabel(prev)}`);
+  set('compareNetCurrent',a.net); set('compareNetPrevious',`${fmtMoney(b.net)} · ${fmtMonthLabel(prev)}`);
+  const labels=[['compareIncomeChange',a.income,b.income],['compareExpenseChange',a.expense,b.expense],['compareNetChange',a.net,b.net]];
+  labels.forEach(([id,c,p])=>{const e=document.getElementById(id);if(!e)return;const ch=percentChange(c,p);e.className='monthly-comparison-change '+(ch===null?'neutral':ch>0?'up':ch<0?'down':'neutral');e.textContent=ch===null?'No previous data':(ch>0?'▲ ':'▼ ')+Math.abs(ch).toFixed(1)+'% vs last month';});
+  const sub=document.getElementById('monthlyComparisonSubtitle'); if(sub)sub.textContent=`${fmtMonthLabel(cur)} vs ${fmtMonthLabel(prev)}`;
+}
+
 function renderDashboard(){
   const grid = document.getElementById('accountsGrid');
   const accts = getAccounts();
@@ -3170,6 +3261,7 @@ function renderDashboard(){
     <div class="dashboard-stat income"><div class="label">This month income</div><div class="value">${fmtMoney(income)}</div><div class="hint">Recorded</div></div>
     <div class="dashboard-stat expense"><div class="label">This month expenses</div><div class="value">${fmtMoney(expense)}</div><div class="hint">Recorded</div></div>
     <div class="dashboard-stat saving"><div class="label">Monthly savings</div><div class="value">${fmtMoney(savings)}</div><div class="hint">Income − expenses</div></div>`;
+  renderQuickAdd();
 
   const todayStr=localDateIso();
   const todayDate=new Date(todayStr+'T00:00:00');
@@ -4226,6 +4318,7 @@ function renderAnalysis(range){
   const netEl=document.getElementById('statNet'); netEl.textContent=fmtMoney(net); netEl.style.color=net>=0?'var(--green)':'var(--red)';
   document.getElementById('statNetPct').textContent=income>0?(net/income*100).toFixed(1)+'% of income':'';
   document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{let size=13;el.style.fontSize=size+'px';while(el.scrollWidth>el.clientWidth&&size>7){size-=.5;el.style.fontSize=size+'px';}});
+  renderMonthlyComparison();
 
   function renderSummaryBreakdown(type, categoryTargetId, subcategoryTargetId){
     const catTarget=document.getElementById(categoryTargetId);
@@ -4364,8 +4457,15 @@ function renderBudgetSummary(){
     return String((a.b.categories||[]).join(', ')).localeCompare(String((b.b.categories||[]).join(', ')));
   });
   w.innerHTML=budgetRows.map(({b,i,spent,amt,pct,over,rawPct})=>{
-    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?rawPct.toFixed(1)+'%':''}</span></div><div class="budget-actions"><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
+    return `<div class="budget-summary-card ${over?'over-budget':'within-budget'}"><div class="budget-summary-head"><div><div class="budget-name">${escapeHtml((b.categories||[]).join(', '))}</div><div class="budget-meta">${(b.subcategories||[]).length?escapeHtml(b.subcategories.map(k=>k.replace('|||',' · ')).join(', ')):'All subcategories'} · Applies every month</div></div><div class="budget-amount">${fmtMoney(amt)}</div></div><div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${pct}%"></div></div><div class="budget-spent-row"><span>Spent in ${escapeHtml(m)}: ${fmtMoney(spent)}</span><span>${amt?rawPct.toFixed(1)+'%':''}</span></div><div class="budget-actions"><button type="button" class="budget-view" data-budget-view="${escapeHtml(b.id||'')}">View actual</button><button class="budget-edit" data-budget-edit="${escapeHtml(b.id||'')}">Edit</button><button class="budget-delete" data-budget-delete="${i}">Delete</button></div></div>`
   }).join('');
+  w.querySelectorAll('[data-budget-view]').forEach(btn=>btn.addEventListener('click',()=>{
+    const b=list.find(x=>x.id===btn.dataset.budgetView);
+    if(!b)return;
+    if((b.categories||[]).length===1){
+      drillIntoSummary('expense',b.categories[0],(b.subcategories||[]).length===1?(b.subcategories[0]||'').split('|||')[1]||'':'');
+    }else showToast('Budget contains multiple categories — use the Budget actual view above.');
+  }));
   w.querySelectorAll('[data-budget-edit]').forEach(btn=>btn.addEventListener('click',()=>startBudgetEdit(btn.dataset.budgetEdit)));
   w.querySelectorAll('[data-budget-delete]').forEach(btn=>btn.addEventListener('click',()=>{
     MONTHLY_BUDGETS.splice(Number(btn.dataset.budgetDelete),1);
@@ -4397,7 +4497,7 @@ function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('bu
 function switchTab(tab){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
   document.querySelectorAll('main section').forEach(s=>s.classList.toggle('active', s.id===tab));
-  document.getElementById('fabAdd').style.display = (tab==='ledger') ? 'flex' : 'none';
+  document.getElementById('fabAdd').style.display = 'flex';
   window.scrollTo(0,0);
 }
 document.querySelectorAll('.tab-btn').forEach(b=>{
@@ -5211,24 +5311,35 @@ async function ensureDeviceShard(){
   const own=files.find(f=>f.name===name);
   return {file:own||null,name};
 }
+const DAILY_BACKUP_FILENAME='ledger-backup-daily.json';
+async function findDailyBackupFile(){
+  const files=await driveListFilesByPrefix('ledger-backup-daily');
+  return files.find(f=>f.name===DAILY_BACKUP_FILENAME)||null;
+}
 async function createDriveSnapshot(reason='auto', mergedState=null){
   if(!accessToken || !navigator.onLine) return false;
-  const last=Number(localStorage.getItem(LS_LAST_BACKUP)||0);
-  // Automatic snapshots are throttled; manual recovery remains available at any time.
-  if(reason==='auto' && Date.now()-last<10*60*1000) return false;
+  // Normal sync must not create backup copies. Daily backup and manual backup
+  // both update the same single Drive file.
+  if(reason==='auto') return false;
   try{
     const state=mergedState||getLocalShard();
-    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
-    const name=`ledger-backup-${stamp}.json`;
-    await writeDriveFile(null,name,JSON.stringify({...state,backupReason:reason}));
+    const existing=await findDailyBackupFile();
+    await writeDriveFile(existing?.id||null,DAILY_BACKUP_FILENAME,JSON.stringify({...state,backupReason:reason,backupAt:new Date().toISOString()}));
     localStorage.setItem(LS_LAST_BACKUP,String(Date.now()));
-    const backups=await driveListFilesByPrefix('ledger-backup-');
-    const sorted=backups.sort((a,b)=>String(b.name).localeCompare(String(a.name)));
-    for(const f of sorted.slice(5)){
-      try{ await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${f.id}`,{method:'DELETE'}); }catch(e){ console.warn('Backup cleanup failed',e); }
-    }
     return true;
-  }catch(e){ console.warn('Automatic backup failed',e); return false; }
+  }catch(e){ console.warn('Backup failed',e); return false; }
+}
+function scheduleDailyBackup(){
+  clearInterval(window.__dailyBackupTimer);
+  const check=()=>{
+    if(!accessToken || !navigator.onLine) return;
+    const now=new Date(), key=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+    if(now.getHours()===22 && now.getMinutes()===0 && localStorage.getItem('ledger.dailyBackupDate.v1')!==key){
+      createDriveSnapshot('daily',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()}).then(ok=>{if(ok)localStorage.setItem('ledger.dailyBackupDate.v1',key);});
+    }
+  };
+  window.__dailyBackupTimer=setInterval(check,30000);
+  check();
 }
 function mergeLocalWithCloudSources(sources){
   const meta=getSyncMeta();
@@ -5319,8 +5430,10 @@ async function driveBackup(silent){
 async function driveRestore(silent){
   if(!accessToken) return;
   try{
+    const daily=await findDailyBackupFile();
     const backups=await driveListFilesByPrefix('ledger-backup-');
-    const sorted=backups.sort((a,b)=>String(b.name).localeCompare(String(a.name)));
+    const legacy=backups.filter(f=>f.name!==DAILY_BACKUP_FILENAME).sort((a,b)=>String(b.name).localeCompare(String(a.name)));
+    const sorted=daily?[daily,...legacy]:legacy;
     if(sorted.length){
       const data=await driveGetFileJson(sorted[0].id);
       if(data){
@@ -5440,10 +5553,11 @@ bindDateTextInput('taskFollowUp');
   refreshAll();
   lastDriveError='';
   updateSyncUI(false);
-  document.getElementById('fabAdd').style.display = 'none'; // default active tab is Dashboard, not Ledger
+  document.getElementById('fabAdd').style.display = 'flex'; // Quick Add is available from every tab
   // Reconnect silently on startup when Google has already granted access.
   // No manual sync is required during normal app opening.
   attemptSilentReconnect();
+  scheduleDailyBackup();
   // Background sync keeps multiple phones reasonably current without requiring
   // the user to press Sync. It only runs when a valid token is already available.
   setInterval(()=>{
