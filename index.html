@@ -2070,10 +2070,10 @@ nav.tabs button.active{font-weight:700!important;}
     </section>
 
     <section id="ledger">
-      <div class="filters">
-        <select id="filterAccount"><option value="">All accounts</option></select>
-        <select id="filterCategory"><option value="">All categories</option></select>
-        <select id="filterSubcategory"><option value="">All subcategories</option></select>
+      <div class="filters" style="display:flex!important;flex-wrap:nowrap!important;gap:10px!important;width:100%!important;">
+        <select id="filterAccount" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All accounts</option></select>
+        <select id="filterCategory" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All categories</option></select>
+        <select id="filterSubcategory" style="flex:1 1 0!important;width:0!important;min-width:0!important;"><option value="">All subcategories</option></select>
       </div>
       <div id="dayFilterBanner" style="display:none;"></div>
       <div class="ledger-list" id="ledgerList"></div>
