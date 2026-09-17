@@ -1961,32 +1961,51 @@ nav.tabs button.active{font-weight:700!important;}
 .debt-delete-link{display:block;margin-top:8px;font-size:10.5px;color:#D83D4A;text-decoration:underline;background:none;border:none;cursor:pointer;padding:0;}
 </style>
 
-
-
-
-<style id="ledger-filter-readable-row">
+<style id="ledger-filter-final-fix">
 #ledger .filters{
-  display:flex!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
   flex-wrap:nowrap!important;
   gap:10px!important;
   width:100%!important;
-  overflow-x:auto!important;
-  overflow-y:hidden!important;
   box-sizing:border-box!important;
-  padding-bottom:2px!important;
-  -webkit-overflow-scrolling:touch!important;
-  scrollbar-width:none!important;
 }
-#ledger .filters::-webkit-scrollbar{display:none!important;}
 #ledger .filters select{
-  flex:0 0 145px!important;
-  width:145px!important;
-  min-width:145px!important;
-  max-width:145px!important;
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+  min-height:46px!important;
+  height:46px!important;
+  padding:8px 36px 8px 13px!important;
+  font-family:'Inter',sans-serif!important;
+  font-size:14px!important;
+  line-height:20px!important;
+  font-weight:500!important;
+  color:#1E2A35!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:clip!important;
+}
+</style>
+
+
+<style id="ledger-filter-readable-final">
+#ledger .filters{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:10px!important;
+  width:100%!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+}
+#ledger .filters select{
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
   min-height:46px!important;
   height:46px!important;
   box-sizing:border-box!important;
-  padding:8px 34px 8px 13px!important;
+  padding:8px 25px 8px 13px!important;
   font-family:'Inter',sans-serif!important;
   font-size:16px!important;
   line-height:20px!important;
@@ -1996,9 +2015,14 @@ nav.tabs button.active{font-weight:700!important;}
   white-space:nowrap!important;
   overflow:hidden!important;
   text-overflow:clip!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23505b61' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;
+  background-repeat:no-repeat!important;
+  background-position:right 9px center!important;
+  background-size:14px 14px!important;
 }
 </style>
-
 </head>
 <body>
 <div id="authGate">
