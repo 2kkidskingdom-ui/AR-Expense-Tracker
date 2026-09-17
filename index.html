@@ -2073,6 +2073,7 @@ nav.tabs button.active{font-weight:700!important;}
       <div class="filters">
         <select id="filterAccount"><option value="">All accounts</option></select>
         <select id="filterCategory"><option value="">All categories</option></select>
+        <select id="filterSubcategory"><option value="">All subcategories</option></select>
       </div>
       <div id="dayFilterBanner" style="display:none;"></div>
       <div class="ledger-list" id="ledgerList"></div>
@@ -3013,6 +3014,7 @@ function drillIntoDayType(dateStr, type){
   const calAcct = document.getElementById('calAccountFilter').value;
   document.getElementById('filterAccount').value = calAcct || '';
   document.getElementById('filterCategory').value = '';
+  populateSubcategoryFilterOptions(false);
   ledgerFilterDate = dateStr;
   ledgerFilterType = type;
   switchTab('ledger');
@@ -3137,6 +3139,23 @@ function renderDashboard(){
   }
 
 }
+function getSubcategoriesForFilter(catFilter){
+  const set = new Set();
+  TXNS.forEach(t=>{
+    if(catFilter && t.category!==catFilter) return;
+    if(t.subcategory) set.add(t.subcategory);
+  });
+  return [...set].sort();
+}
+
+function populateSubcategoryFilterOptions(preserveValue){
+  const catSel = document.getElementById('filterCategory');
+  const subSel = document.getElementById('filterSubcategory');
+  const curSub = preserveValue ? subSel.value : '';
+  subSel.innerHTML = '<option value="">All subcategories</option>' + getSubcategoriesForFilter(catSel.value).map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  subSel.value = curSub;
+}
+
 function populateFilterSelects(){
   const accSel = document.getElementById('filterAccount');
   const catSel = document.getElementById('filterCategory');
@@ -3144,6 +3163,7 @@ function populateFilterSelects(){
   accSel.innerHTML = '<option value="">All accounts</option>' + getAccounts().map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
   catSel.innerHTML = '<option value="">All categories</option>' + getCategories().map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
   accSel.value = curAcc; catSel.value = curCat;
+  populateSubcategoryFilterOptions(true);
 }
 
 function computeRunningBalances(accFilter){
@@ -3168,9 +3188,11 @@ function computeRunningBalances(accFilter){
 function renderLedger(){
   const accFilter = document.getElementById('filterAccount').value;
   const catFilter = document.getElementById('filterCategory').value;
+  const subFilter = document.getElementById('filterSubcategory').value;
   let list = TXNS.filter(t=>{
     if(accFilter && t.account!==accFilter) return false;
     if(catFilter && t.category!==catFilter) return false;
+    if(subFilter && t.subcategory!==subFilter) return false;
     if(ledgerFilterDate && t.date!==ledgerFilterDate) return false;
     if(ledgerFilterType==='income' && !(t.amount>0)) return false;
     if(ledgerFilterType==='expense' && !(t.amount<0)) return false;
@@ -4318,7 +4340,11 @@ document.getElementById('rangeBtns').addEventListener('click', (e)=>{
 document.getElementById('customFrom').addEventListener('change', ()=> renderAnalysis('custom'));
 document.getElementById('customTo').addEventListener('change', ()=> renderAnalysis('custom'));
 document.getElementById('filterAccount').addEventListener('change', renderLedger);
-document.getElementById('filterCategory').addEventListener('change', renderLedger);
+document.getElementById('filterCategory').addEventListener('change', ()=>{
+  populateSubcategoryFilterOptions(false);
+  renderLedger();
+});
+document.getElementById('filterSubcategory').addEventListener('change', renderLedger);
 
 // ---------- Add / Edit sheet ----------
 const overlay = document.getElementById('overlay');
