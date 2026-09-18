@@ -2099,6 +2099,40 @@ nav.tabs button.active{font-weight:700!important;}
   text-align:center!important;
 }
 </style>
+
+<style id="center-bold-finance-labels">
+/* Dashboard: bold, centered labels and values */
+.dashboard-stat .label,
+.dashboard-stat .value,
+.dashboard-stat .hint{
+  text-align:center!important;
+}
+.dashboard-stat .label{
+  font-weight:800!important;
+}
+
+/* Summary: Income / Expenses / Net labels, amounts and percentage text */
+#analysis .totals-strip .tstat{
+  text-align:center!important;
+}
+#analysis .totals-strip .tstat .l,
+#analysis .totals-strip .tstat .v,
+#analysis .totals-strip .tstat .sub{
+  text-align:center!important;
+  width:100%!important;
+}
+#analysis .totals-strip .tstat .l{
+  font-weight:800!important;
+  letter-spacing:.06em!important;
+}
+#analysis .totals-strip .tstat .v{
+  font-weight:800!important;
+}
+#analysis .totals-strip .tstat .sub{
+  font-weight:600!important;
+}
+</style>
+
 </head>
 <body>
 <div id="authGate">
@@ -2717,9 +2751,10 @@ function fmtDateLabel(ds){
   return String(d.getDate()).padStart(2,'0') + '-' + MONTH_ABBR[d.getMonth()] + '-' + d.getFullYear();
 }
 function fmtMoney(n){
-  const abs = Math.abs(n);
-  const s = abs.toLocaleString('en-IN', {minimumFractionDigits: abs % 1 === 0 ? 0 : 2, maximumFractionDigits:2});
-  return (n<0?'−':'') + '₹' + s;
+  const num = Number(n) || 0;
+  const abs = Math.abs(num);
+  const s = abs.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return (num<0?'−':'') + '₹' + s;
 }
 function fmtMoneyWhole(n){
   // Kept for chart/layout callers, but never drop paise.
