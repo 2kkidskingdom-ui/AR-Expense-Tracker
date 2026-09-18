@@ -2082,6 +2082,23 @@ nav.tabs button.active{font-weight:700!important;}
 }
 </style>
 
+
+<style id="summary-drilldown-ui">
+#analysis .totals-strip .tstat[title],#analysis .summary-subcategory-section-item{cursor:pointer;}
+#analysis .summary-subcategory-section-item:hover{background:#FBFEFC;border-radius:10px;}
+</style>
+
+<style id="summary-total-center-fix">
+#analysis .totals-strip .tstat{
+  text-align:center!important;
+}
+#analysis .totals-strip .tstat .l,
+#analysis .totals-strip .tstat .v,
+#analysis .totals-strip .tstat .sub{
+  width:100%!important;
+  text-align:center!important;
+}
+</style>
 </head>
 <body>
 <div id="authGate">
@@ -2599,6 +2616,8 @@ const DEBT_SEED = [
 ];
 let ledgerFilterDate = null;
 let ledgerFilterType = null; // 'income' | 'expense'
+let ledgerFilterFrom = null;
+let ledgerFilterTo = null;
 let editingId = null;
 let convertingProjection = null; // {seriesId, occurrenceId, scheduledDate, plan}
 let currentType = 'expense';
@@ -3150,6 +3169,8 @@ function drillIntoDayType(dateStr, type){
   document.getElementById('filterCategory').value = '';
   populateSubcategoryFilterOptions(false);
   ledgerFilterDate = dateStr;
+  ledgerFilterFrom = null;
+  ledgerFilterTo = null;
   ledgerFilterType = type;
   switchTab('ledger');
   renderLedger();
@@ -3157,14 +3178,24 @@ function drillIntoDayType(dateStr, type){
 
 function clearDayFilter(){
   ledgerFilterDate = null;
+  ledgerFilterFrom = null;
+  ledgerFilterTo = null;
   ledgerFilterType = null;
   renderLedger();
 }
 
 function renderDayFilterBanner(){
   const el = document.getElementById('dayFilterBanner');
-  if(!ledgerFilterDate){ el.style.display = 'none'; return; }
-  const label = fmtDateLabel(ledgerFilterDate);
+  const hasRange=!!(ledgerFilterFrom||ledgerFilterTo);
+  if(!ledgerFilterDate && !hasRange){ el.style.display = 'none'; return; }
+  let label='';
+  if(ledgerFilterDate){
+    label=fmtDateLabel(ledgerFilterDate);
+  }else{
+    const from=ledgerFilterFrom?fmtDateLabel(ledgerFilterFrom):'Start';
+    const to=ledgerFilterTo?fmtDateLabel(ledgerFilterTo):'End';
+    label=`${from} → ${to}`;
+  }
   const typeLabel = ledgerFilterType === 'income' ? 'Income' : ledgerFilterType === 'expense' ? 'Expenses' : 'All';
   el.style.display = 'flex';
   el.innerHTML = `<span>${label} · ${typeLabel}</span><button id="clearDayFilterBtn">Clear ×</button>`;
@@ -3328,6 +3359,8 @@ function renderLedger(){
     if(catFilter && t.category!==catFilter) return false;
     if(subFilter && t.subcategory!==subFilter) return false;
     if(ledgerFilterDate && t.date!==ledgerFilterDate) return false;
+    if(ledgerFilterFrom && (!t.date || t.date < ledgerFilterFrom)) return false;
+    if(ledgerFilterTo && (!t.date || t.date > ledgerFilterTo)) return false;
     if(ledgerFilterType==='income' && !(t.amount>0)) return false;
     if(ledgerFilterType==='expense' && !(t.amount<0)) return false;
     return true;
@@ -4233,6 +4266,22 @@ document.getElementById('calToday').addEventListener('click', ()=>{
 });
 document.getElementById('calAccountFilter').addEventListener('change', renderCalendar);
 
+function drillIntoSummary(type, category='', subcategory='', fromDate=null, toDate=null){
+  const acc=document.getElementById('filterAccount');
+  const cat=document.getElementById('filterCategory');
+  const sub=document.getElementById('filterSubcategory');
+  if(acc) acc.value='';
+  if(cat) cat.value=category || '';
+  populateSubcategoryFilterOptions(false);
+  if(sub) sub.value=subcategory || '';
+  ledgerFilterDate=null;
+  ledgerFilterFrom=fromDate || null;
+  ledgerFilterTo=toDate || null;
+  ledgerFilterType=type;
+  switchTab('ledger');
+  renderLedger();
+}
+
 function renderAnalysis(range){
   const now=new Date(), curYM=localMonthIso(now), todayStr=localDateIso(now), excluded=new Set(getExcludedAccounts());
   let list,customFrom=null,customTo=null;
@@ -4243,6 +4292,14 @@ function renderAnalysis(range){
     list=TXNS.filter(t=>t.date&&(!customFrom||t.date>=customFrom)&&(!customTo||t.date<=customTo));
   } else list=TXNS.filter(t=>t.date);
   list=list.filter(t=>!excluded.has(t.account));
+  let summaryFrom=null, summaryTo=null;
+  if(range==='today'){
+    summaryFrom=todayStr; summaryTo=todayStr;
+  } else if(range==='month'){
+    summaryFrom=`${curYM}-01`; summaryTo=todayStr;
+  } else if(range==='custom'){
+    summaryFrom=customFrom||null; summaryTo=customTo||null;
+  }
   renderTrendChart(range,list,curYM,customFrom,customTo);
   const income=list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
   const expense=list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
@@ -4252,6 +4309,10 @@ function renderAnalysis(range){
   document.getElementById('statIn').textContent=fmtMoney(income);
   document.getElementById('statOut').textContent=fmtMoney(absExpense);
   document.getElementById('statOutPct').textContent=expPct?(expPct+' of income'):'';
+  const incomeStat=document.getElementById('statIn')?.closest('.tstat');
+  const expenseStat=document.getElementById('statOut')?.closest('.tstat');
+  if(incomeStat){ incomeStat.style.cursor='pointer'; incomeStat.title='View all income transactions'; incomeStat.onclick=()=>drillIntoSummary('income','','',summaryFrom,summaryTo); }
+  if(expenseStat){ expenseStat.style.cursor='pointer'; expenseStat.title='View all expense transactions'; expenseStat.onclick=()=>drillIntoSummary('expense','','',summaryFrom,summaryTo); }
   const netEl=document.getElementById('statNet'); netEl.textContent=fmtMoney(net); netEl.style.color=net>=0?'var(--green)':'var(--red)';
   document.getElementById('statNetPct').textContent=income>0?(net/income*100).toFixed(1)+'% of income':'';
   document.querySelectorAll('#analysis .totals-strip .v').forEach(el=>{let size=13;el.style.fontSize=size+'px';while(el.scrollWidth>el.clientWidth&&size>7){size-=.5;el.style.fontSize=size+'px';}});
@@ -4283,14 +4344,22 @@ function renderAnalysis(range){
     if(catTarget) catTarget.innerHTML=cats.length?cats.map((cat,index)=>{
       const total=catTotals[cat];
       const pct=overallTotal>0?(total/overallTotal*100):0;
-      return `<div class="summary-category-item">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
+      return `<div class="summary-category-item" data-summary-type="${isIncome?'income':'expense'}" data-summary-category="${escapeHtml(cat)}" title="View ${isIncome?'income':'expense'} transactions for ${escapeHtml(cat)}">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(cat)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
     }).join(''):`<div class="summary-directory-empty">No ${type} category entries for this period.</div>`;
 
     subTarget.innerHTML=subs.length?subs.map((sub,index)=>{
       const total=subTotals[sub];
       const pct=overallTotal>0?(total/overallTotal*100):0;
-      return `<div class="summary-category-item summary-subcategory-section-item">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(sub)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
+      return `<div class="summary-category-item summary-subcategory-section-item" data-summary-type="${isIncome?'income':'expense'}" data-summary-subcategory="${escapeHtml(sub)}" title="View ${isIncome?'income':'expense'} transactions for ${escapeHtml(sub)}">\n        <div class="summary-category-head">\n          <div class="summary-category-name">${index+1}. ${escapeHtml(sub)}</div>\n          <div class="summary-category-amount">${fmtMoney(total)}</div>\n          <div class="summary-category-percent">${pct.toFixed(1)}%</div>\n        </div>\n        <div class="summary-category-bar"><div class="summary-category-fill" style="width:${Math.min(100,pct)}%"></div></div>\n      </div>`;
     }).join(''):`<div class="summary-directory-empty">No ${type} subcategory entries for this period.</div>`;
+    if(catTarget){
+      catTarget.querySelectorAll('[data-summary-category]').forEach(row=>row.addEventListener('click',()=>{
+        drillIntoSummary(row.dataset.summaryType||type,row.dataset.summaryCategory||'','',summaryFrom,summaryTo);
+      }));
+    }
+    subTarget.querySelectorAll('[data-summary-subcategory]').forEach(row=>row.addEventListener('click',()=>{
+      drillIntoSummary(row.dataset.summaryType||type,'',row.dataset.summarySubcategory||'',summaryFrom,summaryTo);
+    }));
   }
 
   renderSummaryBreakdown('income',null,'analysisIncomeSubcategoryDirectory');
