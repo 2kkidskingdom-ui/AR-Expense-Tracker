@@ -1974,6 +1974,7 @@ nav.tabs button.active{font-weight:700!important;}
 .shop-chip-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:22px;}
 .shop-chip-label{font-size:11px;color:var(--muted);font-weight:600;}
 .shop-link{border:0;background:none;padding:4px 2px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--green);text-decoration:underline;cursor:pointer;}
+.shop-chip.onlist{background:var(--green-soft);border-color:var(--green);color:var(--green-dark);}
 .shop-chip.removing{border-color:#F0C6C6;background:#FFF7F7;color:#9B3B2B;}
 .shop-common-check{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;}
 .shop-common-check input{width:18px;height:18px;margin:0;accent-color:var(--green);}
@@ -2461,7 +2462,7 @@ nav.tabs button.active{font-weight:700!important;}
       <div class="section-title">To-Do</div>
       <div class="todo-switch" id="todoSwitch">
         <button type="button" class="active" data-pane="tasks">Tasks<span class="shop-count" id="todoCount_tasks"></span></button>
-        <button type="button" data-pane="shopping">Shopping<span class="shop-count" id="todoCount_shopping"></span></button>
+        <button type="button" data-pane="shopping">To Buy<span class="shop-count" id="todoCount_shopping"></span></button>
       </div>
       <div class="todo-pane active" id="todoPane_tasks">
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Add tasks with an optional follow-up date. Tap the checkbox to mark a task done, or tap the task to edit it.</p>
@@ -2493,7 +2494,7 @@ nav.tabs button.active{font-weight:700!important;}
         <input type="text" id="shopQty" placeholder="Qty" autocomplete="off" aria-label="Quantity">
         <button type="button" id="shopAddBtn">Add</button>
       </div>
-      <label class="shop-common-check" id="shopCommonCheckWrap"><input type="checkbox" id="shopCommonCheck"> Add to common items</label>
+      <label class="shop-common-check" id="shopCommonCheckWrap"><input type="checkbox" id="shopCommonCheck"> <span id="shopCommonCheckLabel">Add to common items</span></label>
       <div class="shop-edit-actions" id="shopEditActions">
         <button type="button" class="cancel" id="shopCancelBtn">Cancel edit</button>
         <button type="button" class="delete" id="shopDeleteBtn">Delete item</button>
@@ -4171,6 +4172,7 @@ function renderShopping(){
   const listEl = document.getElementById('shopList');
   if(!listEl) return;
   updateTodoCounts();
+  syncShopCommonCheck();
   const cfg = SHOP_LISTS[shopActiveList];
   Object.keys(SHOP_LISTS).forEach(k=>{
     const pending = shopItemsFor(k).filter(i=>!i.done).length;
@@ -4184,15 +4186,18 @@ function renderShopping(){
   const pendingItems = items.filter(i=>!i.done).sort((a,b)=>(a.createdAt||a.updatedAt||0)-(b.createdAt||b.updatedAt||0));
   const doneItems = items.filter(i=>i.done).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
 
-  // Common items: hide anything already waiting to be bought (unless editing the common list).
-  const allCommon = shopCommonFor(shopActiveList);
+  // Common items: always shown. Ones already waiting to be bought get a tick so you can see them.
+  const chips = shopCommonFor(shopActiveList);
   const pendingNames = new Set(pendingItems.map(i=>String(i.name||'').trim().toLowerCase()));
-  const chips = shopCommonEdit ? allCommon : allCommon.filter(n=>!pendingNames.has(n.toLowerCase()));
-  document.getElementById('shopChipsWrap').style.display = allCommon.length ? 'block' : 'none';
-  document.getElementById('shopChipLabel').textContent = shopCommonEdit ? 'Tap an item to remove it from common items'
-    : (chips.length ? 'Common items, tap to add' : 'All common items are already on your list');
+  document.getElementById('shopChipsWrap').style.display = chips.length ? 'block' : 'none';
+  document.getElementById('shopChipLabel').textContent = shopCommonEdit ? 'Tap an item to remove it from common items' : 'Common items, tap to add';
   document.getElementById('shopCommonEditBtn').textContent = shopCommonEdit ? 'Done' : 'Edit';
-  document.getElementById('shopChips').innerHTML = chips.map(n=>`<button type="button" class="shop-chip ${shopCommonEdit?'removing':''}" data-name="${escapeHtml(n)}">${shopCommonEdit?'×':'+'} ${escapeHtml(n)}</button>`).join('');
+  document.getElementById('shopChips').innerHTML = chips.map(n=>{
+    const onList = !shopCommonEdit && pendingNames.has(n.toLowerCase());
+    const cls = shopCommonEdit ? 'removing' : (onList ? 'onlist' : '');
+    const mark = shopCommonEdit ? '×' : (onList ? '✓' : '+');
+    return `<button type="button" class="shop-chip ${cls}" data-name="${escapeHtml(n)}">${mark} ${escapeHtml(n)}</button>`;
+  }).join('');
 
   const summary = document.getElementById('shopSummary');
   summary.textContent = items.length
@@ -4230,6 +4235,22 @@ function addShopItem(name, qty){
   saveShopping(); renderShopping();
   return true;
 }
+function shopIsCommon(list, name){
+  const k = String(name||'').trim().toLowerCase();
+  return !!k && shopCommonFor(list).some(n=>n.toLowerCase()===k);
+}
+// The tick means "add to common items". If the typed name is already common, show that instead.
+function syncShopCommonCheck(){
+  const cb = document.getElementById('shopCommonCheck'), lab = document.getElementById('shopCommonCheckLabel');
+  const nameEl = document.getElementById('shopName');
+  if(!cb || !lab || !nameEl) return;
+  if(shopIsCommon(shopActiveList, nameEl.value)){
+    cb.checked = true; cb.disabled = true; lab.textContent = 'Already in common items';
+  } else {
+    if(cb.disabled){ cb.disabled = false; cb.checked = false; }
+    lab.textContent = 'Add to common items';
+  }
+}
 function resetShopForm(){
   editingShopId = null;
   document.getElementById('shopName').value = '';
@@ -4237,8 +4258,10 @@ function resetShopForm(){
   document.getElementById('shopName').placeholder = SHOP_LISTS[shopActiveList].placeholder;
   document.getElementById('shopAddBtn').textContent = 'Add';
   document.getElementById('shopEditActions').style.display = 'none';
+  document.getElementById('shopCommonCheck').disabled = false;
   document.getElementById('shopCommonCheck').checked = false;
   document.getElementById('shopCommonCheckWrap').style.display = 'flex';
+  syncShopCommonCheck();
 }
 function openShopForEdit(id){
   const it = SHOPPING.find(x=>x.id===id);
@@ -4248,7 +4271,9 @@ function openShopForEdit(id){
   document.getElementById('shopQty').value = it.qty || '';
   document.getElementById('shopAddBtn').textContent = 'Save';
   document.getElementById('shopEditActions').style.display = 'flex';
-  document.getElementById('shopCommonCheckWrap').style.display = 'none';
+  document.getElementById('shopCommonCheck').disabled = false;
+  document.getElementById('shopCommonCheck').checked = false;
+  syncShopCommonCheck();
   document.getElementById('shopName').focus();
 }
 function submitShopForm(){
@@ -4257,20 +4282,26 @@ function submitShopForm(){
   if(!name){ nameEl.focus(); showToast('Enter an item name'); return; }
   if(editingShopId){
     const it = SHOPPING.find(x=>x.id===editingShopId);
+    const cbEdit = document.getElementById('shopCommonCheck');
+    const addToCommonEdit = cbEdit.checked && !cbEdit.disabled;
     if(it){ it.name = name; it.qty = qty; it.updatedAt = Date.now(); saveShopping(); }
+    if(addToCommonEdit) setShopCommon(shopActiveList, name, true);
     resetShopForm(); renderShopping();
-    showToast('Item updated');
+    showToast(addToCommonEdit ? 'Item updated and added to common items' : 'Item updated');
     return;
   }
-  const addToCommon = document.getElementById('shopCommonCheck').checked;
+  const cbAdd = document.getElementById('shopCommonCheck');
+  const addToCommon = cbAdd.checked && !cbAdd.disabled;
   if(addShopItem(name, qty)){
     if(addToCommon){ setShopCommon(shopActiveList, name, true); renderShopping(); }
     nameEl.value = ''; qtyEl.value = '';
-    document.getElementById('shopCommonCheck').checked = false;
+    cbAdd.disabled = false; cbAdd.checked = false;
+    syncShopCommonCheck();
     nameEl.focus();
   }
 }
 document.getElementById('shopAddBtn').addEventListener('click', submitShopForm);
+document.getElementById('shopName').addEventListener('input', syncShopCommonCheck);
 ['shopName','shopQty'].forEach(id=>{
   document.getElementById(id).addEventListener('keydown', e=>{
     if(e.key==='Enter'){ e.preventDefault(); submitShopForm(); }
