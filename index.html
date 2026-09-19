@@ -1743,7 +1743,6 @@ nav.tabs button.active{font-weight:700!important;}
   nav.tabs .tab-btn[data-tab="plan"]{ color:#F15A00!important; }
   nav.tabs .tab-btn[data-tab="calendar"]{ color:#009B96!important; }
   nav.tabs .tab-btn[data-tab="budget"]{ color:#EE9500!important; }
-  nav.tabs .tab-btn[data-tab="shopping"]{ color:#C2185B!important; }
   nav.tabs .tab-btn.active{ background:#E3FAF0!important; font-weight:800!important; }
   @media(max-width:520px){
     nav.tabs{ border-radius:14px!important; padding:8px 5px!important; gap:2px!important; }
@@ -1951,12 +1950,18 @@ nav.tabs button.active{font-weight:700!important;}
 .task-followup.overdue{color:var(--red);font-weight:700;}
 .task-card.done .task-followup{color:var(--green);}
 /* Shopping list: provisions & vegetables */
-.shop-switch{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:10px;}
-.shop-switch button{flex:1 1 auto;min-width:0;white-space:nowrap;border:0;background:#fff;padding:12px 4px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted);cursor:pointer;}
-.shop-switch button.active{background:var(--green);color:#fff;}
+.todo-switch{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:10px;}
+.todo-switch button{flex:1;min-width:0;white-space:nowrap;border:0;background:#fff;padding:12px 4px;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;}
+.todo-switch button.active{background:var(--green);color:#fff;}
+.todo-switch button.active .shop-count{background:rgba(255,255,255,.25);}
+.todo-pane{display:none;margin-top:14px;}
+.todo-pane.active{display:block;}
+.shop-switch{display:flex;gap:6px;margin-top:10px;}
+.shop-switch button{flex:1 1 auto;min-width:0;white-space:nowrap;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px 4px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted);cursor:pointer;}
+.shop-switch button.active{background:var(--green-soft);border-color:var(--green);color:var(--green-dark);}
 .shop-count{display:inline-block;min-width:16px;padding:1px 5px;margin-left:4px;border-radius:9px;background:rgba(0,0,0,.08);font-size:11px;font-weight:800;}
 .shop-count:empty{display:none;}
-.shop-switch button.active .shop-count{background:rgba(255,255,255,.25);}
+.shop-switch button.active .shop-count{background:rgba(31,74,61,.15);}
 .shop-add{display:flex;gap:8px;margin-top:12px;}
 .shop-add input[type=text]{height:44px;min-width:0;border:1px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--ink);padding:0 12px;font-size:15px;font-family:'Inter',sans-serif;}
 .shop-add #shopName{flex:1 1 0;}
@@ -2242,11 +2247,7 @@ nav.tabs button.active{font-weight:700!important;}
     </button>
     <button class="tab-btn" data-tab="tasks">
       <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M7.5 12l2.5 2.5 6-6"/></svg>
-      <span>Tasks</span>
-    </button>
-    <button class="tab-btn" data-tab="shopping">
-      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="19.5" r="1.3" fill="currentColor" stroke="none"/></svg>
-      <span>Shopping</span>
+      <span>To-Do</span>
     </button>
   </nav>
 
@@ -2452,7 +2453,12 @@ nav.tabs button.active{font-weight:700!important;}
     </section>
 
     <section id="tasks">
-      <div class="section-title">To-Do Tasks</div>
+      <div class="section-title">To-Do</div>
+      <div class="todo-switch" id="todoSwitch">
+        <button type="button" class="active" data-pane="tasks">Tasks<span class="shop-count" id="todoCount_tasks"></span></button>
+        <button type="button" data-pane="shopping">Shopping<span class="shop-count" id="todoCount_shopping"></span></button>
+      </div>
+      <div class="todo-pane active" id="todoPane_tasks">
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Add tasks with an optional follow-up date. Tap the checkbox to mark a task done, or tap the task to edit it.</p>
       <div class="plan-form" id="taskForm">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -2468,10 +2474,9 @@ nav.tabs button.active{font-weight:700!important;}
         <button class="del-btn" id="taskDeleteBtn" style="display:none;">Delete task</button>
       </div>
       <div id="taskList"></div>
-    </section>
+      </div>
 
-    <section id="shopping">
-      <div class="section-title">Shopping list</div>
+      <div class="todo-pane" id="todoPane_shopping">
       <p class="gate-hint" style="text-align:left; margin:0;">Tap an item when you have bought it. Tap ✎ to edit it.</p>
       <div class="shop-switch" id="shopSwitch">
         <button type="button" class="active" data-list="provisions">Provisions<span class="shop-count" id="shopCount_provisions"></span></button>
@@ -2495,6 +2500,7 @@ nav.tabs button.active{font-weight:700!important;}
       <div id="shopChipsWrap">
         <div class="shop-chip-label">Common items, tap to add</div>
         <div class="shop-chips" id="shopChips"></div>
+      </div>
       </div>
     </section>
   </main>
@@ -3962,6 +3968,7 @@ function taskFollowUpLabel(t){
 function renderTaskList(){
   const el = document.getElementById('taskList');
   if(!el) return;
+  updateTodoCounts();
   const today = localDateIso();
   const sorted = [...TASKS].sort((a,b)=>{
     if(!!a.done !== !!b.done) return a.done ? 1 : -1;
@@ -4062,7 +4069,25 @@ document.getElementById('taskAddBtn').addEventListener('click', ()=>{
   showToast(wasEditing ? 'Task updated' : 'Task added');
 });
 
-// ---------- Shopping list (provisions & vegetables) ----------
+// ---------- To-Do tab: Tasks / Shopping switch ----------
+function updateTodoCounts(){
+  const t = document.getElementById('todoCount_tasks'), sh = document.getElementById('todoCount_shopping');
+  const openTasks = (Array.isArray(TASKS)?TASKS:[]).filter(x=>x && !x.done).length;
+  const toBuy = (Array.isArray(SHOPPING)?SHOPPING:[]).filter(x=>x && !x.done).length;
+  if(t) t.textContent = openTasks ? String(openTasks) : '';
+  if(sh) sh.textContent = toBuy ? String(toBuy) : '';
+}
+function showTodoPane(pane){
+  document.querySelectorAll('#todoSwitch button').forEach(b=>b.classList.toggle('active', b.dataset.pane===pane));
+  document.querySelectorAll('.todo-pane').forEach(p=>p.classList.toggle('active', p.id==='todoPane_'+pane));
+  if(pane==='shopping') renderShopping(); else renderTaskList();
+}
+document.getElementById('todoSwitch').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-pane]');
+  if(btn) showTodoPane(btn.dataset.pane);
+});
+
+// ---------- Shopping list (provisions, vegetables & miscellaneous) ----------
 const SHOP_LISTS = {
   provisions:{
     label:'Provisions', placeholder:'e.g. Toor dal',
@@ -4089,6 +4114,7 @@ function markShopDeleted(ids){
 function renderShopping(){
   const listEl = document.getElementById('shopList');
   if(!listEl) return;
+  updateTodoCounts();
   const cfg = SHOP_LISTS[shopActiveList];
   Object.keys(SHOP_LISTS).forEach(k=>{
     const pending = shopItemsFor(k).filter(i=>!i.done).length;
@@ -4814,8 +4840,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
     if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); }
-    if(b.dataset.tab==='tasks'){ renderTaskList(); }
-    if(b.dataset.tab==='shopping'){ renderShopping(); }
+    if(b.dataset.tab==='tasks'){ renderTaskList(); renderShopping(); }
   });
 });
 
@@ -5207,7 +5232,7 @@ delBtn.addEventListener('click', ()=>{
 });
 
 function refreshAll(){
-  renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger(); renderShopping();
+  renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger(); renderTaskList(); renderShopping();
   renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
 }
 
