@@ -1743,6 +1743,7 @@ nav.tabs button.active{font-weight:700!important;}
   nav.tabs .tab-btn[data-tab="plan"]{ color:#F15A00!important; }
   nav.tabs .tab-btn[data-tab="calendar"]{ color:#009B96!important; }
   nav.tabs .tab-btn[data-tab="budget"]{ color:#EE9500!important; }
+  nav.tabs .tab-btn[data-tab="shopping"]{ color:#C2185B!important; }
   nav.tabs .tab-btn.active{ background:#E3FAF0!important; font-weight:800!important; }
   @media(max-width:520px){
     nav.tabs{ border-radius:14px!important; padding:8px 5px!important; gap:2px!important; }
@@ -1949,6 +1950,34 @@ nav.tabs button.active{font-weight:700!important;}
 .task-followup{font-size:10.5px;color:var(--muted);margin-top:9px;font-weight:600;}
 .task-followup.overdue{color:var(--red);font-weight:700;}
 .task-card.done .task-followup{color:var(--green);}
+/* Shopping list: provisions & vegetables */
+.shop-switch{display:flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:10px;}
+.shop-switch button{flex:1;border:0;background:#fff;padding:12px 8px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:800;color:var(--muted);cursor:pointer;}
+.shop-switch button.active{background:var(--green);color:#fff;}
+.shop-count{display:inline-block;min-width:18px;padding:1px 6px;margin-left:5px;border-radius:9px;background:rgba(0,0,0,.08);font-size:11px;font-weight:800;}
+.shop-count:empty{display:none;}
+.shop-switch button.active .shop-count{background:rgba(255,255,255,.25);}
+.shop-add{display:flex;gap:8px;margin-top:12px;}
+.shop-add input[type=text]{height:44px;min-width:0;border:1px solid var(--line-strong);border-radius:12px;background:#fff;color:var(--ink);padding:0 12px;font-size:15px;font-family:'Inter',sans-serif;}
+.shop-add #shopName{flex:1 1 0;}
+.shop-add #shopQty{flex:none;width:86px;}
+.shop-add button{flex:none;height:44px;padding:0 18px;border:0;border-radius:12px;background:linear-gradient(135deg,#079669,#18B986);color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:800;cursor:pointer;}
+.shop-edit-actions{display:none;gap:8px;margin-top:8px;}
+.shop-edit-actions button{flex:1;height:38px;border-radius:10px;background:#fff;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
+.shop-edit-actions .cancel{border:1px solid var(--line-strong);color:var(--muted);}
+.shop-edit-actions .delete{border:1px solid #F0C6C6;color:#E04450;background:#FFF1F2;}
+.shop-chip-label{margin-top:22px;font-size:11px;color:var(--muted);font-weight:600;}
+.shop-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+.shop-chip{border:1px solid var(--line);background:#fff;color:var(--green-dark);border-radius:16px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
+.shop-chip:active{background:var(--green-soft);}
+.shop-summary{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;font-size:12px;font-weight:700;color:var(--muted);min-height:28px;}
+.shop-clear{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:10px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.shop-row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-top:8px;cursor:pointer;box-shadow:var(--shadow);}
+.shop-name{flex:1;min-width:0;font-size:14.5px;font-weight:700;color:var(--green-dark);word-break:break-word;}
+.shop-qty{flex:none;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.shop-row.done{background:#F7FAF8;}
+.shop-row.done .shop-name{text-decoration:line-through;color:var(--muted);}
+.shop-edit{flex:none;width:32px;height:32px;border:0;border-radius:10px;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;}
 .debt-card{margin-top:10px;cursor:pointer;}
 .debt-change{font-weight:800;}
 .debt-change.down{color:#0F9D78;}
@@ -2215,6 +2244,10 @@ nav.tabs button.active{font-weight:700!important;}
       <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M7.5 12l2.5 2.5 6-6"/></svg>
       <span>Tasks</span>
     </button>
+    <button class="tab-btn" data-tab="shopping">
+      <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5a1.5 1.5 0 0 0 1.5 1.2h8.2a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.2"/><circle cx="9.5" cy="19.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="17" cy="19.5" r="1.3" fill="currentColor" stroke="none"/></svg>
+      <span>Shopping</span>
+    </button>
   </nav>
 
   <main>
@@ -2436,6 +2469,33 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div id="taskList"></div>
     </section>
+
+    <section id="shopping">
+      <div class="section-title">Shopping list</div>
+      <p class="gate-hint" style="text-align:left; margin:0;">Tap an item when you have bought it. Tap ✎ to edit it.</p>
+      <div class="shop-switch" id="shopSwitch">
+        <button type="button" class="active" data-list="provisions">Provisions<span class="shop-count" id="shopCount_provisions"></span></button>
+        <button type="button" data-list="vegetables">Vegetables<span class="shop-count" id="shopCount_vegetables"></span></button>
+      </div>
+      <div class="shop-add">
+        <input type="text" id="shopName" placeholder="e.g. Toor dal" autocomplete="off" aria-label="Item name">
+        <input type="text" id="shopQty" placeholder="Qty" autocomplete="off" aria-label="Quantity">
+        <button type="button" id="shopAddBtn">Add</button>
+      </div>
+      <div class="shop-edit-actions" id="shopEditActions">
+        <button type="button" class="cancel" id="shopCancelBtn">Cancel edit</button>
+        <button type="button" class="delete" id="shopDeleteBtn">Delete item</button>
+      </div>
+      <div class="shop-summary">
+        <span id="shopSummary"></span>
+        <button type="button" class="shop-clear" id="shopClearBtn" style="display:none;">Clear bought</button>
+      </div>
+      <div id="shopList"></div>
+      <div id="shopChipsWrap">
+        <div class="shop-chip-label">Common items, tap to add</div>
+        <div class="shop-chips" id="shopChips"></div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -2574,6 +2634,7 @@ const LS_PLANS = 'ledger.plans.v1';
 const LS_GOALS = 'ledger.goals.v1';
 const LS_DEBTS = 'ledger.debts.v1';
 const LS_TASKS = 'ledger.tasks.v1';
+const LS_SHOPPING = 'ledger.shopping.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -2615,6 +2676,9 @@ let PLANS = [];
 let GOALS = [];
 let DEBTS = [];
 let TASKS = [];
+let SHOPPING = [];
+let shopActiveList = 'provisions';
+let editingShopId = null;
 // Starting values for the Debts & Loan EMIs page (Dept & Loan report), Jan'26-Jun'26.
 // Used only to seed the page the first time it loads on a device with no saved debts yet.
 const DEBT_SEED = [
@@ -2902,6 +2966,19 @@ function loadTasks(){
 function saveTasks(){
   TASKS = stampChangedRecords(TASKS, LS_TASKS);
   localStorage.setItem(LS_TASKS, JSON.stringify(TASKS));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  markLocalDirty();
+  if(accessToken) debouncedBackup();
+}
+function loadShopping(){
+  const raw = localStorage.getItem(LS_SHOPPING);
+  if(raw){ try{ SHOPPING = JSON.parse(raw); }catch(e){ SHOPPING = []; } }
+  else { SHOPPING = []; }
+  if(!Array.isArray(SHOPPING)) SHOPPING = [];
+}
+function saveShopping(){
+  SHOPPING = stampChangedRecords(SHOPPING, LS_SHOPPING);
+  localStorage.setItem(LS_SHOPPING, JSON.stringify(SHOPPING));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
@@ -3984,6 +4061,166 @@ document.getElementById('taskAddBtn').addEventListener('click', ()=>{
   showToast(wasEditing ? 'Task updated' : 'Task added');
 });
 
+// ---------- Shopping list (provisions & vegetables) ----------
+const SHOP_LISTS = {
+  provisions:{
+    label:'Provisions', placeholder:'e.g. Toor dal',
+    suggestions:['Rice','Toor dal','Urad dal','Moong dal','Wheat flour','Sugar','Salt','Cooking oil','Tea powder','Coffee powder','Mustard seeds','Turmeric powder']
+  },
+  vegetables:{
+    label:'Vegetables', placeholder:'e.g. Tomato',
+    suggestions:['Onion','Tomato','Potato','Carrot','Beans','Brinjal','Ladies finger','Cabbage','Beetroot','Drumstick','Green chilli','Coriander leaves','Curry leaves','Ginger','Garlic']
+  }
+};
+function shopItemsFor(list){
+  return SHOPPING.filter(i=>i && i.list===list);
+}
+function markShopDeleted(ids){
+  const m = getSyncMeta(); const now = Date.now();
+  const del = {...(m.deleted||{})};
+  ids.forEach(id=>{ del[id] = now; });
+  m.deleted = del; setSyncMeta(m);
+}
+function renderShopping(){
+  const listEl = document.getElementById('shopList');
+  if(!listEl) return;
+  const cfg = SHOP_LISTS[shopActiveList];
+  Object.keys(SHOP_LISTS).forEach(k=>{
+    const pending = shopItemsFor(k).filter(i=>!i.done).length;
+    const c = document.getElementById('shopCount_'+k);
+    if(c) c.textContent = pending ? String(pending) : '';
+  });
+  document.querySelectorAll('#shopSwitch button').forEach(b=>b.classList.toggle('active', b.dataset.list===shopActiveList));
+  if(!editingShopId) document.getElementById('shopName').placeholder = cfg.placeholder;
+
+  const items = shopItemsFor(shopActiveList);
+  const pendingItems = items.filter(i=>!i.done).sort((a,b)=>(a.createdAt||a.updatedAt||0)-(b.createdAt||b.updatedAt||0));
+  const doneItems = items.filter(i=>i.done).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+
+  // Suggestions: hide anything already waiting to be bought on this list.
+  const pendingNames = new Set(pendingItems.map(i=>String(i.name||'').trim().toLowerCase()));
+  const chips = cfg.suggestions.filter(n=>!pendingNames.has(n.toLowerCase()));
+  document.getElementById('shopChipsWrap').style.display = chips.length ? 'block' : 'none';
+  document.getElementById('shopChips').innerHTML = chips.map(n=>`<button type="button" class="shop-chip" data-name="${escapeHtml(n)}">+ ${escapeHtml(n)}</button>`).join('');
+
+  const summary = document.getElementById('shopSummary');
+  summary.textContent = items.length
+    ? `${pendingItems.length} to buy` + (doneItems.length ? `, ${doneItems.length} bought` : '')
+    : '';
+  document.getElementById('shopClearBtn').style.display = doneItems.length ? 'inline-block' : 'none';
+
+  if(!items.length){
+    listEl.innerHTML = `<div class="goal-empty-note">Nothing on the ${escapeHtml(cfg.label.toLowerCase())} list yet. Add an item above or tap a common item.</div>`;
+    return;
+  }
+  listEl.innerHTML = [...pendingItems, ...doneItems].map(i=>`<div class="shop-row ${i.done?'done':''}" data-id="${escapeHtml(i.id)}">
+      <button type="button" class="task-checkbox ${i.done?'checked':''}" aria-label="${i.done?'Mark as not bought':'Mark as bought'}">${i.done?'✓':''}</button>
+      <div class="shop-name">${escapeHtml(i.name||'Untitled item')}</div>
+      ${i.qty?`<div class="shop-qty">${escapeHtml(i.qty)}</div>`:''}
+      <button type="button" class="shop-edit" aria-label="Edit item">✎</button>
+    </div>`).join('');
+}
+function addShopItem(name, qty){
+  name = (name||'').trim(); qty = (qty||'').trim();
+  if(!name) return false;
+  const key = name.toLowerCase();
+  const existing = SHOPPING.find(i=>i.list===shopActiveList && String(i.name||'').trim().toLowerCase()===key);
+  if(existing){
+    if(!existing.done){ showToast(`${existing.name} is already on the list`); return false; }
+    existing.done = false;
+    if(qty) existing.qty = qty;
+    existing.updatedAt = Date.now();
+    saveShopping(); renderShopping();
+    showToast(`${existing.name} added back`);
+    return true;
+  }
+  const now = Date.now();
+  SHOPPING.push({ id:uid(), createdAt:now, updatedAt:now, list:shopActiveList, name, qty, done:false });
+  saveShopping(); renderShopping();
+  return true;
+}
+function resetShopForm(){
+  editingShopId = null;
+  document.getElementById('shopName').value = '';
+  document.getElementById('shopQty').value = '';
+  document.getElementById('shopName').placeholder = SHOP_LISTS[shopActiveList].placeholder;
+  document.getElementById('shopAddBtn').textContent = 'Add';
+  document.getElementById('shopEditActions').style.display = 'none';
+}
+function openShopForEdit(id){
+  const it = SHOPPING.find(x=>x.id===id);
+  if(!it) return;
+  editingShopId = id;
+  document.getElementById('shopName').value = it.name || '';
+  document.getElementById('shopQty').value = it.qty || '';
+  document.getElementById('shopAddBtn').textContent = 'Save';
+  document.getElementById('shopEditActions').style.display = 'flex';
+  document.getElementById('shopName').focus();
+}
+function submitShopForm(){
+  const nameEl = document.getElementById('shopName'), qtyEl = document.getElementById('shopQty');
+  const name = nameEl.value.trim(), qty = qtyEl.value.trim();
+  if(!name){ nameEl.focus(); showToast('Enter an item name'); return; }
+  if(editingShopId){
+    const it = SHOPPING.find(x=>x.id===editingShopId);
+    if(it){ it.name = name; it.qty = qty; it.updatedAt = Date.now(); saveShopping(); }
+    resetShopForm(); renderShopping();
+    showToast('Item updated');
+    return;
+  }
+  if(addShopItem(name, qty)){
+    nameEl.value = ''; qtyEl.value = '';
+    nameEl.focus();
+  }
+}
+document.getElementById('shopAddBtn').addEventListener('click', submitShopForm);
+['shopName','shopQty'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); submitShopForm(); }
+  });
+});
+document.getElementById('shopCancelBtn').addEventListener('click', resetShopForm);
+document.getElementById('shopDeleteBtn').addEventListener('click', ()=>{
+  if(!editingShopId) return;
+  const it = SHOPPING.find(x=>x.id===editingShopId);
+  if(!confirm(`Delete ${it && it.name ? it.name : 'this item'}?`)) return;
+  markShopDeleted([editingShopId]);
+  SHOPPING = SHOPPING.filter(x=>x.id!==editingShopId);
+  saveShopping(); resetShopForm(); renderShopping();
+  showToast('Item deleted');
+});
+document.getElementById('shopClearBtn').addEventListener('click', ()=>{
+  const bought = shopItemsFor(shopActiveList).filter(i=>i.done);
+  if(!bought.length) return;
+  const label = SHOP_LISTS[shopActiveList].label.toLowerCase();
+  if(!confirm(`Remove ${bought.length} bought item${bought.length>1?'s':''} from ${label}?`)) return;
+  const ids = new Set(bought.map(i=>i.id));
+  markShopDeleted([...ids]);
+  SHOPPING = SHOPPING.filter(i=>!ids.has(i.id));
+  saveShopping(); resetShopForm(); renderShopping();
+  showToast('Cleared bought items');
+});
+document.getElementById('shopSwitch').addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-list]');
+  if(!btn || btn.dataset.list===shopActiveList) return;
+  shopActiveList = btn.dataset.list;
+  resetShopForm(); renderShopping();
+});
+document.getElementById('shopChips').addEventListener('click', e=>{
+  const chip = e.target.closest('.shop-chip');
+  if(chip) addShopItem(chip.dataset.name, '');
+});
+document.getElementById('shopList').addEventListener('click', e=>{
+  const row = e.target.closest('.shop-row');
+  if(!row) return;
+  const id = row.dataset.id;
+  if(e.target.closest('.shop-edit')){ openShopForEdit(id); return; }
+  const it = SHOPPING.find(x=>x.id===id);
+  if(!it) return;
+  it.done = !it.done; it.updatedAt = Date.now();
+  saveShopping(); renderShopping();
+});
+
 // ---------- Debts & loan EMIs ----------
 function monthLabel(ym){
   if(!ym) return '';
@@ -4573,6 +4810,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
     if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); }
     if(b.dataset.tab==='tasks'){ renderTaskList(); }
+    if(b.dataset.tab==='shopping'){ renderShopping(); }
   });
 });
 
@@ -4964,7 +5202,7 @@ delBtn.addEventListener('click', ()=>{
 });
 
 function refreshAll(){
-  renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger();
+  renderNetStamp(); renderDashboard(); populateFilterSelects(); renderLedger(); renderShopping();
   renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
 }
 
@@ -5313,6 +5551,7 @@ function getLocalShard(){
     goals:Array.isArray(GOALS)?GOALS:[],
     debts:Array.isArray(DEBTS)?DEBTS:[],
     tasks:Array.isArray(TASKS)?TASKS:[],
+    shopping:Array.isArray(SHOPPING)?SHOPPING:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
@@ -5420,13 +5659,14 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],shopping:Array.isArray(SHOPPING)?SHOPPING:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
   GOALS=mergeRecordsFromSources(all,'goals',deleted);
   DEBTS=mergeRecordsFromSources(all,'debts',deleted);
   TASKS=mergeRecordsFromSources(all,'tasks',deleted);
+  SHOPPING=mergeRecordsFromSources(all,'shopping',deleted);
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
@@ -5434,7 +5674,7 @@ function mergeLocalWithCloudSources(sources){
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
   localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
   localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS));
-  localStorage.setItem(LS_TASKS,JSON.stringify(TASKS));
+  localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING));
   localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
@@ -5466,10 +5706,11 @@ async function driveSyncMerge(silent, existingMeta){
       GOALS=mergeRecordsFromSources(all,'goals',deleted);
       DEBTS=mergeRecordsFromSources(all,'debts',deleted);
       TASKS=mergeRecordsFromSources(all,'tasks',deleted);
+  SHOPPING=mergeRecordsFromSources(all,'shopping',deleted);
       MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -5513,10 +5754,10 @@ async function driveRestore(silent){
     if(backupFile){
       const data=await driveGetFileJson(backupFile.id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; SHOPPING=Array.isArray(data.shopping)?data.shopping:SHOPPING; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
@@ -5619,6 +5860,7 @@ bindDateTextInput('taskFollowUp');
   loadGoals();
   loadDebts();
   loadTasks();
+  loadShopping();
   loadCategoryConfig();
   initBudgetUI();
   if(ensureRecordTimestamps()){
