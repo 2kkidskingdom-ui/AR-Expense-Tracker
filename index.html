@@ -1971,7 +1971,12 @@ nav.tabs button.active{font-weight:700!important;}
 .shop-edit-actions button{flex:1;height:38px;border-radius:10px;background:#fff;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
 .shop-edit-actions .cancel{border:1px solid var(--line-strong);color:var(--muted);}
 .shop-edit-actions .delete{border:1px solid #F0C6C6;color:#E04450;background:#FFF1F2;}
-.shop-chip-label{margin-top:22px;font-size:11px;color:var(--muted);font-weight:600;}
+.shop-chip-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:22px;}
+.shop-chip-label{font-size:11px;color:var(--muted);font-weight:600;}
+.shop-link{border:0;background:none;padding:4px 2px;font-family:'Inter',sans-serif;font-size:12px;font-weight:700;color:var(--green);text-decoration:underline;cursor:pointer;}
+.shop-chip.removing{border-color:#F0C6C6;background:#FFF7F7;color:#9B3B2B;}
+.shop-common-check{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+.shop-common-check input{width:18px;height:18px;margin:0;accent-color:var(--green);}
 .shop-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
 .shop-chip{border:1px solid var(--line);background:#fff;color:var(--green-dark);border-radius:16px;padding:6px 12px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;}
 .shop-chip:active{background:var(--green-soft);}
@@ -2488,6 +2493,7 @@ nav.tabs button.active{font-weight:700!important;}
         <input type="text" id="shopQty" placeholder="Qty" autocomplete="off" aria-label="Quantity">
         <button type="button" id="shopAddBtn">Add</button>
       </div>
+      <label class="shop-common-check" id="shopCommonCheckWrap"><input type="checkbox" id="shopCommonCheck"> Add to common items</label>
       <div class="shop-edit-actions" id="shopEditActions">
         <button type="button" class="cancel" id="shopCancelBtn">Cancel edit</button>
         <button type="button" class="delete" id="shopDeleteBtn">Delete item</button>
@@ -2498,7 +2504,10 @@ nav.tabs button.active{font-weight:700!important;}
       </div>
       <div id="shopList"></div>
       <div id="shopChipsWrap">
-        <div class="shop-chip-label">Common items, tap to add</div>
+        <div class="shop-chip-head">
+          <span class="shop-chip-label" id="shopChipLabel">Common items, tap to add</span>
+          <button type="button" class="shop-link" id="shopCommonEditBtn">Edit</button>
+        </div>
         <div class="shop-chips" id="shopChips"></div>
       </div>
       </div>
@@ -2642,6 +2651,7 @@ const LS_GOALS = 'ledger.goals.v1';
 const LS_DEBTS = 'ledger.debts.v1';
 const LS_TASKS = 'ledger.tasks.v1';
 const LS_SHOPPING = 'ledger.shopping.v1';
+const LS_SHOPCOMMON = 'ledger.shopCommon.v1';
 const ACCOUNT_ORDER = ['Ashok','Raji','Purse','ICICI Bank','Canara Bank','HDFC Card','ICICI Card','RD','SSY Krishni','SSY Kani'];
 const ALLOWED_EMAIL = '2kkidskingdom@gmail.com';
 const LS_AUTH_EMAIL = 'ledger.authEmail.v1';
@@ -2684,6 +2694,8 @@ let GOALS = [];
 let DEBTS = [];
 let TASKS = [];
 let SHOPPING = [];
+let SHOPCOMMON = [];
+let shopCommonEdit = false;
 let shopActiveList = 'provisions';
 let editingShopId = null;
 // Starting values for the Debts & Loan EMIs page (Dept & Loan report), Jan'26-Jun'26.
@@ -2986,6 +2998,19 @@ function loadShopping(){
 function saveShopping(){
   SHOPPING = stampChangedRecords(SHOPPING, LS_SHOPPING);
   localStorage.setItem(LS_SHOPPING, JSON.stringify(SHOPPING));
+  localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
+  markLocalDirty();
+  if(accessToken) debouncedBackup();
+}
+function loadShopCommon(){
+  const raw = localStorage.getItem(LS_SHOPCOMMON);
+  if(raw){ try{ SHOPCOMMON = JSON.parse(raw); }catch(e){ SHOPCOMMON = []; } }
+  else { SHOPCOMMON = []; }
+  if(!Array.isArray(SHOPCOMMON)) SHOPCOMMON = [];
+}
+function saveShopCommon(){
+  SHOPCOMMON = stampChangedRecords(SHOPCOMMON, LS_SHOPCOMMON);
+  localStorage.setItem(LS_SHOPCOMMON, JSON.stringify(SHOPCOMMON));
   localStorage.setItem(LS_LAST_MODIFIED, String(Date.now()));
   markLocalDirty();
   if(accessToken) debouncedBackup();
@@ -4091,7 +4116,7 @@ document.getElementById('todoSwitch').addEventListener('click', e=>{
 const SHOP_LISTS = {
   provisions:{
     label:'Provisions', placeholder:'e.g. Toor dal',
-    suggestions:['Rice','Toor dal','Urad dal','Moong dal','Wheat flour','Sugar','Salt','Cooking oil','Tea powder','Coffee powder','Mustard seeds','Turmeric powder']
+    suggestions:['Milk','Rice','Toor dal','Urad dal','Moong dal','Wheat flour','Sugar','Salt','Cooking oil','Tea powder','Coffee powder','Mustard seeds','Turmeric powder']
   },
   vegetables:{
     label:'Vegetables', placeholder:'e.g. Tomato',
@@ -4102,6 +4127,37 @@ const SHOP_LISTS = {
     suggestions:['Soap','Detergent','Dishwash liquid','Toothpaste','Shampoo','Toilet cleaner','Floor cleaner','Tissue paper','Garbage bags','Batteries','Matchbox']
   }
 };
+// Common items = built-in suggestions + the user's own, minus any the user removed.
+// Each change is a small record (one per list+name) so it merges cleanly across phones.
+function shopCommonFor(list){
+  const defs = SHOP_LISTS[list].suggestions;
+  const hidden = new Set(), extra = [], seen = new Set(defs.map(n=>n.toLowerCase()));
+  SHOPCOMMON.filter(c=>c && c.list===list).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).forEach(c=>{
+    const name = String(c.name||'').trim(), k = name.toLowerCase();
+    if(!k) return;
+    if(c.hidden) hidden.add(k);
+    else if(!seen.has(k)){ extra.push(name); seen.add(k); }
+  });
+  return [...defs.filter(n=>!hidden.has(n.toLowerCase())), ...extra];
+}
+function setShopCommon(list, name, visible){
+  name = String(name||'').trim();
+  const key = name.toLowerCase();
+  if(!key) return;
+  const id = 'sc:'+list+':'+key;
+  const isDefault = SHOP_LISTS[list].suggestions.some(n=>n.toLowerCase()===key);
+  const idx = SHOPCOMMON.findIndex(c=>c.id===id);
+  if(idx>=0){
+    SHOPCOMMON[idx] = {...SHOPCOMMON[idx], hidden:!visible};
+  } else if(visible && isDefault){
+    return; // already shown by default
+  } else {
+    const shown = name.charAt(0).toUpperCase()+name.slice(1);
+    const now = Date.now();
+    SHOPCOMMON.push({ id, list, name:shown, hidden:!visible, createdAt:now, updatedAt:now });
+  }
+  saveShopCommon();
+}
 function shopItemsFor(list){
   return SHOPPING.filter(i=>i && i.list===list);
 }
@@ -4128,11 +4184,15 @@ function renderShopping(){
   const pendingItems = items.filter(i=>!i.done).sort((a,b)=>(a.createdAt||a.updatedAt||0)-(b.createdAt||b.updatedAt||0));
   const doneItems = items.filter(i=>i.done).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
 
-  // Suggestions: hide anything already waiting to be bought on this list.
+  // Common items: hide anything already waiting to be bought (unless editing the common list).
+  const allCommon = shopCommonFor(shopActiveList);
   const pendingNames = new Set(pendingItems.map(i=>String(i.name||'').trim().toLowerCase()));
-  const chips = cfg.suggestions.filter(n=>!pendingNames.has(n.toLowerCase()));
-  document.getElementById('shopChipsWrap').style.display = chips.length ? 'block' : 'none';
-  document.getElementById('shopChips').innerHTML = chips.map(n=>`<button type="button" class="shop-chip" data-name="${escapeHtml(n)}">+ ${escapeHtml(n)}</button>`).join('');
+  const chips = shopCommonEdit ? allCommon : allCommon.filter(n=>!pendingNames.has(n.toLowerCase()));
+  document.getElementById('shopChipsWrap').style.display = allCommon.length ? 'block' : 'none';
+  document.getElementById('shopChipLabel').textContent = shopCommonEdit ? 'Tap an item to remove it from common items'
+    : (chips.length ? 'Common items, tap to add' : 'All common items are already on your list');
+  document.getElementById('shopCommonEditBtn').textContent = shopCommonEdit ? 'Done' : 'Edit';
+  document.getElementById('shopChips').innerHTML = chips.map(n=>`<button type="button" class="shop-chip ${shopCommonEdit?'removing':''}" data-name="${escapeHtml(n)}">${shopCommonEdit?'×':'+'} ${escapeHtml(n)}</button>`).join('');
 
   const summary = document.getElementById('shopSummary');
   summary.textContent = items.length
@@ -4177,6 +4237,8 @@ function resetShopForm(){
   document.getElementById('shopName').placeholder = SHOP_LISTS[shopActiveList].placeholder;
   document.getElementById('shopAddBtn').textContent = 'Add';
   document.getElementById('shopEditActions').style.display = 'none';
+  document.getElementById('shopCommonCheck').checked = false;
+  document.getElementById('shopCommonCheckWrap').style.display = 'flex';
 }
 function openShopForEdit(id){
   const it = SHOPPING.find(x=>x.id===id);
@@ -4186,6 +4248,7 @@ function openShopForEdit(id){
   document.getElementById('shopQty').value = it.qty || '';
   document.getElementById('shopAddBtn').textContent = 'Save';
   document.getElementById('shopEditActions').style.display = 'flex';
+  document.getElementById('shopCommonCheckWrap').style.display = 'none';
   document.getElementById('shopName').focus();
 }
 function submitShopForm(){
@@ -4199,8 +4262,11 @@ function submitShopForm(){
     showToast('Item updated');
     return;
   }
+  const addToCommon = document.getElementById('shopCommonCheck').checked;
   if(addShopItem(name, qty)){
+    if(addToCommon){ setShopCommon(shopActiveList, name, true); renderShopping(); }
     nameEl.value = ''; qtyEl.value = '';
+    document.getElementById('shopCommonCheck').checked = false;
     nameEl.focus();
   }
 }
@@ -4239,7 +4305,13 @@ document.getElementById('shopSwitch').addEventListener('click', e=>{
 });
 document.getElementById('shopChips').addEventListener('click', e=>{
   const chip = e.target.closest('.shop-chip');
-  if(chip) addShopItem(chip.dataset.name, '');
+  if(!chip) return;
+  if(shopCommonEdit){ setShopCommon(shopActiveList, chip.dataset.name, false); renderShopping(); return; }
+  addShopItem(chip.dataset.name, '');
+});
+document.getElementById('shopCommonEditBtn').addEventListener('click', ()=>{
+  shopCommonEdit = !shopCommonEdit;
+  renderShopping();
 });
 document.getElementById('shopList').addEventListener('click', e=>{
   const row = e.target.closest('.shop-row');
@@ -5582,6 +5654,7 @@ function getLocalShard(){
     debts:Array.isArray(DEBTS)?DEBTS:[],
     tasks:Array.isArray(TASKS)?TASKS:[],
     shopping:Array.isArray(SHOPPING)?SHOPPING:[],
+    shopcommon:Array.isArray(SHOPCOMMON)?SHOPCOMMON:[],
     categories:getCategoryConfig(), categoryMeta:getCategoryMeta(),
     deleted:getSyncMeta().deleted||{},
     savedAt:new Date().toISOString(), savedAtMs:Date.now()
@@ -5689,7 +5762,7 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],shopping:Array.isArray(SHOPPING)?SHOPPING:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],shopping:Array.isArray(SHOPPING)?SHOPPING:[],shopcommon:Array.isArray(SHOPCOMMON)?SHOPCOMMON:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
@@ -5697,6 +5770,7 @@ function mergeLocalWithCloudSources(sources){
   DEBTS=mergeRecordsFromSources(all,'debts',deleted);
   TASKS=mergeRecordsFromSources(all,'tasks',deleted);
   SHOPPING=mergeRecordsFromSources(all,'shopping',deleted);
+  SHOPCOMMON=mergeRecordsFromSources(all,'shopcommon',deleted);
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
@@ -5704,7 +5778,7 @@ function mergeLocalWithCloudSources(sources){
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
   localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
   localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS));
-  localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING));
+  localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_SHOPCOMMON,JSON.stringify(SHOPCOMMON));
   localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
   localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig()));
   setCategoryMeta(cm.categoryMeta);
@@ -5737,10 +5811,11 @@ async function driveSyncMerge(silent, existingMeta){
       DEBTS=mergeRecordsFromSources(all,'debts',deleted);
       TASKS=mergeRecordsFromSources(all,'tasks',deleted);
   SHOPPING=mergeRecordsFromSources(all,'shopping',deleted);
+  SHOPCOMMON=mergeRecordsFromSources(all,'shopcommon',deleted);
       MONTHLY_BUDGETS=mergeBudgetSources(all);
       const cm=mergeAllCategorySources(all);
       loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
-      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+      localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_SHOPCOMMON,JSON.stringify(SHOPCOMMON)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
       localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); setCategoryMeta(cm.categoryMeta);
     } else {
       mergeLocalWithCloudSources(sources);
@@ -5784,10 +5859,10 @@ async function driveRestore(silent){
     if(backupFile){
       const data=await driveGetFileJson(backupFile.id);
       if(data){
-        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; SHOPPING=Array.isArray(data.shopping)?data.shopping:SHOPPING; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
+        TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; SHOPPING=Array.isArray(data.shopping)?data.shopping:SHOPPING; SHOPCOMMON=Array.isArray(data.shopcommon)?data.shopcommon:SHOPCOMMON; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
-        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
+        localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_SHOPCOMMON,JSON.stringify(SHOPCOMMON)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
       }
@@ -5891,6 +5966,7 @@ bindDateTextInput('taskFollowUp');
   loadDebts();
   loadTasks();
   loadShopping();
+  loadShopCommon();
   loadCategoryConfig();
   initBudgetUI();
   if(ensureRecordTimestamps()){
