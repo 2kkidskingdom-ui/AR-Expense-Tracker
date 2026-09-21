@@ -1680,6 +1680,23 @@ nav.tabs button.active{font-weight:700!important;}
   }
 </style>
 
+<style id="budget-unbudgeted-card">
+  #budgetUnbudgeted{margin-top:10px;}
+  #budget .unbudgeted-card:before{background:linear-gradient(180deg,#D69E2E,#F6C453)!important;}
+  .unbudgeted-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;}
+  .unbudgeted-right{display:flex;align-items:center;gap:8px;flex:none;}
+  .unbudgeted-arrow{font-size:15px;color:var(--muted);transition:transform .18s ease;}
+  .unbudgeted-card.is-open .unbudgeted-arrow{transform:rotate(180deg);}
+  .unbudgeted-body{display:none;margin-top:10px;border-top:1px solid var(--line);}
+  .unbudgeted-card.is-open .unbudgeted-body{display:block;}
+  .unbudgeted-group{padding-top:11px;}
+  .unbudgeted-group-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--green-dark);}
+  .unbudgeted-tag{font-size:9px;font-weight:800;color:#B7791F;background:#FFF6E0;border-radius:999px;padding:3px 7px;white-space:nowrap;}
+  .unbudgeted-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
+  .unbudgeted-chip{font-size:11px;color:var(--ink);background:#F1F7FA;border:1px solid var(--line);border-radius:999px;padding:4px 9px;}
+  .unbudgeted-nosub{font-size:11px;color:var(--muted);margin-top:6px;}
+</style>
+
 <style id="fancy-app-title">
   .app-title{
     display:inline-flex; align-items:center; justify-content:center; gap:10px;
@@ -5024,8 +5041,45 @@ function loadMonthlyBudgets(){
 function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));markLocalDirty();if(accessToken)debouncedBackup()}
 function currentBudgetMonth(){const e=document.getElementById('budgetMonth');return e&&e.value?e.value:new Date().toISOString().slice(0,7)}
 function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
+let budgetUnbudgetedOpen=false;
+function renderUnbudgetedExpenses(list){
+  const anchor=document.getElementById('budgetSummary');
+  if(!anchor) return;
+  let box=document.getElementById('budgetUnbudgeted');
+  if(!box){ box=document.createElement('div'); box.id='budgetUnbudgeted'; anchor.insertAdjacentElement('afterend',box); }
+  if(!list.length){ box.innerHTML=''; return; }
+  // Budgets are generic (apply to every month), so compare the expense category/subcategory list with the budget rows.
+  const groups=[]; let missingCount=0, totalCount=0;
+  getCategories('expense').forEach(cat=>{
+    const subs=[...(EXPENSE_CATEGORY_SUBCATS[cat]||[])].sort((a,b)=>String(a).localeCompare(String(b)));
+    totalCount+=subs.length||1;
+    const rows=list.filter(b=>(b.categories||[]).includes(cat));
+    if(rows.some(b=>!(b.subcategories||[]).length)) return; // whole category covered
+    if(!subs.length){ groups.push({cat,subs:[],whole:true}); missingCount+=1; return; }
+    const covered=new Set();
+    rows.forEach(b=>(b.subcategories||[]).forEach(k=>{ const p=String(k).split('|||'); if(p[0]===cat) covered.add(p[1]); }));
+    const missing=subs.filter(x=>!covered.has(x));
+    if(missing.length){ groups.push({cat,subs:missing,whole:!rows.length}); missingCount+=missing.length; }
+  });
+  if(!groups.length){
+    box.innerHTML='<div class="budget-summary-card unbudgeted-card"><div class="budget-name">Not in any budget</div><div class="budget-meta">Every expense category and subcategory is covered by a budget.</div></div>';
+    return;
+  }
+  box.innerHTML=`<div class="budget-summary-card unbudgeted-card ${budgetUnbudgetedOpen?'is-open':''}">
+    <div class="unbudgeted-head" id="unbudgetedHead">
+      <div><div class="budget-name">Not in any budget</div><div class="budget-meta">${missingCount} of ${totalCount} expense subcategories have no budget</div></div>
+      <div class="unbudgeted-right"><div class="unbudgeted-arrow">⌄</div></div>
+    </div>
+    <div class="unbudgeted-body">${groups.map(g=>`<div class="unbudgeted-group"><div class="unbudgeted-group-head"><span>${escapeHtml(g.cat)}</span><span class="unbudgeted-tag">${g.whole?'No budget':'Some subcategories'}</span></div>${g.subs.length?`<div class="unbudgeted-chips">${g.subs.map(x=>`<span class="unbudgeted-chip">${escapeHtml(x)}</span>`).join('')}</div>`:'<div class="unbudgeted-nosub">No subcategories</div>'}</div>`).join('')}</div>
+  </div>`;
+  box.querySelector('#unbudgetedHead').addEventListener('click',()=>{
+    budgetUnbudgetedOpen=!budgetUnbudgetedOpen;
+    box.querySelector('.unbudgeted-card').classList.toggle('is-open',budgetUnbudgetedOpen);
+  });
+}
 function renderBudgetSummary(){
   const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
+  renderUnbudgetedExpenses(list);
   const overviewCard=document.getElementById('budgetOverviewCard');
   if(!list.length){
     w.innerHTML='<div class="budget-empty">No budget added yet.</div>';
