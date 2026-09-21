@@ -3860,7 +3860,7 @@ function renderPlanList(){
         <div class="dot ${isCredit?'pos':'neg'}"></div>
         <div class="summary-name">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
         <div class="summary-meta">${escapeHtml(summaryMeta)}</div>
-        <div class="summary-amount" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(next ? ((next.credit||0)>0 ? next.credit : next.debit) : amt)}</div>
+        <div class="summary-amount" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
         ${next ? `<div class="summary-next">Next ${escapeHtml(fmtDateLabel(next.date))}</div>` : ''}
         <div class="summary-arrow" aria-hidden="true">⌄</div>
       </div>
