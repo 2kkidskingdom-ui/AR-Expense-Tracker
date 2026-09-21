@@ -1656,6 +1656,15 @@ nav.tabs button.active{font-weight:700!important;}
   .projection-occurrence .occ-status.done{color:var(--green);font-weight:800;}
   .projection-convert-btn{border:1px solid var(--green);background:#fff;color:var(--green-dark);border-radius:8px;padding:6px 8px;font-size:9.5px;font-weight:800;white-space:nowrap;cursor:pointer;flex:none;}
   .projection-convert-btn:active{transform:translateY(1px);}
+  .occ-amt-set{color:#B7791F;font-weight:800;}
+  .occ-edit-btn{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:8px;width:30px;height:28px;padding:0;font-size:13px;line-height:1;cursor:pointer;flex:none;}
+  .occ-edit-btn:active{transform:translateY(1px);}
+  .projection-occurrence.is-editing{flex-wrap:wrap;}
+  .occ-editor{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px;padding-top:8px;border-top:1px dashed var(--line);}
+  .occ-editor-label{flex:1 0 100%;font-size:9.5px;color:var(--muted);line-height:1.3;}
+  .occ-editor-input{flex:1 1 90px;min-width:0;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:8px;padding:7px 8px;font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--ink);background:#fff;}
+  .occ-editor button{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:8px;padding:7px 9px;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer;}
+  .occ-editor .occ-editor-save{background:var(--green);border-color:var(--green);color:#fff;}
   .projection-completed-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:4px 7px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:800;white-space:nowrap;flex:none;}
   .projection-master + .projection-master{border-top:1px solid var(--line)!important;}
   @media(max-width:520px){
@@ -3740,6 +3749,16 @@ function uncompleteProjectionOccurrence(seriesId, occurrenceId){
   PLANS[idx]=p;
   return true;
 }
+function setProjectionAmountOverride(seriesId, occurrenceId, amount){
+  const idx=PLANS.findIndex(p=>p.id===seriesId);
+  if(idx<0) return false;
+  const p={...PLANS[idx]};
+  const ov={...(p.amountOverrides||{})};
+  if(amount==null) delete ov[occurrenceId]; else ov[occurrenceId]=amount;
+  if(Object.keys(ov).length) p.amountOverrides=ov; else delete p.amountOverrides;
+  PLANS[idx]=p;
+  return true;
+}
 function expandPlanOccurrences(plan, fromDate, toDate, includeCompleted=false){
   if(!plan || !plan.date) return [];
   const start = new Date(plan.date+'T00:00:00');
@@ -3757,7 +3776,14 @@ function expandPlanOccurrences(plan, fromDate, toDate, includeCompleted=false){
       const occurrenceId=projectionOccurrenceId(plan,date);
       const completed=getCompletedProjection(plan,occurrenceId);
       if(includeCompleted || !completed){
-        out.push({...plan, date, occurrenceId, completed:!!completed, completion:completed || null});
+        const occ={...plan, date, occurrenceId, completed:!!completed, completion:completed || null};
+        const ov=plan.amountOverrides ? Number(plan.amountOverrides[occurrenceId]) : NaN;
+        occ.baseAmount=(plan.credit||0)>0 ? plan.credit : plan.debit;
+        if(isFinite(ov) && ov>0){
+          if((plan.credit||0)>0) occ.credit=ov; else occ.debit=ov;
+          occ.overridden=true;
+        }
+        out.push(occ);
       }
     }
     if(plan.repeat==='monthly') {
@@ -3787,6 +3813,7 @@ function renderPlanList(){
   const to=localDateIso(horizon);
   const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   const el = document.getElementById('planList');
+  const openIds = [...el.querySelectorAll('.projection-master.is-open')].map(r=>r.dataset.id);
   el.innerHTML = sorted.map(p=>{
     const isCredit = p.credit > 0;
     const amt = isCredit ? p.credit : p.debit;
@@ -3800,14 +3827,23 @@ function renderPlanList(){
           <div class="projection-detail-title">${p.repeat && p.repeat!=='none' ? 'All recurring occurrences' : 'Projection details'}</div>
           <button type="button" class="projection-edit-btn" data-edit-id="${escapeHtml(p.id)}">Edit projection</button>
         </div>
-        <div class="projection-link-note"><strong>Convert to Actual</strong> for the specific occurrence when the payment/income is actually completed.</div>
+        <div class="projection-link-note">Amounts shown are estimates. Tap <strong>✎</strong> to set a month's actual bill amount once you know it, then <strong>Convert to Actual</strong> when it is paid.</div>
         <div class="projection-occurrences">
           ${occurrences.map(o=>{
             const done=!!o.completed;
             const paid=o.completion?.actualDate ? ` · paid ${fmtDateLabel(o.completion.actualDate)}` : '';
+            const paidTxn=done ? TXNS.find(t=>t.id===o.completion?.transactionId) : null;
+            const occAmt=(o.credit||0)>0 ? o.credit : o.debit;
+            const shownAmt=paidTxn ? Math.abs(paidTxn.amount) : occAmt;
+            const statusHtml=done
+              ? '✓ Completed'+escapeHtml(paid)+' · '+fmtMoney(shownAmt)
+              : (o.overridden
+                  ? `Projected · <span class="occ-amt-set">Bill ${fmtMoney(occAmt)}</span>`
+                  : `Projected · Est. ${fmtMoney(occAmt)}`);
+            const ids=`data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}"`;
             return `<div class="projection-occurrence">
-              <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${done?'✓ Completed'+escapeHtml(paid):'Projected'}</div></div>
-              ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="projection-convert-btn" data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}">Convert to Actual</button>`}
+              <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${statusHtml}</div></div>
+              ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="occ-edit-btn" title="Set this month's amount" aria-label="Set this month's amount" ${ids} data-amount="${escapeHtml(String(occAmt))}" data-overridden="${o.overridden?'1':''}" data-base="${escapeHtml(String(o.baseAmount))}">✎</button><button type="button" class="projection-convert-btn" ${ids}>Convert to Actual</button>`}
             </div>`;
           }).join('')}
         </div>
@@ -3824,7 +3860,7 @@ function renderPlanList(){
         <div class="dot ${isCredit?'pos':'neg'}"></div>
         <div class="summary-name">${escapeHtml(p.description || (isCredit?'Planned income':'Planned expense'))}</div>
         <div class="summary-meta">${escapeHtml(summaryMeta)}</div>
-        <div class="summary-amount" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(amt)}</div>
+        <div class="summary-amount" style="color:${isCredit?'var(--green)':'var(--red)'}">${isCredit?'':'−'}${fmtMoney(next ? ((next.credit||0)>0 ? next.credit : next.debit) : amt)}</div>
         ${next ? `<div class="summary-next">Next ${escapeHtml(fmtDateLabel(next.date))}</div>` : ''}
         <div class="summary-arrow" aria-hidden="true">⌄</div>
       </div>
@@ -3834,8 +3870,15 @@ function renderPlanList(){
 
   el.querySelectorAll('.projection-master').forEach(row=>{
     row.addEventListener('click', e=>{
-      if(e.target.closest('.projection-convert-btn') || e.target.closest('.projection-edit-btn')) return;
+      if(e.target.closest('.projection-convert-btn') || e.target.closest('.projection-edit-btn') || e.target.closest('.occ-edit-btn') || e.target.closest('.occ-editor')) return;
       row.classList.toggle('is-open');
+    });
+    if(openIds.includes(row.dataset.id)) row.classList.add('is-open');
+  });
+  el.querySelectorAll('.occ-edit-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.preventDefault(); e.stopPropagation();
+      openOccurrenceAmountEditor(btn);
     });
   });
   el.querySelectorAll('.projection-edit-btn').forEach(btn=>{
@@ -3850,6 +3893,49 @@ function renderPlanList(){
       openProjectionConversion(btn.dataset.seriesId, btn.dataset.occurrenceId, btn.dataset.date);
     });
   });
+}
+function openOccurrenceAmountEditor(btn){
+  const rowEl=btn.closest('.projection-occurrence');
+  if(!rowEl) return;
+  const existing=rowEl.querySelector('.occ-editor');
+  if(existing){ existing.remove(); rowEl.classList.remove('is-editing'); return; }
+  const seriesId=btn.dataset.seriesId, occurrenceId=btn.dataset.occurrenceId;
+  const wasOverridden=btn.dataset.overridden==='1';
+  const box=document.createElement('div');
+  box.className='occ-editor';
+  box.innerHTML=`<div class="occ-editor-label">${escapeHtml(fmtDateLabel(btn.dataset.date))}: enter this month's actual bill amount. Only this month changes.</div>
+    <input type="number" inputmode="decimal" step="0.01" min="0" class="occ-editor-input" value="${escapeHtml(btn.dataset.amount||'')}">
+    <button type="button" class="occ-editor-save">Save</button>
+    ${wasOverridden ? '<button type="button" class="occ-editor-reset">Use estimate</button>' : ''}
+    <button type="button" class="occ-editor-cancel" aria-label="Cancel">✕</button>`;
+  rowEl.classList.add('is-editing');
+  rowEl.appendChild(box);
+  const input=box.querySelector('.occ-editor-input');
+  setTimeout(()=>{ try{ input.focus(); input.select(); }catch(e){} },30);
+  const finish=(msg)=>{
+    savePlans();
+    renderPlanList();
+    renderProjectionGraph();
+    try{ refreshAll(); }catch(e){}
+    showToast(msg);
+  };
+  box.querySelector('.occ-editor-save').addEventListener('click', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    const v=parseFloat(input.value);
+    if(isNaN(v) || v<=0){ showToast('Enter a valid amount'); return; }
+    setProjectionAmountOverride(seriesId, occurrenceId, Math.round(v*100)/100);
+    finish('Amount updated for this month');
+  });
+  box.querySelector('.occ-editor-reset')?.addEventListener('click', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    setProjectionAmountOverride(seriesId, occurrenceId, null);
+    finish('Back to the estimated amount');
+  });
+  box.querySelector('.occ-editor-cancel').addEventListener('click', ev=>{
+    ev.preventDefault(); ev.stopPropagation();
+    box.remove(); rowEl.classList.remove('is-editing');
+  });
+  input.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); box.querySelector('.occ-editor-save').click(); } });
 }
 function openPlanForEdit(id){
   const p = PLANS.find(x=>x.id===id);
@@ -3941,7 +4027,8 @@ document.getElementById('planAddBtn').addEventListener('click', ()=>{
     debit: currentPlanType==='debit' ? amt : 0,
     credit: currentPlanType==='credit' ? amt : 0,
     description: desc, repeat, until,
-    completedOccurrences: Array.isArray(existingPlan?.completedOccurrences) ? existingPlan.completedOccurrences : []
+    completedOccurrences: Array.isArray(existingPlan?.completedOccurrences) ? existingPlan.completedOccurrences : [],
+    ...(existingPlan?.amountOverrides && Object.keys(existingPlan.amountOverrides).length ? {amountOverrides: existingPlan.amountOverrides} : {})
   };
   if(editingPlanId){
     const idx = PLANS.findIndex(p=>p.id===editingPlanId);
@@ -5243,7 +5330,7 @@ function openProjectionConversion(seriesId, occurrenceId, scheduledDate){
   const note=document.createElement('div');
   note.id='projectionLinkNote';
   note.className='projection-link-note';
-  note.innerHTML=`<strong>Linked to projection:</strong> ${escapeHtml(fmtDateLabel(scheduledDate))}. You can change the actual payment date if it was paid early or late. This exact monthly occurrence will be marked completed after saving.`;
+  note.innerHTML=`<strong>Linked to projection:</strong> ${escapeHtml(fmtDateLabel(scheduledDate))}. The amount is pre-filled from the projection: change it to the actual amount if it differs. You can also change the payment date if it was paid early or late. This exact monthly occurrence will be marked completed after saving.`;
   const saveBtn=document.getElementById('saveBtn');
   saveBtn.parentElement.insertBefore(note,saveBtn);
   overlay.classList.add('show');
