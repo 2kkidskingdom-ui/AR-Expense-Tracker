@@ -2217,7 +2217,7 @@ nav.tabs{
   left:0!important; right:0!important; bottom:0!important; top:auto!important;
   z-index:1000!important;
   display:grid!important;
-  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
   align-items:stretch!important;
   gap:2px!important;
   margin:0!important;
@@ -2233,14 +2233,14 @@ nav.tabs{
 nav.tabs button{
   width:100%!important; min-width:0!important; max-width:none!important;
   padding:8px 1px 7px!important;
-  font-size:10.2px!important; line-height:1.15!important;
+  font-size:9px!important; line-height:1.05!important; letter-spacing:-.15px!important;
   white-space:nowrap!important; overflow:visible!important; text-overflow:clip!important;
   border-top:3px solid transparent!important; border-bottom:0!important;
 }
 nav.tabs button.active{border-top-color:var(--green)!important;border-bottom:0!important;}
 @media(max-width:380px){
   nav.tabs{gap:0!important;padding-left:2px!important;padding-right:2px!important;}
-  nav.tabs button{font-size:9.5px!important;padding-left:0!important;padding-right:0!important;}
+  nav.tabs button{font-size:8px!important;padding-left:0!important;padding-right:0!important;letter-spacing:-.2px!important;}
 }
 body{padding-bottom:96px!important;}
 </style>
@@ -4971,10 +4971,9 @@ function renderBucketExpenseDetails(m,bucket){
     grouped[key]=(grouped[key]||0)+r.amount;
   });
   const items=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
-  const total=items.reduce((s,[,amount])=>s+amount,0);
   return `<div class="alloc-expense-list">${items.map(([subcategory,amount])=>
     `<div class="alloc-expense-row"><div class="alloc-expense-main"><div class="alloc-expense-title">${escapeHtml(subcategory)}</div></div><div class="alloc-expense-amount">−${fmtMoney(amount)}</div></div>`
-  ).join('')}</div><div class="alloc-expense-total"><span>Total expenses</span><span>${fmtMoney(total)}</span></div>`;
+  ).join('')}</div>`;
 }
 function renderAllocOverview(){
   const m=currentBudgetMonth();
