@@ -479,6 +479,9 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .category-add-row input{min-width:0}
 .category-add-row button{border:0;border-radius:10px;background:var(--green);color:#fff;font-weight:700;padding:0 14px;cursor:pointer}
 .category-tree{margin-top:12px;display:grid;gap:9px}.category-item{border:1px solid var(--line);border-radius:13px;background:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(20,70,55,.05)}.category-item-head{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 12px;background:#fbfdfc;border-bottom:1px solid var(--line)}.category-item-title{font-size:13px;font-weight:800;color:var(--text);min-width:0;overflow-wrap:anywhere}.category-item-count{font-size:10px;color:var(--muted);font-weight:500;margin-top:2px}.category-actions{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;flex-shrink:0}.category-actions button{border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--text);font-size:10px;font-weight:700;padding:6px 8px;cursor:pointer}.category-actions .delete-cat,.category-actions .delete-sub{color:var(--red);border-color:#f0c5ca}.category-sub-list{padding:4px 12px 8px}.category-sub-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #edf2ef}.category-sub-row:last-child{border-bottom:0}.category-sub-name{font-size:11.5px;color:var(--muted);min-width:0;overflow-wrap:anywhere;padding-left:9px;position:relative}.category-sub-name:before{content:'•';position:absolute;left:0;color:var(--green)}.category-sub-actions{display:flex;gap:5px;flex-shrink:0}.category-sub-actions button{border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--text);font-size:9.5px;padding:4px 7px;cursor:pointer}.category-sub-actions .delete-sub{color:var(--red);border-color:#f0c5ca}.category-add-sub{border:0;background:transparent;color:var(--green);font-size:10.5px;font-weight:700;padding:7px 0 2px;cursor:pointer}.category-empty-sub{font-size:10.5px;color:var(--muted);padding:9px 0 4px}.category-system-item{border-style:dashed;}.category-system-label{font-size:12px;font-weight:700;color:#7a8582;white-space:nowrap;}.category-system-item .category-sub-row{background:#f7faf9;}
+.category-bucket-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F3FBF8;border-bottom:1px solid #edf2ef;}
+.category-bucket-row label{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);}
+.category-bucket-select{flex:1;border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;font-size:11.5px;background:#fff;color:var(--ink);}
 .category-empty{background:#fff;border:1px dashed var(--line);border-radius:11px;padding:13px;color:var(--muted);font-size:11px;text-align:center}
 .category-item{border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfdfc}
 .category-item-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
@@ -545,6 +548,27 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .budget-summary-card.over-budget .budget-spent-row{color:#D83D4A}
 .budget-summary-card.over-budget .budget-progress-fill{background:linear-gradient(90deg,#D83D4A,#EF6B76)}
 .budget-spent-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:6px}.budget-delete{border:1px solid #F0A7AE;background:#fff0f2;color:#D83D4A;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-top:9px}.budget-empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:12px}@media(max-width:520px){.budget-month-row{flex-direction:column;align-items:stretch}.budget-total-box{text-align:left;min-width:0}}
+/* Income Allocation (Needs/Enjoyment/Investment rule) */
+.alloc-card{margin-top:14px}
+.alloc-desc{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 14px;}
+.alloc-pct-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.alloc-pct-error{font-size:11.5px;color:#D83D4A;font-weight:600;margin-top:8px;}
+.alloc-income-row{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;}
+.alloc-actual-income{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:16px;color:var(--green-dark);background:#F3FBF8;border:1px solid #B9D3DF;border-radius:12px;padding:10px 13px;}
+.alloc-income-used{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;}
+.alloc-unassigned{background:#FFF7E6;border:1px solid #EFCB7A;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:12px;color:#7A5A0A;line-height:1.55;}
+.alloc-unassigned b{color:#5A4000;}
+.alloc-buckets{display:grid;gap:10px;margin-top:14px;}
+.alloc-bucket-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow);}
+.alloc-bucket-card.over{border-left:4px solid #E04450;background:linear-gradient(135deg,#fff,#fff7f8)}
+.alloc-bucket-card.within{border-left:4px solid #10A878;}
+.alloc-bucket-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.alloc-bucket-name{font-family:'Fraunces',serif;font-weight:700;font-size:14.5px;color:var(--green-dark);}
+.alloc-bucket-amt{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13.5px;white-space:nowrap;}
+.alloc-bucket-amt.over{color:#D83D4A;}
+.alloc-bucket-meta{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:8px;}
+.alloc-bucket-meta.over{color:#D83D4A;font-weight:600;}
+@media(max-width:420px){.alloc-pct-row{grid-template-columns:1fr;}}
 /* Overall Actual vs Budget summary */
 .budget-overview-card{border-radius:18px;padding:16px;margin-top:10px;background:linear-gradient(135deg,#075A49,#0F9D78);box-shadow:0 8px 18px rgba(7,150,105,.18)}
 .budget-overview-row{display:flex;gap:6px;justify-content:space-between}
@@ -1656,15 +1680,6 @@ nav.tabs button.active{font-weight:700!important;}
   .projection-occurrence .occ-status.done{color:var(--green);font-weight:800;}
   .projection-convert-btn{border:1px solid var(--green);background:#fff;color:var(--green-dark);border-radius:8px;padding:6px 8px;font-size:9.5px;font-weight:800;white-space:nowrap;cursor:pointer;flex:none;}
   .projection-convert-btn:active{transform:translateY(1px);}
-  .occ-amt-set{color:#B7791F;font-weight:800;}
-  .occ-edit-btn{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:8px;width:30px;height:28px;padding:0;font-size:13px;line-height:1;cursor:pointer;flex:none;}
-  .occ-edit-btn:active{transform:translateY(1px);}
-  .projection-occurrence.is-editing{flex-wrap:wrap;}
-  .occ-editor{flex:1 0 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px;padding-top:8px;border-top:1px dashed var(--line);}
-  .occ-editor-label{flex:1 0 100%;font-size:9.5px;color:var(--muted);line-height:1.3;}
-  .occ-editor-input{flex:1 1 90px;min-width:0;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:8px;padding:7px 8px;font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--ink);background:#fff;}
-  .occ-editor button{border:1px solid var(--line-strong);background:#fff;color:var(--green-dark);border-radius:8px;padding:7px 9px;font-size:10px;font-weight:800;white-space:nowrap;cursor:pointer;}
-  .occ-editor .occ-editor-save{background:var(--green);border-color:var(--green);color:#fff;}
   .projection-completed-badge{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:4px 7px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:800;white-space:nowrap;flex:none;}
   .projection-master + .projection-master{border-top:1px solid var(--line)!important;}
   @media(max-width:520px){
@@ -1678,23 +1693,6 @@ nav.tabs button.active{font-weight:700!important;}
     .projection-occurrence{gap:6px;padding:8px;}
     .projection-convert-btn{padding:6px 7px;font-size:9px;}
   }
-</style>
-
-<style id="budget-unbudgeted-card">
-  #budgetUnbudgeted{margin-top:10px;}
-  #budget .unbudgeted-card:before{background:linear-gradient(180deg,#D69E2E,#F6C453)!important;}
-  .unbudgeted-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;cursor:pointer;}
-  .unbudgeted-right{display:flex;align-items:center;gap:8px;flex:none;}
-  .unbudgeted-arrow{font-size:15px;color:var(--muted);transition:transform .18s ease;}
-  .unbudgeted-card.is-open .unbudgeted-arrow{transform:rotate(180deg);}
-  .unbudgeted-body{display:none;margin-top:10px;border-top:1px solid var(--line);}
-  .unbudgeted-card.is-open .unbudgeted-body{display:block;}
-  .unbudgeted-group{padding-top:11px;}
-  .unbudgeted-group-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--green-dark);}
-  .unbudgeted-tag{font-size:9px;font-weight:800;color:#B7791F;background:#FFF6E0;border-radius:999px;padding:3px 7px;white-space:nowrap;}
-  .unbudgeted-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;}
-  .unbudgeted-chip{font-size:11px;color:var(--ink);background:#F1F7FA;border:1px solid var(--line);border-radius:999px;padding:4px 9px;}
-  .unbudgeted-nosub{font-size:11px;color:var(--muted);margin-top:6px;}
 </style>
 
 <style id="fancy-app-title">
@@ -2200,130 +2198,6 @@ nav.tabs button.active{font-weight:700!important;}
 }
 </style>
 
-
-<style id="fixed-bottom-tab-navigation-fix">
-/* Fixed mobile bottom navigation:
-   The tab bar stays visible while Dashboard/Ledger/etc. content scrolls. */
-@media (max-width: 700px){
-  body{
-    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
-  }
-
-  nav.tabs{
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    top: auto !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 72px !important;
-    margin: 0 !important;
-    padding: 7px 5px calc(7px + env(safe-area-inset-bottom)) !important;
-    display: grid !important;
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-    gap: 2px !important;
-    align-items: stretch !important;
-    overflow: hidden !important;
-    background: rgba(255,255,255,.97) !important;
-    border: 0 !important;
-    border-top: 1px solid #D8E3DD !important;
-    border-radius: 18px 18px 0 0 !important;
-    box-shadow: 0 -6px 22px rgba(20,50,40,.12) !important;
-    backdrop-filter: blur(14px) !important;
-    -webkit-backdrop-filter: blur(14px) !important;
-    z-index: 1000 !important;
-  }
-
-  nav.tabs .tab-btn{
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: none !important;
-    height: 58px !important;
-    min-height: 58px !important;
-    padding: 5px 1px 4px !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 3px !important;
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    border: 0 !important;
-    border-radius: 12px !important;
-    background: transparent !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 8.8px !important;
-    font-weight: 700 !important;
-    line-height: 1.1 !important;
-  }
-
-  nav.tabs .tab-btn svg{
-    display: block !important;
-    width: 23px !important;
-    height: 23px !important;
-    flex: 0 0 23px !important;
-  }
-
-  nav.tabs .tab-btn span{
-    display: block !important;
-    max-width: 100% !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    white-space: nowrap !important;
-  }
-
-  nav.tabs .tab-btn.active{
-    background: #E3FAF0 !important;
-    font-weight: 800 !important;
-  }
-
-  /* Keep the Add button above the fixed navigation instead of covering it. */
-  .fab{
-    bottom: calc(86px + env(safe-area-inset-bottom)) !important;
-  }
-
-  /* Toast should also appear above the navigation. */
-  .toast{
-    bottom: calc(88px + env(safe-area-inset-bottom)) !important;
-  }
-
-  /* Modal sheets/overlays must remain above the fixed navigation. */
-  .overlay{
-    z-index: 2000 !important;
-  }
-}
-
-@media (max-width: 420px){
-  nav.tabs{
-    min-height: 70px !important;
-    padding-left: 3px !important;
-    padding-right: 3px !important;
-  }
-
-  nav.tabs .tab-btn{
-    height: 56px !important;
-    min-height: 56px !important;
-    font-size: 8.2px !important;
-  }
-
-  nav.tabs .tab-btn svg{
-    width: 22px !important;
-    height: 22px !important;
-    flex-basis: 22px !important;
-  }
-
-  .fab{
-    bottom: calc(84px + env(safe-area-inset-bottom)) !important;
-  }
-
-  .toast{
-    bottom: calc(86px + env(safe-area-inset-bottom)) !important;
-  }
-}
-</style>
-
 </head>
 <body>
 <div id="authGate">
@@ -2447,6 +2321,32 @@ nav.tabs button.active{font-weight:700!important;}
     </section>
 
     <section id="budget">
+      <div class="section-title">Income Allocation</div>
+      <div class="budget-card alloc-card">
+        <p class="alloc-desc" id="allocDesc">Every rupee of income is split across three buckets. Set your percentages and this month's income below — every expense category then counts against one of these three limits.</p>
+        <div class="alloc-pct-row">
+          <div class="field" style="margin:0;"><label for="allocPctNeeds">NEEDS %</label><input type="number" id="allocPctNeeds" min="0" max="100" step="1"></div>
+          <div class="field" style="margin:0;"><label for="allocPctWants">ENJOYMENT %</label><input type="number" id="allocPctWants" min="0" max="100" step="1"></div>
+          <div class="field" style="margin:0;"><label for="allocPctInvest">INVESTMENT %</label><input type="number" id="allocPctInvest" min="0" max="100" step="1"></div>
+        </div>
+        <div class="alloc-pct-error" id="allocPctError" style="display:none;">Percentages must add up to 100%.</div>
+        <button class="save-btn" id="allocSaveRuleBtn" type="button">Save Percentages</button>
+        <div class="alloc-income-row">
+          <div class="field" style="margin:0;flex:1;">
+            <label>ACTUAL INCOME THIS MONTH</label>
+            <div class="alloc-actual-income" id="allocActualIncome">₹0.00</div>
+          </div>
+          <div class="field" style="margin:0;flex:1;">
+            <label for="allocProjectedIncome">PROJECTED INCOME (if actual not final yet)</label>
+            <input type="number" id="allocProjectedIncome" min="0" step="0.01" inputmode="decimal" placeholder="Enter expected income">
+          </div>
+        </div>
+        <button class="save-btn" id="allocSaveIncomeBtn" type="button">Save Projected Income</button>
+        <div class="alloc-income-used" id="allocIncomeUsed"></div>
+      </div>
+      <div class="alloc-unassigned" id="allocUnassigned" style="display:none;"></div>
+      <div class="alloc-buckets" id="allocBuckets"></div>
+
       <div class="section-title">Monthly Budget</div>
       <div class="budget-card">
         <div class="budget-month-row">
@@ -3766,16 +3666,6 @@ function uncompleteProjectionOccurrence(seriesId, occurrenceId){
   PLANS[idx]=p;
   return true;
 }
-function setProjectionAmountOverride(seriesId, occurrenceId, amount){
-  const idx=PLANS.findIndex(p=>p.id===seriesId);
-  if(idx<0) return false;
-  const p={...PLANS[idx]};
-  const ov={...(p.amountOverrides||{})};
-  if(amount==null) delete ov[occurrenceId]; else ov[occurrenceId]=amount;
-  if(Object.keys(ov).length) p.amountOverrides=ov; else delete p.amountOverrides;
-  PLANS[idx]=p;
-  return true;
-}
 function expandPlanOccurrences(plan, fromDate, toDate, includeCompleted=false){
   if(!plan || !plan.date) return [];
   const start = new Date(plan.date+'T00:00:00');
@@ -3793,14 +3683,7 @@ function expandPlanOccurrences(plan, fromDate, toDate, includeCompleted=false){
       const occurrenceId=projectionOccurrenceId(plan,date);
       const completed=getCompletedProjection(plan,occurrenceId);
       if(includeCompleted || !completed){
-        const occ={...plan, date, occurrenceId, completed:!!completed, completion:completed || null};
-        const ov=plan.amountOverrides ? Number(plan.amountOverrides[occurrenceId]) : NaN;
-        occ.baseAmount=(plan.credit||0)>0 ? plan.credit : plan.debit;
-        if(isFinite(ov) && ov>0){
-          if((plan.credit||0)>0) occ.credit=ov; else occ.debit=ov;
-          occ.overridden=true;
-        }
-        out.push(occ);
+        out.push({...plan, date, occurrenceId, completed:!!completed, completion:completed || null});
       }
     }
     if(plan.repeat==='monthly') {
@@ -3830,7 +3713,6 @@ function renderPlanList(){
   const to=localDateIso(horizon);
   const sorted = [...PLANS].sort((a,b)=> (a.date||'').localeCompare(b.date||''));
   const el = document.getElementById('planList');
-  const openIds = [...el.querySelectorAll('.projection-master.is-open')].map(r=>r.dataset.id);
   el.innerHTML = sorted.map(p=>{
     const isCredit = p.credit > 0;
     const amt = isCredit ? p.credit : p.debit;
@@ -3844,23 +3726,14 @@ function renderPlanList(){
           <div class="projection-detail-title">${p.repeat && p.repeat!=='none' ? 'All recurring occurrences' : 'Projection details'}</div>
           <button type="button" class="projection-edit-btn" data-edit-id="${escapeHtml(p.id)}">Edit projection</button>
         </div>
-        <div class="projection-link-note">Amounts shown are estimates. Tap <strong>✎</strong> to set a month's actual bill amount once you know it, then <strong>Convert to Actual</strong> when it is paid.</div>
+        <div class="projection-link-note"><strong>Convert to Actual</strong> for the specific occurrence when the payment/income is actually completed.</div>
         <div class="projection-occurrences">
           ${occurrences.map(o=>{
             const done=!!o.completed;
             const paid=o.completion?.actualDate ? ` · paid ${fmtDateLabel(o.completion.actualDate)}` : '';
-            const paidTxn=done ? TXNS.find(t=>t.id===o.completion?.transactionId) : null;
-            const occAmt=(o.credit||0)>0 ? o.credit : o.debit;
-            const shownAmt=paidTxn ? Math.abs(paidTxn.amount) : occAmt;
-            const statusHtml=done
-              ? '✓ Completed'+escapeHtml(paid)+' · '+fmtMoney(shownAmt)
-              : (o.overridden
-                  ? `Projected · <span class="occ-amt-set">Bill ${fmtMoney(occAmt)}</span>`
-                  : `Projected · Est. ${fmtMoney(occAmt)}`);
-            const ids=`data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}"`;
             return `<div class="projection-occurrence">
-              <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${statusHtml}</div></div>
-              ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="occ-edit-btn" title="Set this month's amount" aria-label="Set this month's amount" ${ids} data-amount="${escapeHtml(String(occAmt))}" data-overridden="${o.overridden?'1':''}" data-base="${escapeHtml(String(o.baseAmount))}">✎</button><button type="button" class="projection-convert-btn" ${ids}>Convert to Actual</button>`}
+              <div class="occ-main"><div class="occ-date">${escapeHtml(fmtDateLabel(o.date))}</div><div class="occ-status ${done?'done':''}">${done?'✓ Completed'+escapeHtml(paid):'Projected'}</div></div>
+              ${done ? '<span class="projection-completed-badge">✓ Done</span>' : `<button type="button" class="projection-convert-btn" data-series-id="${escapeHtml(p.id)}" data-occurrence-id="${escapeHtml(o.occurrenceId)}" data-date="${escapeHtml(o.date)}">Convert to Actual</button>`}
             </div>`;
           }).join('')}
         </div>
@@ -3887,15 +3760,8 @@ function renderPlanList(){
 
   el.querySelectorAll('.projection-master').forEach(row=>{
     row.addEventListener('click', e=>{
-      if(e.target.closest('.projection-convert-btn') || e.target.closest('.projection-edit-btn') || e.target.closest('.occ-edit-btn') || e.target.closest('.occ-editor')) return;
+      if(e.target.closest('.projection-convert-btn') || e.target.closest('.projection-edit-btn')) return;
       row.classList.toggle('is-open');
-    });
-    if(openIds.includes(row.dataset.id)) row.classList.add('is-open');
-  });
-  el.querySelectorAll('.occ-edit-btn').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      e.preventDefault(); e.stopPropagation();
-      openOccurrenceAmountEditor(btn);
     });
   });
   el.querySelectorAll('.projection-edit-btn').forEach(btn=>{
@@ -3910,49 +3776,6 @@ function renderPlanList(){
       openProjectionConversion(btn.dataset.seriesId, btn.dataset.occurrenceId, btn.dataset.date);
     });
   });
-}
-function openOccurrenceAmountEditor(btn){
-  const rowEl=btn.closest('.projection-occurrence');
-  if(!rowEl) return;
-  const existing=rowEl.querySelector('.occ-editor');
-  if(existing){ existing.remove(); rowEl.classList.remove('is-editing'); return; }
-  const seriesId=btn.dataset.seriesId, occurrenceId=btn.dataset.occurrenceId;
-  const wasOverridden=btn.dataset.overridden==='1';
-  const box=document.createElement('div');
-  box.className='occ-editor';
-  box.innerHTML=`<div class="occ-editor-label">${escapeHtml(fmtDateLabel(btn.dataset.date))}: enter this month's actual bill amount. Only this month changes.</div>
-    <input type="number" inputmode="decimal" step="0.01" min="0" class="occ-editor-input" value="${escapeHtml(btn.dataset.amount||'')}">
-    <button type="button" class="occ-editor-save">Save</button>
-    ${wasOverridden ? '<button type="button" class="occ-editor-reset">Use estimate</button>' : ''}
-    <button type="button" class="occ-editor-cancel" aria-label="Cancel">✕</button>`;
-  rowEl.classList.add('is-editing');
-  rowEl.appendChild(box);
-  const input=box.querySelector('.occ-editor-input');
-  setTimeout(()=>{ try{ input.focus(); input.select(); }catch(e){} },30);
-  const finish=(msg)=>{
-    savePlans();
-    renderPlanList();
-    renderProjectionGraph();
-    try{ refreshAll(); }catch(e){}
-    showToast(msg);
-  };
-  box.querySelector('.occ-editor-save').addEventListener('click', ev=>{
-    ev.preventDefault(); ev.stopPropagation();
-    const v=parseFloat(input.value);
-    if(isNaN(v) || v<=0){ showToast('Enter a valid amount'); return; }
-    setProjectionAmountOverride(seriesId, occurrenceId, Math.round(v*100)/100);
-    finish('Amount updated for this month');
-  });
-  box.querySelector('.occ-editor-reset')?.addEventListener('click', ev=>{
-    ev.preventDefault(); ev.stopPropagation();
-    setProjectionAmountOverride(seriesId, occurrenceId, null);
-    finish('Back to the estimated amount');
-  });
-  box.querySelector('.occ-editor-cancel').addEventListener('click', ev=>{
-    ev.preventDefault(); ev.stopPropagation();
-    box.remove(); rowEl.classList.remove('is-editing');
-  });
-  input.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); box.querySelector('.occ-editor-save').click(); } });
 }
 function openPlanForEdit(id){
   const p = PLANS.find(x=>x.id===id);
@@ -4044,8 +3867,7 @@ document.getElementById('planAddBtn').addEventListener('click', ()=>{
     debit: currentPlanType==='debit' ? amt : 0,
     credit: currentPlanType==='credit' ? amt : 0,
     description: desc, repeat, until,
-    completedOccurrences: Array.isArray(existingPlan?.completedOccurrences) ? existingPlan.completedOccurrences : [],
-    ...(existingPlan?.amountOverrides && Object.keys(existingPlan.amountOverrides).length ? {amountOverrides: existingPlan.amountOverrides} : {})
+    completedOccurrences: Array.isArray(existingPlan?.completedOccurrences) ? existingPlan.completedOccurrences : []
   };
   if(editingPlanId){
     const idx = PLANS.findIndex(p=>p.id===editingPlanId);
@@ -5006,6 +4828,125 @@ function renderAnalysis(range){
   if(cb&&!cb.dataset.bound){cb.dataset.bound='1';cb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='block';table.style.display='none';cb.classList.add('active');tb.classList.remove('active');});tb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='none';table.style.display='block';tb.classList.add('active');cb.classList.remove('active');});}
 }
 
+// ---------- Income Allocation (Needs/Enjoyment/Investment rule; additive) ----------
+const LS_ALLOC_RULE='ledger.budgetRule.v1';
+const LS_CATEGORY_BUCKET='ledger.categoryBucket.v1';
+const LS_PROJECTED_INCOME='ledger.projectedIncome.v1';
+const ALLOC_BUCKETS=[{key:'needs',label:'Needs'},{key:'wants',label:'Enjoyment'},{key:'invest',label:'Investment'}];
+let ALLOC_RULE={needs:40,wants:20,invest:40};
+let CATEGORY_BUCKETS={};
+let PROJECTED_INCOME={};
+function loadAllocRule(){try{const raw=localStorage.getItem(LS_ALLOC_RULE);if(raw){const p=JSON.parse(raw);ALLOC_RULE={needs:Number(p.needs)||0,wants:Number(p.wants)||0,invest:Number(p.invest)||0};}}catch(e){}}
+function saveAllocRule(){localStorage.setItem(LS_ALLOC_RULE,JSON.stringify(ALLOC_RULE));markLocalDirty();if(accessToken)debouncedBackup();}
+function loadCategoryBuckets(){try{const raw=localStorage.getItem(LS_CATEGORY_BUCKET);CATEGORY_BUCKETS=raw?JSON.parse(raw):{};}catch(e){CATEGORY_BUCKETS={};}}
+function saveCategoryBuckets(){localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS));markLocalDirty();if(accessToken)debouncedBackup();}
+function getCategoryBucket(cat){return CATEGORY_BUCKETS[cat]||'';}
+function setCategoryBucket(cat,bucket){if(bucket){CATEGORY_BUCKETS[cat]=bucket;}else{delete CATEGORY_BUCKETS[cat];}saveCategoryBuckets();}
+function loadProjectedIncome(){try{const raw=localStorage.getItem(LS_PROJECTED_INCOME);PROJECTED_INCOME=raw?JSON.parse(raw):{};}catch(e){PROJECTED_INCOME={};}}
+function saveProjectedIncome(){localStorage.setItem(LS_PROJECTED_INCOME,JSON.stringify(PROJECTED_INCOME));markLocalDirty();if(accessToken)debouncedBackup();}
+function getProjectedIncomeForMonth(m){return Number(PROJECTED_INCOME[m]||0);}
+function setProjectedIncomeForMonth(m,val){if(val>0)PROJECTED_INCOME[m]=val;else delete PROJECTED_INCOME[m];saveProjectedIncome();}
+function computeActualIncomeForMonth(m){return TXNS.filter(t=>t&&t.amount>0&&isRealIncome(t)&&reportMonth(t)===m).reduce((s,t)=>s+Number(t.amount||0),0);}
+function computeMonthIncomeInfo(m){const actual=computeActualIncomeForMonth(m);const projected=getProjectedIncomeForMonth(m);const used=actual>0?actual:projected;const source=actual>0?'actual':(projected>0?'projected':'none');return{actual,projected,used,source};}
+// Every expense category rolls up into exactly one of the three buckets above.
+// Uncategorized expense categories are surfaced as "unassigned" rather than silently dropped.
+function computeBucketSpend(m){
+  const spend={needs:0,wants:0,invest:0};
+  const unassignedMap={};
+  TXNS.forEach(t=>{
+    if(!(t&&t.amount<0&&isRealExpense(t)&&reportMonth(t)===m))return;
+    const cat=t.category||'';
+    const bucket=getCategoryBucket(cat);
+    const amt=Math.abs(Number(t.amount||0));
+    if(bucket&&spend.hasOwnProperty(bucket)){spend[bucket]+=amt;}
+    else{unassignedMap[cat]=(unassignedMap[cat]||0)+amt;}
+  });
+  const unassigned=Object.entries(unassignedMap).map(([category,amount])=>({category,amount})).sort((a,b)=>b.amount-a.amount);
+  return{spend,unassigned};
+}
+function allocRuleTotal(){return Number(ALLOC_RULE.needs||0)+Number(ALLOC_RULE.wants||0)+Number(ALLOC_RULE.invest||0);}
+function renderAllocDescription(){
+  const el=document.getElementById('allocDesc');if(!el)return;
+  const n=Number(ALLOC_RULE.needs||0),w=Number(ALLOC_RULE.wants||0),i=Number(ALLOC_RULE.invest||0);
+  el.textContent=`Every ₹1,00,000 of income splits into ₹${(n*1000).toLocaleString('en-IN')} Needs (${n}%), ₹${(w*1000).toLocaleString('en-IN')} Enjoyment (${w}%) and ₹${(i*1000).toLocaleString('en-IN')} Investment (${i}%). Every expense category counts against one of these three limits.`;
+}
+function renderAllocRuleInputs(){
+  const nEl=document.getElementById('allocPctNeeds'),wEl=document.getElementById('allocPctWants'),iEl=document.getElementById('allocPctInvest');
+  if(nEl)nEl.value=ALLOC_RULE.needs; if(wEl)wEl.value=ALLOC_RULE.wants; if(iEl)iEl.value=ALLOC_RULE.invest;
+  renderAllocDescription();
+}
+function saveAllocRuleFromInputs(){
+  const n=Number(document.getElementById('allocPctNeeds').value)||0;
+  const w=Number(document.getElementById('allocPctWants').value)||0;
+  const i=Number(document.getElementById('allocPctInvest').value)||0;
+  const errEl=document.getElementById('allocPctError');
+  if(n+w+i!==100){errEl.style.display='block';return;}
+  errEl.style.display='none';
+  ALLOC_RULE={needs:n,wants:w,invest:i};
+  saveAllocRule();renderAllocDescription();renderAllocOverview();showToast('Allocation percentages saved.');
+}
+function renderAllocIncomeInputs(){
+  const m=currentBudgetMonth();
+  const info=computeMonthIncomeInfo(m);
+  const actualEl=document.getElementById('allocActualIncome');
+  if(actualEl)actualEl.textContent=fmtMoney(info.actual);
+  const projEl=document.getElementById('allocProjectedIncome');
+  if(projEl)projEl.value=getProjectedIncomeForMonth(m)||'';
+  const usedEl=document.getElementById('allocIncomeUsed');
+  if(usedEl){
+    if(info.source==='actual')usedEl.textContent=`Using actual income of ${fmtMoney(info.actual)} logged this month for the targets below.`;
+    else if(info.source==='projected')usedEl.textContent=`No income logged yet for ${monthLabel(m)} — using your projected ${fmtMoney(info.projected)} for the targets below. This updates automatically once you log actual income.`;
+    else usedEl.textContent='Enter a projected income, or log an income transaction, to see your allocation targets.';
+  }
+}
+function saveAllocProjectedIncomeFromInput(){
+  const m=currentBudgetMonth();
+  const val=Number(document.getElementById('allocProjectedIncome').value)||0;
+  setProjectedIncomeForMonth(m,val);
+  renderAllocIncomeInputs();renderAllocOverview();
+  showToast('Projected income saved for '+monthLabel(m)+'.');
+}
+function renderAllocOverview(){
+  const m=currentBudgetMonth();
+  const info=computeMonthIncomeInfo(m);
+  const {spend,unassigned}=computeBucketSpend(m);
+  const unassignedWrap=document.getElementById('allocUnassigned');
+  if(unassigned.length){
+    unassignedWrap.style.display='block';
+    const total=unassigned.reduce((s,u)=>s+u.amount,0);
+    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Needs / Enjoyment / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.category)).join(', ')}.`;
+  }else{
+    unassignedWrap.style.display='none';unassignedWrap.innerHTML='';
+  }
+  const bucketsWrap=document.getElementById('allocBuckets');
+  if(!bucketsWrap)return;
+  if(!info.used){
+    bucketsWrap.innerHTML='<div class="budget-empty">Enter this month\'s income above to see your Needs / Enjoyment / Investment targets.</div>';
+    return;
+  }
+  bucketsWrap.innerHTML=ALLOC_BUCKETS.map(b=>{
+    const pct=Number(ALLOC_RULE[b.key]||0);
+    const target=info.used*pct/100;
+    const spent=spend[b.key]||0;
+    const rawPct=target?(spent/target*100):0;
+    const barPct=Math.min(100,Math.max(0,rawPct));
+    const over=spent>target&&target>0;
+    const diff=target-spent;
+    return `<div class="alloc-bucket-card ${over?'over':'within'}">
+      <div class="alloc-bucket-head"><div class="alloc-bucket-name">${b.label} <span style="font-weight:500;color:var(--muted);font-size:11px;">(${pct}%)</span></div><div class="alloc-bucket-amt ${over?'over':''}">${fmtMoney(spent)} / ${fmtMoney(target)}</div></div>
+      <div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${barPct}%"></div></div>
+      <div class="alloc-bucket-meta ${over?'over':''}"><span>${over?'Over by '+fmtMoney(Math.abs(diff)):'Remaining '+fmtMoney(diff)}</span><span>${target?rawPct.toFixed(1)+'%':''}</span></div>
+    </div>`;
+  }).join('');
+}
+function initAllocUI(){
+  loadAllocRule();loadCategoryBuckets();loadProjectedIncome();
+  renderAllocRuleInputs();renderAllocIncomeInputs();renderAllocOverview();
+  document.getElementById('allocSaveRuleBtn')?.addEventListener('click',saveAllocRuleFromInputs);
+  document.getElementById('allocSaveIncomeBtn')?.addEventListener('click',saveAllocProjectedIncomeFromInput);
+}
+function refreshAllocForMonthChange(){renderAllocIncomeInputs();renderAllocOverview();}
+
 // ---------- Monthly Budget (additive feature; existing data/logic untouched) ----------
 const LS_BUDGETS='ledger.budgets.v2';
 const LS_BUDGETS_OLD='ledger.monthlyBudgets.v1';
@@ -5041,45 +4982,8 @@ function loadMonthlyBudgets(){
 function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));markLocalDirty();if(accessToken)debouncedBackup()}
 function currentBudgetMonth(){const e=document.getElementById('budgetMonth');return e&&e.value?e.value:new Date().toISOString().slice(0,7)}
 function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
-let budgetUnbudgetedOpen=false;
-function renderUnbudgetedExpenses(list){
-  const anchor=document.getElementById('budgetSummary');
-  if(!anchor) return;
-  let box=document.getElementById('budgetUnbudgeted');
-  if(!box){ box=document.createElement('div'); box.id='budgetUnbudgeted'; anchor.insertAdjacentElement('afterend',box); }
-  if(!list.length){ box.innerHTML=''; return; }
-  // Budgets are generic (apply to every month), so compare the expense category/subcategory list with the budget rows.
-  const groups=[]; let missingCount=0, totalCount=0;
-  getCategories('expense').forEach(cat=>{
-    const subs=[...(EXPENSE_CATEGORY_SUBCATS[cat]||[])].sort((a,b)=>String(a).localeCompare(String(b)));
-    totalCount+=subs.length||1;
-    const rows=list.filter(b=>(b.categories||[]).includes(cat));
-    if(rows.some(b=>!(b.subcategories||[]).length)) return; // whole category covered
-    if(!subs.length){ groups.push({cat,subs:[],whole:true}); missingCount+=1; return; }
-    const covered=new Set();
-    rows.forEach(b=>(b.subcategories||[]).forEach(k=>{ const p=String(k).split('|||'); if(p[0]===cat) covered.add(p[1]); }));
-    const missing=subs.filter(x=>!covered.has(x));
-    if(missing.length){ groups.push({cat,subs:missing,whole:!rows.length}); missingCount+=missing.length; }
-  });
-  if(!groups.length){
-    box.innerHTML='<div class="budget-summary-card unbudgeted-card"><div class="budget-name">Not in any budget</div><div class="budget-meta">Every expense category and subcategory is covered by a budget.</div></div>';
-    return;
-  }
-  box.innerHTML=`<div class="budget-summary-card unbudgeted-card ${budgetUnbudgetedOpen?'is-open':''}">
-    <div class="unbudgeted-head" id="unbudgetedHead">
-      <div><div class="budget-name">Not in any budget</div><div class="budget-meta">${missingCount} of ${totalCount} expense subcategories have no budget</div></div>
-      <div class="unbudgeted-right"><div class="unbudgeted-arrow">⌄</div></div>
-    </div>
-    <div class="unbudgeted-body">${groups.map(g=>`<div class="unbudgeted-group"><div class="unbudgeted-group-head"><span>${escapeHtml(g.cat)}</span><span class="unbudgeted-tag">${g.whole?'No budget':'Some subcategories'}</span></div>${g.subs.length?`<div class="unbudgeted-chips">${g.subs.map(x=>`<span class="unbudgeted-chip">${escapeHtml(x)}</span>`).join('')}</div>`:'<div class="unbudgeted-nosub">No subcategories</div>'}</div>`).join('')}</div>
-  </div>`;
-  box.querySelector('#unbudgetedHead').addEventListener('click',()=>{
-    budgetUnbudgetedOpen=!budgetUnbudgetedOpen;
-    box.querySelector('.unbudgeted-card').classList.toggle('is-open',budgetUnbudgetedOpen);
-  });
-}
 function renderBudgetSummary(){
   const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
-  renderUnbudgetedExpenses(list);
   const overviewCard=document.getElementById('budgetOverviewCard');
   if(!list.length){
     w.innerHTML='<div class="budget-empty">No budget added yet.</div>';
@@ -5154,7 +5058,7 @@ function startBudgetEdit(id){
   editingBudgetId=id;document.getElementById('budgetAmount').value=found.amount;budgetCategorySelections=new Set(found.categories||[]);budgetSubcategorySelections=new Set(found.subcategories||[]);document.getElementById('budgetSaveBtn').textContent='Update Budget';document.getElementById('budgetCancelEditBtn').style.display='block';renderBudgetMultiSelects();document.querySelector('#budget .budget-card')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cancelBudgetEdit(){editingBudgetId=null;budgetCategorySelections=new Set();budgetSubcategorySelections=new Set();const amount=document.getElementById('budgetAmount');if(amount)amount.value='';const btn=document.getElementById('budgetSaveBtn');if(btn)btn.textContent='Add Budget';const cancel=document.getElementById('budgetCancelEditBtn');if(cancel)cancel.style.display='none';renderBudgetMultiSelects()}
-function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const dm=document.getElementById('debtMonth');if(dm&&!dm.value)dm.value=new Date().toISOString().slice(0,7);const cb=document.getElementById('budgetCategoryBtn'),sb=document.getElementById('budgetSubcategoryBtn'),cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');const cf=cb.closest('.field'),sf=sb.closest('.field');const closeBudgetMenus=()=>{cd.classList.remove('show');sd.classList.remove('show');cf?.classList.remove('budget-field-open');sf?.classList.remove('budget-field-open')};cb.addEventListener('click',e=>{e.stopPropagation();sd.classList.remove('show');sf?.classList.remove('budget-field-open');cd.classList.toggle('show');cf?.classList.toggle('budget-field-open',cd.classList.contains('show'))});sb.addEventListener('click',e=>{e.stopPropagation();cd.classList.remove('show');cf?.classList.remove('budget-field-open');sd.classList.toggle('show');sf?.classList.toggle('budget-field-open',sd.classList.contains('show'))});cd.addEventListener('click',e=>e.stopPropagation());sd.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',closeBudgetMenus);m.addEventListener('change',renderBudgetSummary);document.getElementById('budgetSaveBtn').addEventListener('click',addMonthlyBudget);document.getElementById('budgetCancelEditBtn').addEventListener('click',cancelBudgetEdit);renderBudgetMultiSelects();renderBudgetSummary()}
+function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const dm=document.getElementById('debtMonth');if(dm&&!dm.value)dm.value=new Date().toISOString().slice(0,7);const cb=document.getElementById('budgetCategoryBtn'),sb=document.getElementById('budgetSubcategoryBtn'),cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');const cf=cb.closest('.field'),sf=sb.closest('.field');const closeBudgetMenus=()=>{cd.classList.remove('show');sd.classList.remove('show');cf?.classList.remove('budget-field-open');sf?.classList.remove('budget-field-open')};cb.addEventListener('click',e=>{e.stopPropagation();sd.classList.remove('show');sf?.classList.remove('budget-field-open');cd.classList.toggle('show');cf?.classList.toggle('budget-field-open',cd.classList.contains('show'))});sb.addEventListener('click',e=>{e.stopPropagation();cd.classList.remove('show');cf?.classList.remove('budget-field-open');sd.classList.toggle('show');sf?.classList.toggle('budget-field-open',sd.classList.contains('show'))});cd.addEventListener('click',e=>e.stopPropagation());sd.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',closeBudgetMenus);m.addEventListener('change',()=>{renderBudgetSummary();refreshAllocForMonthChange();});document.getElementById('budgetSaveBtn').addEventListener('click',addMonthlyBudget);document.getElementById('budgetCancelEditBtn').addEventListener('click',cancelBudgetEdit);renderBudgetMultiSelects();renderBudgetSummary();initAllocUI();}
 
 function getQuickAddItems(){
   const map=new Map();
@@ -5208,7 +5112,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
-    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); }
+    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); renderAllocIncomeInputs(); renderAllocOverview(); }
     if(b.dataset.tab==='tasks'){ renderTaskList(); renderShopping(); }
   });
 });
@@ -5384,7 +5288,7 @@ function openProjectionConversion(seriesId, occurrenceId, scheduledDate){
   const note=document.createElement('div');
   note.id='projectionLinkNote';
   note.className='projection-link-note';
-  note.innerHTML=`<strong>Linked to projection:</strong> ${escapeHtml(fmtDateLabel(scheduledDate))}. The amount is pre-filled from the projection: change it to the actual amount if it differs. You can also change the payment date if it was paid early or late. This exact monthly occurrence will be marked completed after saving.`;
+  note.innerHTML=`<strong>Linked to projection:</strong> ${escapeHtml(fmtDateLabel(scheduledDate))}. You can change the actual payment date if it was paid early or late. This exact monthly occurrence will be marked completed after saving.`;
   const saveBtn=document.getElementById('saveBtn');
   saveBtn.parentElement.insertBefore(note,saveBtn);
   overlay.classList.add('show');
@@ -5629,8 +5533,10 @@ function renderCategoryManager(){
     tree.innerHTML='<div class="category-empty">No categories yet. Add a category above.</div>';
     return;
   }
+  const bucketOptions=b=>ALLOC_BUCKETS.map(x=>`<option value="${x.key}" ${b===x.key?'selected':''}>${x.label}</option>`).join('');
   tree.innerHTML=initialBalanceCard + cats.map(cat=>{
     const subs=[...(source[cat]||[])].filter(sub=>sub!=='Account Transfer' && sub!=='Initial Balance').sort((a,b)=>a.localeCompare(b));
+    const bucketRow=categoryManagerType==='expense'?`<div class="category-bucket-row"><label>ALLOCATION BUCKET</label><select class="category-bucket-select" data-bucket-cat="${escapeHtml(cat)}"><option value="">Unassigned</option>${bucketOptions(getCategoryBucket(cat))}</select></div>`:'';
     return `<div class="category-item">
       <div class="category-item-head">
         <div><div class="category-item-title">${escapeHtml(cat)}</div><div class="category-item-count">${subs.length} subcategor${subs.length===1?'y':'ies'}</div></div>
@@ -5639,6 +5545,7 @@ function renderCategoryManager(){
           <button type="button" class="delete-cat" data-remove-cat="${escapeHtml(cat)}">Delete</button>
         </div>
       </div>
+      ${bucketRow}
       <div class="category-sub-list">
         ${subs.length ? subs.map(sub=>`<div class="category-sub-row">
           <div class="category-sub-name">${escapeHtml(sub)}</div>
@@ -5686,6 +5593,11 @@ function renderCategoryManager(){
     document.getElementById('newCategoryName').value=cat;
     document.getElementById('newSubcategoryName').value='';
     document.getElementById('newSubcategoryName').focus();
+  }));
+  tree.querySelectorAll('[data-bucket-cat]').forEach(sel=>sel.addEventListener('change',()=>{
+    setCategoryBucket(sel.dataset.bucketCat,sel.value);
+    renderAllocOverview();
+    showToast(sel.value?`${sel.dataset.bucketCat} assigned to ${ALLOC_BUCKETS.find(b=>b.key===sel.value)?.label||sel.value}`:`${sel.dataset.bucketCat} unassigned`);
   }));
 }
 function addManagedCategory(){
@@ -6048,7 +5960,7 @@ function scheduleDailyBackup(){
     const already=localStorage.getItem('ledger.dailyBackupDate.v1')===key;
     // Run at 10 PM, or on first app use after 10 PM if the 10 PM check was missed.
     if(now.getHours()>=22 && !already){
-      createDriveSnapshot('daily',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()}).then(ok=>{if(ok)localStorage.setItem('ledger.dailyBackupDate.v1',key);});
+      createDriveSnapshot('daily',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),budgetRule:ALLOC_RULE,categoryBucket:CATEGORY_BUCKETS,projectedIncome:PROJECTED_INCOME}).then(ok=>{if(ok)localStorage.setItem('ledger.dailyBackupDate.v1',key);});
     }
   };
   window.__dailyBackupTimer=setInterval(check,30000);
@@ -6059,7 +5971,7 @@ function mergeLocalWithCloudSources(sources){
   const deleted={};
   for(const src of sources){ for(const [id,ts] of Object.entries(src.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0)); }
   for(const [id,ts] of Object.entries(meta.deleted||{})) deleted[id]=Math.max(Number(deleted[id]||0),Number(ts||0));
-  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],shopping:Array.isArray(SHOPPING)?SHOPPING:[],shopcommon:Array.isArray(SHOPCOMMON)?SHOPCOMMON:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),deleted:meta.deleted||{}};
+  const local={deviceId:DEVICE_ID,transactions:TXNS,plans:PLANS,budgets:Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],goals:Array.isArray(GOALS)?GOALS:[],debts:Array.isArray(DEBTS)?DEBTS:[],tasks:Array.isArray(TASKS)?TASKS:[],shopping:Array.isArray(SHOPPING)?SHOPPING:[],shopcommon:Array.isArray(SHOPCOMMON)?SHOPCOMMON:[],categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),budgetRule:ALLOC_RULE,categoryBucket:CATEGORY_BUCKETS,projectedIncome:PROJECTED_INCOME,deleted:meta.deleted||{}};
   const all=[...sources,local];
   TXNS=mergeRecordsFromSources(all,'transactions',deleted);
   PLANS=mergeRecordsFromSources(all,'plans',deleted);
@@ -6071,6 +5983,16 @@ function mergeLocalWithCloudSources(sources){
   MONTHLY_BUDGETS=mergeBudgetSources(all);
   const cm=mergeAllCategorySources(all);
   loadCategoryConfig({...cm.categories,categoryMeta:cm.categoryMeta});
+  // Income allocation settings: categoryBucket/projectedIncome are additive maps,
+  // merged across devices with local edits taking priority per key. budgetRule
+  // is a single object; adopt a cloud copy only if this device still has the default.
+  const mergedCategoryBucket={},mergedProjectedIncome={};
+  all.forEach(src=>{ Object.assign(mergedCategoryBucket,src.categoryBucket||{}); Object.assign(mergedProjectedIncome,src.projectedIncome||{}); });
+  CATEGORY_BUCKETS=mergedCategoryBucket; saveCategoryBuckets();
+  PROJECTED_INCOME=mergedProjectedIncome; saveProjectedIncome();
+  const cloudRule=sources.map(s=>s.budgetRule).find(r=>r);
+  if(cloudRule && JSON.stringify(ALLOC_RULE)===JSON.stringify({needs:40,wants:20,invest:40})){ ALLOC_RULE=cloudRule; saveAllocRule(); }
+  renderAllocRuleInputs(); renderAllocIncomeInputs(); renderAllocOverview();
   localStorage.setItem(LS_TXNS,JSON.stringify(TXNS));
   localStorage.setItem(LS_PLANS,JSON.stringify(PLANS));
   localStorage.setItem(LS_GOALS,JSON.stringify(GOALS));
@@ -6128,7 +6050,7 @@ async function driveSyncMerge(silent, existingMeta){
       await writeDriveFile(shardInfo.file.id,shardInfo.name,JSON.stringify(state));
       localStorage.setItem(LS_DRIVE_FILE_ID,shardInfo.file.id); driveFileId=shardInfo.file.id;
     }
-    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, debts:DEBTS, tasks:TASKS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta() });
+    await createDriveSnapshot('auto', { ...state, transactions:TXNS, plans:PLANS, goals:GOALS, debts:DEBTS, tasks:TASKS, categories:getCategoryConfig(), categoryMeta:getCategoryMeta(), budgetRule:ALLOC_RULE, categoryBucket:CATEGORY_BUCKETS, projectedIncome:PROJECTED_INCOME });
     setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:getSyncMeta().deleted||{}});
     updateSyncUI(true); refreshAll();
     if(!silent) showToast('Synced with Google Drive');
@@ -6141,7 +6063,7 @@ async function driveSyncMerge(silent, existingMeta){
 }
 async function driveBackup(silent){
   if(!accessToken) return;
-  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta()});
+  const ok=await createDriveSnapshot('manual',{...getLocalShard(),transactions:TXNS,plans:PLANS,goals:GOALS,debts:DEBTS,tasks:TASKS,categories:getCategoryConfig(),categoryMeta:getCategoryMeta(),budgetRule:ALLOC_RULE,categoryBucket:CATEGORY_BUCKETS,projectedIncome:PROJECTED_INCOME});
   if(!silent) showToast(ok?'Backup saved to Drive':'Backup could not be saved');
 }
 async function driveRestore(silent){
@@ -6159,6 +6081,10 @@ async function driveRestore(silent){
         TXNS=Array.isArray(data.transactions)?data.transactions:TXNS; PLANS=Array.isArray(data.plans)?data.plans:PLANS; GOALS=Array.isArray(data.goals)?data.goals:GOALS; DEBTS=Array.isArray(data.debts)?data.debts:DEBTS; TASKS=Array.isArray(data.tasks)?data.tasks:TASKS; SHOPPING=Array.isArray(data.shopping)?data.shopping:SHOPPING; SHOPCOMMON=Array.isArray(data.shopcommon)?data.shopcommon:SHOPCOMMON; MONTHLY_BUDGETS=Array.isArray(data.budgets)?data.budgets:MONTHLY_BUDGETS;
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
+        if(data.budgetRule){ ALLOC_RULE=data.budgetRule; localStorage.setItem(LS_ALLOC_RULE,JSON.stringify(ALLOC_RULE)); }
+        if(data.categoryBucket){ CATEGORY_BUCKETS={...data.categoryBucket,...CATEGORY_BUCKETS}; localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS)); }
+        if(data.projectedIncome){ PROJECTED_INCOME={...data.projectedIncome,...PROJECTED_INCOME}; localStorage.setItem(LS_PROJECTED_INCOME,JSON.stringify(PROJECTED_INCOME)); }
+        renderAllocRuleInputs(); renderAllocIncomeInputs(); renderAllocOverview();
         localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_SHOPCOMMON,JSON.stringify(SHOPCOMMON)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
         setSyncMeta({...getSyncMeta(),initialized:true,lastCloudModified:Date.now(),localChangedAt:0,deleted:data.deleted||{}}); localDirty=false; refreshAll();
         if(!silent) showToast('Restored latest backup'); return;
