@@ -81,14 +81,14 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ display:flex; justify-content:space-between; gap:2px; margin:14px 0 0 0; padding:0 4px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  nav.tabs{ position:fixed; left:0; right:0; bottom:0; z-index:90; display:flex; justify-content:space-between; gap:2px; margin:0; padding:7px 8px calc(7px + env(safe-area-inset-bottom)); background:rgba(251,248,238,.98); border-top:1px solid var(--line-strong); border-bottom:0; box-shadow:0 -6px 18px rgba(18,73,57,.10); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:11px; background:none; border:none; cursor:pointer;
-    padding:8px 2px 10px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
-    white-space:nowrap; flex:none;
+    padding:7px 7px 6px; color:var(--muted); border-top:3px solid transparent; border-bottom:0; position:relative; top:0;
+    white-space:nowrap; flex:1 0 auto; min-width:0;
   }
-  nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
+  nav.tabs button.active{ color:var(--green-dark); border-top-color:var(--green); }
 
   main{padding:16px 6px 0 6px;}
   section{display:none;}
@@ -2209,6 +2209,41 @@ nav.tabs button.active{font-weight:700!important;}
 }
 </style>
 
+
+<style id="bottom-fixed-tabs-final">
+/* Bottom navigation: always available while scrolling */
+nav.tabs{
+  position:fixed!important;
+  left:0!important; right:0!important; bottom:0!important; top:auto!important;
+  z-index:1000!important;
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:2px!important;
+  margin:0!important;
+  padding:6px 5px calc(6px + env(safe-area-inset-bottom))!important;
+  background:rgba(248,251,249,.98)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+  border-top:1px solid var(--line)!important;
+  border-bottom:0!important;
+  box-shadow:0 -5px 18px rgba(20,50,40,.10)!important;
+  overflow:hidden!important;
+}
+nav.tabs button{
+  width:100%!important; min-width:0!important; max-width:none!important;
+  padding:8px 1px 7px!important;
+  font-size:10.2px!important; line-height:1.15!important;
+  white-space:nowrap!important; overflow:visible!important; text-overflow:clip!important;
+  border-top:3px solid transparent!important; border-bottom:0!important;
+}
+nav.tabs button.active{border-top-color:var(--green)!important;border-bottom:0!important;}
+@media(max-width:380px){
+  nav.tabs{gap:0!important;padding-left:2px!important;padding-right:2px!important;}
+  nav.tabs button{font-size:9.5px!important;padding-left:0!important;padding-right:0!important;}
+}
+body{padding-bottom:96px!important;}
+</style>
 </head>
 <body>
 <div id="authGate">
@@ -4930,12 +4965,16 @@ function getBucketExpenses(m,bucket){
 function renderBucketExpenseDetails(m,bucket){
   const rows=getBucketExpenses(m,bucket);
   if(!rows.length)return '<div class="alloc-expense-empty">No expenses recorded in this bucket for this month.</div>';
-  const total=rows.reduce((s,r)=>s+r.amount,0);
-  return `<div class="alloc-expense-list">${rows.map(r=>{
-    const title=r.description||r.subcategory||r.category||'Expense';
-    const meta=[r.date?fmtDateLabel(r.date):'',r.category&&r.subcategory?r.category+' · '+r.subcategory:(r.category||r.subcategory||'')].filter(Boolean).join(' · ');
-    return `<div class="alloc-expense-row"><div class="alloc-expense-main"><div class="alloc-expense-title">${escapeHtml(title)}</div><div class="alloc-expense-meta">${escapeHtml(meta)}</div></div><div class="alloc-expense-amount">−${fmtMoney(r.amount)}</div></div>`;
-  }).join('')}</div><div class="alloc-expense-total"><span>Total expenses</span><span>${fmtMoney(total)}</span></div>`;
+  const grouped={};
+  rows.forEach(r=>{
+    const key=r.subcategory||r.category||'Uncategorized';
+    grouped[key]=(grouped[key]||0)+r.amount;
+  });
+  const items=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
+  const total=items.reduce((s,[,amount])=>s+amount,0);
+  return `<div class="alloc-expense-list">${items.map(([subcategory,amount])=>
+    `<div class="alloc-expense-row"><div class="alloc-expense-main"><div class="alloc-expense-title">${escapeHtml(subcategory)}</div></div><div class="alloc-expense-amount">−${fmtMoney(amount)}</div></div>`
+  ).join('')}</div><div class="alloc-expense-total"><span>Total expenses</span><span>${fmtMoney(total)}</span></div>`;
 }
 function renderAllocOverview(){
   const m=currentBudgetMonth();
