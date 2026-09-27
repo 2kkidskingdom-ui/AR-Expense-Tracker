@@ -5001,10 +5001,13 @@ function renderAllocOverview(){
     const barPct=Math.min(100,Math.max(0,rawPct));
     const over=spent>target&&target>0;
     const diff=target-spent;
-    return `<div class="alloc-bucket-card ${over?'over':'within'}" data-bucket-key="${b.key}" tabindex="0" role="button" aria-expanded="false">
-      <div class="alloc-bucket-head"><div class="alloc-bucket-name">${b.label} <span style="font-weight:500;color:var(--muted);font-size:11px;">(${pct}%)</span></div><div class="alloc-bucket-amt ${over?'over':''}">${fmtMoney(spent)} / ${fmtMoney(target)}</div></div>
-      <div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${barPct}%"></div></div>
-      <div class="alloc-bucket-meta ${over?'over':''}"><span>${over?'Over by '+fmtMoney(Math.abs(diff)):'Remaining '+fmtMoney(diff)}</span><span>${target?rawPct.toFixed(1)+'%':''}</span></div>
+    // Basic Needs / Advanced Needs: within 100% = green, over 100% = red.
+    // Investment: within 100% = red, over 100% = green.
+    const statusClass = b.key==='invest' ? (over?'within':'over') : (over?'over':'within');
+    return `<div class="alloc-bucket-card ${statusClass}" data-bucket-key="${b.key}" tabindex="0" role="button" aria-expanded="false">
+      <div class="alloc-bucket-head"><div class="alloc-bucket-name">${b.label} <span style="font-weight:500;color:var(--muted);font-size:11px;">(${pct}%)</span></div><div class="alloc-bucket-amt ${statusClass==='over'?'over':''}">${fmtMoney(spent)} / ${fmtMoney(target)}</div></div>
+      <div class="budget-progress"><div class="budget-progress-fill ${statusClass==='over'?'over':''}" style="width:${barPct}%"></div></div>
+      <div class="alloc-bucket-meta ${statusClass==='over'?'over':''}"><span>${over?'Over by '+fmtMoney(Math.abs(diff)):'Remaining '+fmtMoney(diff)}</span><span>${target?rawPct.toFixed(1)+'%':''}</span></div>
       <div class="alloc-bucket-expenses">${renderBucketExpenseDetails(m,b.key)}</div>
     </div>`;
   }).join('');
