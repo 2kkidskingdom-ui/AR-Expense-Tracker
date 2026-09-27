@@ -482,6 +482,8 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .category-bucket-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F3FBF8;border-bottom:1px solid #edf2ef;}
 .category-bucket-row label{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);}
 .category-bucket-select{flex:1;border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;font-size:11.5px;background:#fff;color:var(--ink);}
+/* Keep the allocation bucket label compact on mobile so "Unassigned" stays on one line. */
+.category-sub-actions .category-bucket-select{font-size:11px!important;line-height:1.2!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
 .category-empty{background:#fff;border:1px dashed var(--line);border-radius:11px;padding:13px;color:var(--muted);font-size:11px;text-align:center}
 .category-item{border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfdfc}
 .category-item-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
