@@ -81,14 +81,14 @@
   .stamp .lbl{font-family:'Inter',sans-serif; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; opacity:0.8;}
   .stamp .amt{font-size:12px; margin-top:1px;}
 
-  nav.tabs{ position:fixed; left:0; right:0; bottom:0; z-index:90; display:flex; justify-content:space-between; gap:2px; margin:0; padding:7px 8px calc(7px + env(safe-area-inset-bottom)); background:rgba(251,248,238,.98); border-top:1px solid var(--line-strong); border-bottom:0; box-shadow:0 -6px 18px rgba(18,73,57,.10); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  nav.tabs{ display:flex; justify-content:space-between; gap:2px; margin:14px 0 0 0; padding:0 4px; border-bottom:1px solid var(--line-strong); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
   nav.tabs::-webkit-scrollbar{ display:none; }
   nav.tabs button{
     font-family:'Inter',sans-serif; font-weight:600; font-size:11px; background:none; border:none; cursor:pointer;
-    padding:7px 7px 6px; color:var(--muted); border-top:3px solid transparent; border-bottom:0; position:relative; top:0;
-    white-space:nowrap; flex:1 0 auto; min-width:0;
+    padding:8px 2px 10px; color:var(--muted); border-bottom:2px solid transparent; position:relative; top:1px;
+    white-space:nowrap; flex:none;
   }
-  nav.tabs button.active{ color:var(--green-dark); border-top-color:var(--green); }
+  nav.tabs button.active{ color:var(--green-dark); border-bottom-color:var(--green); }
 
   main{padding:16px 6px 0 6px;}
   section{display:none;}
@@ -223,12 +223,12 @@
   .tstat .sub{font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap;}
 
   .fab{
-    position:fixed; right:20px; bottom:calc(82px + env(safe-area-inset-bottom)); width:56px; height:56px; border-radius:50%;
+    position:fixed; right:20px; bottom:22px; width:56px; height:56px; border-radius:50%;
     background:var(--green); color:#fff; border:none; font-size:26px; box-shadow:0 4px 14px rgba(18,48,38,0.35);
-    cursor:pointer; z-index:95; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center;
   }
 
-  .overlay{ position:fixed; inset:0; background:rgba(20,18,12,0.4); display:none; align-items:flex-end; justify-content:center; z-index:200; }
+  .overlay{ position:fixed; inset:0; background:rgba(20,18,12,0.4); display:none; align-items:flex-end; justify-content:center; z-index:20; }
   .overlay.show{display:flex;}
   .sheet{
     background:var(--paper); width:100%; max-width:640px; border-radius:14px 14px 0 0; padding:18px 20px 22px;
@@ -260,7 +260,7 @@
   .toast{
     position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
     background:var(--green-dark); color:#fff; padding:9px 16px; border-radius:20px; font-size:12.5px;
-    z-index:210; opacity:0; pointer-events:none; transition:opacity .25s;
+    z-index:40; opacity:0; pointer-events:none; transition:opacity .25s;
   }
   .toast.show{opacity:1;}
   .settings-icon{ background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; padding:4px; }
@@ -412,7 +412,7 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-title{font-size:18px;}.cal-grid{gap:2px;background:var(--line);border:0;border-radius:14px;box-shadow:var(--shadow);}
 .cal-dow{background:#EDF4F0;padding:7px 0;font-size:8.5px;}.cal-day{background:#fff;min-height:78px;padding:5px 3px;border-radius:0;}.cal-day.empty{background:#F1F5F3;}.cal-day.today{outline:2px solid var(--green);}.cal-day.projected{background:repeating-linear-gradient(135deg,#fff,#fff 7px,#F0F6F3 7px,#F0F6F3 8px);border:1px dashed #A9C8B9;}
 .cal-footer .tstat{padding:10px 7px;}
-.fab{width:60px;height:60px;right:20px;bottom:calc(82px + env(safe-area-inset-bottom));background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 10px 25px rgba(11,76,58,.28);font-size:29px;}
+.fab{width:60px;height:60px;right:20px;bottom:22px;background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 10px 25px rgba(11,76,58,.28);font-size:29px;}
 .overlay{background:rgba(10,28,22,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 .sheet{
   width:min(100%,760px);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:24px 24px 0 0;
@@ -482,15 +482,13 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .category-bucket-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F3FBF8;border-bottom:1px solid #edf2ef;}
 .category-bucket-row label{font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);}
 .category-bucket-select{flex:1;border:1px solid var(--line-strong);border-radius:8px;padding:6px 8px;font-size:11.5px;background:#fff;color:var(--ink);}
-/* Keep the allocation bucket label compact on mobile so "Unassigned" stays on one line. */
-.category-sub-actions .category-bucket-select{font-size:11px!important;line-height:1.1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;min-height:38px!important;height:38px!important;padding:4px 8px!important;}
 .category-empty{background:#fff;border:1px dashed var(--line);border-radius:11px;padding:13px;color:var(--muted);font-size:11px;text-align:center}
 .category-item{border:1px solid var(--line);border-radius:11px;padding:9px 10px;background:#fbfdfc}
 .category-item-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
 .category-item-head button{border:0;background:none;color:var(--red);font-size:16px;cursor:pointer;padding:0 2px}
 .category-subs{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .category-chip{font-size:10px;padding:4px 7px;border-radius:12px;background:var(--paper-deep);color:var(--muted)}
-@media (max-width:520px){.category-item-head{align-items:flex-start}.category-actions{gap:4px}.category-actions button{font-size:9px;padding:5px 6px}.category-sub-list{padding-left:10px;padding-right:10px}.category-sub-row{display:grid;grid-template-columns:1fr;align-items:start;gap:7px;padding:10px 0!important}.category-sub-name{width:100%;box-sizing:border-box;font-size:12px;line-height:1.35;overflow-wrap:anywhere;word-break:normal}.category-sub-actions{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}.category-sub-actions .category-bucket-select{width:100%;min-width:0;box-sizing:border-box;min-height:38px!important;height:38px!important;font-size:11px!important;padding:4px 8px!important}.category-sub-actions button{white-space:nowrap;font-size:9.5px!important;padding:7px 9px!important;min-height:38px!important;height:38px!important}}
+@media (max-width:520px){.category-item-head{align-items:flex-start}.category-actions{gap:4px}.category-actions button{font-size:9px;padding:5px 6px}.category-sub-list{padding-left:10px;padding-right:10px}.category-sub-actions button{font-size:9px;padding:4px 6px}}
 @media (max-width:520px){.dashboard-stats{grid-template-columns:1fr 1fr}.dashboard-stat:last-child{grid-column:1/-1}.dashboard-two-col{grid-template-columns:1fr}.category-add-row{grid-template-columns:1fr 1fr}.category-add-row button{grid-column:1/-1;min-height:40px}}
 
 
@@ -556,11 +554,6 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .alloc-pct-error{font-size:11.5px;color:#D83D4A;font-weight:600;margin-top:8px;}
 .alloc-unassigned{background:#FFF7E6;border:1px solid #EFCB7A;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:12px;color:#7A5A0A;line-height:1.55;}
 .alloc-unassigned b{color:#5A4000;}
-.alloc-warning-title{font-weight:900;font-size:13px;color:#9A4A00;margin-bottom:4px;}
-.alloc-warning-text{font-size:12px;line-height:1.5;}
-.alloc-warning-list{display:grid;gap:3px;margin-top:7px;font-size:11.5px;color:#765000;}
-.alloc-warning-list span{display:block;}
-.alloc-warning-action{margin-top:7px;font-weight:800;font-size:11.5px;color:#7A4A00;}
 .alloc-buckets{display:grid;gap:10px;margin-top:14px;}
 .alloc-bucket-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow);}
 .alloc-bucket-card.over{border-left:4px solid #E04450;background:linear-gradient(135deg,#fff,#fff7f8)}
@@ -571,19 +564,6 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .alloc-bucket-amt.over{color:#D83D4A;}
 .alloc-bucket-meta{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:8px;}
 .alloc-bucket-meta.over{color:#D83D4A;font-weight:600;}
-.alloc-bucket-card{cursor:pointer;}
-.alloc-bucket-card:focus{outline:2px solid var(--green);outline-offset:2px;}
-.alloc-bucket-expenses{display:none;margin-top:12px;border-top:1px solid #e8efec;padding-top:10px;}
-.alloc-bucket-card.is-open .alloc-bucket-expenses{display:block;}
-.alloc-expense-list{display:grid;gap:7px;}
-.alloc-expense-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px 9px;border-radius:10px;background:#f7faf9;}
-.alloc-expense-main{min-width:0;}
-.alloc-expense-title{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.alloc-expense-meta{font-size:9.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.alloc-expense-amount{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#D83D4A;white-space:nowrap;}
-.alloc-expense-empty{font-size:10.5px;color:var(--muted);padding:4px 2px;}
-.alloc-expense-total{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed #dbe7e2;font-size:10.5px;font-weight:700;color:var(--text);}
-@media(max-width:420px){.alloc-pct-row{grid-template-columns:1fr;}.alloc-expense-row{grid-template-columns:minmax(0,1fr) auto;}.alloc-expense-title{font-size:10.5px;}.alloc-expense-meta{font-size:9px;}}
 @media(max-width:420px){.alloc-pct-row{grid-template-columns:1fr;}}
 /* Overall Actual vs Budget summary */
 .budget-overview-card{border-radius:18px;padding:16px;margin-top:10px;background:linear-gradient(135deg,#075A49,#0F9D78);box-shadow:0 8px 18px rgba(7,150,105,.18)}
@@ -2212,43 +2192,12 @@ nav.tabs button.active{font-weight:700!important;}
 #analysis .totals-strip .tstat .sub{
   font-weight:600!important;
 }
+
+/* Keep modal sheets above the fixed bottom navigation so all entry actions remain reachable. */
+.overlay{z-index:2000 !important;}
+.overlay .sheet{position:relative;z-index:2001;max-height:calc(100vh - 24px);padding-bottom:30px;}
 </style>
 
-
-<style id="bottom-fixed-tabs-final">
-/* Bottom navigation: always available while scrolling */
-nav.tabs{
-  position:fixed!important;
-  left:0!important; right:0!important; bottom:0!important; top:auto!important;
-  z-index:1000!important;
-  display:grid!important;
-  grid-template-columns:repeat(7,minmax(0,1fr))!important;
-  align-items:stretch!important;
-  gap:2px!important;
-  margin:0!important;
-  padding:6px 5px calc(6px + env(safe-area-inset-bottom))!important;
-  background:rgba(248,251,249,.98)!important;
-  backdrop-filter:blur(14px)!important;
-  -webkit-backdrop-filter:blur(14px)!important;
-  border-top:1px solid var(--line)!important;
-  border-bottom:0!important;
-  box-shadow:0 -5px 18px rgba(20,50,40,.10)!important;
-  overflow:hidden!important;
-}
-nav.tabs button{
-  width:100%!important; min-width:0!important; max-width:none!important;
-  padding:8px 1px 7px!important;
-  font-size:9px!important; line-height:1.05!important; letter-spacing:-.15px!important;
-  white-space:nowrap!important; overflow:visible!important; text-overflow:clip!important;
-  border-top:3px solid transparent!important; border-bottom:0!important;
-}
-nav.tabs button.active{border-top-color:var(--green)!important;border-bottom:0!important;}
-@media(max-width:380px){
-  nav.tabs{gap:0!important;padding-left:2px!important;padding-right:2px!important;}
-  nav.tabs button{font-size:8px!important;padding-left:0!important;padding-right:0!important;letter-spacing:-.2px!important;}
-}
-body{padding-bottom:96px!important;}
-</style>
 </head>
 <body>
 <div id="authGate">
@@ -4857,77 +4806,31 @@ let CATEGORY_BUCKETS={};
 let PROJECTED_INCOME={};
 function loadAllocRule(){try{const raw=localStorage.getItem(LS_ALLOC_RULE);if(raw){const p=JSON.parse(raw);ALLOC_RULE={needs:Number(p.needs)||0,wants:Number(p.wants)||0,invest:Number(p.invest)||0};}}catch(e){}}
 function saveAllocRule(){localStorage.setItem(LS_ALLOC_RULE,JSON.stringify(ALLOC_RULE));markLocalDirty();if(accessToken)debouncedBackup();}
-function normalizeCategoryBuckets(source){
-  const out={};
-  const raw=(source&&typeof source==='object')?source:{};
-  Object.entries(raw).forEach(([key,bucket])=>{
-    if(!bucket)return;
-    if(key.includes('|||')){out[key]=bucket;return;}
-    const subs=EXPENSE_CATEGORY_SUBCATS[key]||[];
-    (subs instanceof Set?[...subs]:Array.isArray(subs)?subs:[]).forEach(sub=>{
-      out[key+'|||'+sub]=bucket;
-    });
-  });
-  return out;
-}
-function loadCategoryBuckets(){
-  try{
-    const raw=localStorage.getItem(LS_CATEGORY_BUCKET);
-    CATEGORY_BUCKETS=normalizeCategoryBuckets(raw?JSON.parse(raw):{});
-    localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS));
-  }catch(e){CATEGORY_BUCKETS={};}
-}
+function loadCategoryBuckets(){try{const raw=localStorage.getItem(LS_CATEGORY_BUCKET);CATEGORY_BUCKETS=raw?JSON.parse(raw):{};}catch(e){CATEGORY_BUCKETS={};}}
 function saveCategoryBuckets(){localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS));markLocalDirty();if(accessToken)debouncedBackup();}
-function getCategoryBucket(cat,sub){return CATEGORY_BUCKETS[(cat||'')+'|||'+(sub||'')]||'';}
-function setCategoryBucket(cat,sub,bucket){
-  const key=(cat||'')+'|||'+(sub||'');
-  if(bucket)CATEGORY_BUCKETS[key]=bucket;else delete CATEGORY_BUCKETS[key];
-  saveCategoryBuckets();
-}
+function getCategoryBucket(cat){return CATEGORY_BUCKETS[cat]||'';}
+function setCategoryBucket(cat,bucket){if(bucket){CATEGORY_BUCKETS[cat]=bucket;}else{delete CATEGORY_BUCKETS[cat];}saveCategoryBuckets();}
 function loadProjectedIncome(){try{const raw=localStorage.getItem(LS_PROJECTED_INCOME);PROJECTED_INCOME=raw?JSON.parse(raw):{};}catch(e){PROJECTED_INCOME={};}}
 function saveProjectedIncome(){localStorage.setItem(LS_PROJECTED_INCOME,JSON.stringify(PROJECTED_INCOME));markLocalDirty();if(accessToken)debouncedBackup();}
 function getProjectedIncomeForMonth(m){return Number(PROJECTED_INCOME[m]||0);}
 function setProjectedIncomeForMonth(m,val){if(val>0)PROJECTED_INCOME[m]=val;else delete PROJECTED_INCOME[m];saveProjectedIncome();}
 function computeActualIncomeForMonth(m){return TXNS.filter(t=>t&&t.amount>0&&isRealIncome(t)&&reportMonth(t)===m).reduce((s,t)=>s+Number(t.amount||0),0);}
-function computeProjectedIncomeEntriesForMonth(m){
-  let total=0;
-  const monthStart=m+'-01';
-  const monthEnd=new Date(Number(m.slice(0,4)),Number(m.slice(5,7)),0);
-  const endIso=`${monthEnd.getFullYear()}-${String(monthEnd.getMonth()+1).padStart(2,'0')}-${String(monthEnd.getDate()).padStart(2,'0')}`;
-  PLANS.forEach(plan=>{
-    if(!(plan&&Number(plan.credit||0)>0))return;
-    expandPlanOccurrences(plan,monthStart,endIso,true).forEach(o=>{total+=Number(o.credit||0);});
-  });
-  return total;
-}
-// Budget monthly income uses all actual income entries. If there is no actual income,
-// it falls back to the sum of all income projection occurrences for that month.
-function computeMonthIncomeInfo(m){
-  const actual=computeActualIncomeForMonth(m);
-  const projectedEntries=computeProjectedIncomeEntriesForMonth(m);
-  const projected=projectedEntries;
-  const used=actual>0?actual:projected;
-  const source=actual>0?'actual':(projected>0?'projected':'none');
-  return{actual,projected,used,source};
-}
-// Every expense subcategory rolls up into exactly one of the three buckets above.
-// Uncategorized expense subcategories are surfaced as "unassigned" rather than silently dropped.
+// One income value per month: actual logged income if there is any, otherwise the projected figure entered for that month.
+function computeMonthIncomeInfo(m){const actual=computeActualIncomeForMonth(m);const projected=getProjectedIncomeForMonth(m);const used=actual>0?actual:projected;const source=actual>0?'actual':(projected>0?'projected':'none');return{actual,projected,used,source};}
+// Every expense category rolls up into exactly one of the three buckets above.
+// Uncategorized expense categories are surfaced as "unassigned" rather than silently dropped.
 function computeBucketSpend(m){
   const spend={needs:0,wants:0,invest:0};
   const unassignedMap={};
   TXNS.forEach(t=>{
     if(!(t&&t.amount<0&&isRealExpense(t)&&reportMonth(t)===m))return;
-    const cat=t.category||'',sub=t.subcategory||'';
-    const bucket=getCategoryBucket(cat,sub);
+    const cat=t.category||'';
+    const bucket=getCategoryBucket(cat);
     const amt=Math.abs(Number(t.amount||0));
     if(bucket&&spend.hasOwnProperty(bucket)){spend[bucket]+=amt;}
-    else{
-      const key=cat+'|||'+sub;
-      unassignedMap[key]=unassignedMap[key]||{category:cat,subcategory:sub,amount:0};
-      unassignedMap[key].amount+=amt;
-    }
+    else{unassignedMap[cat]=(unassignedMap[cat]||0)+amt;}
   });
-  const unassigned=Object.values(unassignedMap).sort((a,b)=>b.amount-a.amount);
+  const unassigned=Object.entries(unassignedMap).map(([category,amount])=>({category,amount})).sort((a,b)=>b.amount-a.amount);
   return{spend,unassigned};
 }
 function allocRuleTotal(){return Number(ALLOC_RULE.needs||0)+Number(ALLOC_RULE.wants||0)+Number(ALLOC_RULE.invest||0);}
@@ -4950,50 +4853,27 @@ function renderAllocIncomeInputs(){
   const info=computeMonthIncomeInfo(m);
   const el=document.getElementById('allocIncome');
   if(!el)return;
-  el.value=info.used||'';
-  el.readOnly=true;
-  el.placeholder=info.source==='projected'?'Income from projections':'Calculated from actual income';
+  if(info.actual>0){ el.value=info.actual; el.readOnly=true; }
+  else{ el.readOnly=false; el.value=info.projected||''; }
 }
-function saveAllocIncomeFromInput(){renderAllocOverview();}
-function getBucketExpenses(m,bucket){
-  return TXNS.filter(t=>{
-    if(!(t&&Number(t.amount)<0&&isRealExpense(t)&&reportMonth(t)===m))return false;
-    return getCategoryBucket(t.category||'',t.subcategory||'')===bucket;
-  }).map(t=>({
-    date:t.date||'',
-    category:t.category||'',
-    subcategory:t.subcategory||'',
-    description:t.description||'',
-    amount:Math.abs(Number(t.amount||0))
-  })).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-}
-function renderBucketExpenseDetails(m,bucket){
-  const rows=getBucketExpenses(m,bucket);
-  if(!rows.length)return '<div class="alloc-expense-empty">No expenses recorded in this bucket for this month.</div>';
-  const grouped={};
-  rows.forEach(r=>{
-    const key=r.subcategory||r.category||'Uncategorized';
-    grouped[key]=(grouped[key]||0)+r.amount;
-  });
-  const items=Object.entries(grouped).sort((a,b)=>b[1]-a[1]);
-  return `<div class="alloc-expense-list">${items.map(([subcategory,amount])=>
-    `<div class="alloc-expense-row"><div class="alloc-expense-main"><div class="alloc-expense-title">${escapeHtml(subcategory)}</div></div><div class="alloc-expense-amount">−${fmtMoney(amount)}</div></div>`
-  ).join('')}</div>`;
+function saveAllocIncomeFromInput(){
+  const el=document.getElementById('allocIncome');
+  if(!el||el.readOnly)return;
+  const m=currentBudgetMonth();
+  setProjectedIncomeForMonth(m,Number(el.value)||0);
+  renderAllocOverview();
 }
 function renderAllocOverview(){
   const m=currentBudgetMonth();
   const info=computeMonthIncomeInfo(m);
   const {spend,unassigned}=computeBucketSpend(m);
   const unassignedWrap=document.getElementById('allocUnassigned');
-  if(unassignedWrap){
-    if(unassigned.length){
-      const total=unassigned.reduce((s,u)=>s+u.amount,0);
-      unassignedWrap.style.display='block';
-      unassignedWrap.innerHTML=`<div class="alloc-warning-title">⚠ Unassigned expense</div><div class="alloc-warning-text"><strong>${unassigned.length}</strong> unassigned ${unassigned.length===1?'subcategory':'subcategories'} with <strong>${fmtMoney(total)}</strong> spent in ${monthLabel(m)}. These expenses are <strong>not included</strong> in Basic Needs, Advanced Needs, or Investment.</div><div class="alloc-warning-list">${unassigned.map(u=>`<span>${escapeHtml(u.category||'Uncategorized')}${u.subcategory?' · '+escapeHtml(u.subcategory):''} — ${fmtMoney(u.amount)}</span>`).join('')}</div><div class="alloc-warning-action">Assign a bucket in Settings → Category Manager.</div>`;
-    }else{
-      unassignedWrap.style.display='none';
-      unassignedWrap.innerHTML='';
-    }
+  if(unassigned.length){
+    unassignedWrap.style.display='block';
+    const total=unassigned.reduce((s,u)=>s+u.amount,0);
+    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Basic Needs / Advanced Needs / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.category)).join(', ')}.`;
+  }else{
+    unassignedWrap.style.display='none';unassignedWrap.innerHTML='';
   }
   const bucketsWrap=document.getElementById('allocBuckets');
   if(!bucketsWrap)return;
@@ -5009,30 +4889,18 @@ function renderAllocOverview(){
     const barPct=Math.min(100,Math.max(0,rawPct));
     const over=spent>target&&target>0;
     const diff=target-spent;
-    // Basic Needs / Advanced Needs: within 100% = green, over 100% = red.
-    // Investment: within 100% = red, over 100% = green.
-    const statusClass = b.key==='invest' ? (over?'within':'over') : (over?'over':'within');
-    return `<div class="alloc-bucket-card ${statusClass}" data-bucket-key="${b.key}" tabindex="0" role="button" aria-expanded="false">
-      <div class="alloc-bucket-head"><div class="alloc-bucket-name">${b.label} <span style="font-weight:500;color:var(--muted);font-size:11px;">(${pct}%)</span></div><div class="alloc-bucket-amt ${statusClass==='over'?'over':''}">${fmtMoney(spent)} / ${fmtMoney(target)}</div></div>
-      <div class="budget-progress"><div class="budget-progress-fill ${statusClass==='over'?'over':''}" style="width:${barPct}%"></div></div>
-      <div class="alloc-bucket-meta ${statusClass==='over'?'over':''}"><span>${over?'Over by '+fmtMoney(Math.abs(diff)):'Remaining '+fmtMoney(diff)}</span><span>${target?rawPct.toFixed(1)+'%':''}</span></div>
-      <div class="alloc-bucket-expenses">${renderBucketExpenseDetails(m,b.key)}</div>
+    return `<div class="alloc-bucket-card ${over?'over':'within'}">
+      <div class="alloc-bucket-head"><div class="alloc-bucket-name">${b.label} <span style="font-weight:500;color:var(--muted);font-size:11px;">(${pct}%)</span></div><div class="alloc-bucket-amt ${over?'over':''}">${fmtMoney(spent)} / ${fmtMoney(target)}</div></div>
+      <div class="budget-progress"><div class="budget-progress-fill ${over?'over':''}" style="width:${barPct}%"></div></div>
+      <div class="alloc-bucket-meta ${over?'over':''}"><span>${over?'Over by '+fmtMoney(Math.abs(diff)):'Remaining '+fmtMoney(diff)}</span><span>${target?rawPct.toFixed(1)+'%':''}</span></div>
     </div>`;
   }).join('');
-  bucketsWrap.querySelectorAll('.alloc-bucket-card').forEach(card=>{
-    const toggle=()=>{
-      const open=card.classList.toggle('is-open');
-      card.setAttribute('aria-expanded',open?'true':'false');
-    };
-    card.addEventListener('click',toggle);
-    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
-  });
 }
 function initAllocUI(){
   loadAllocRule();loadCategoryBuckets();loadProjectedIncome();
   renderAllocRuleInputs();renderAllocIncomeInputs();renderAllocOverview();
   document.getElementById('allocSaveRuleBtn')?.addEventListener('click',saveAllocRuleFromInputs);
-  
+  document.getElementById('allocIncome')?.addEventListener('change',saveAllocIncomeFromInput);
 }
 function refreshAllocForMonthChange(){renderAllocIncomeInputs();renderAllocOverview();}
 
@@ -5626,6 +5494,7 @@ function renderCategoryManager(){
   const bucketOptions=b=>ALLOC_BUCKETS.map(x=>`<option value="${x.key}" ${b===x.key?'selected':''}>${x.label}</option>`).join('');
   tree.innerHTML=initialBalanceCard + cats.map(cat=>{
     const subs=[...(source[cat]||[])].filter(sub=>sub!=='Account Transfer' && sub!=='Initial Balance').sort((a,b)=>a.localeCompare(b));
+    const bucketRow=categoryManagerType==='expense'?`<div class="category-bucket-row"><label>ALLOCATION BUCKET</label><select class="category-bucket-select" data-bucket-cat="${escapeHtml(cat)}"><option value="">Unassigned</option>${bucketOptions(getCategoryBucket(cat))}</select></div>`:'';
     return `<div class="category-item">
       <div class="category-item-head">
         <div><div class="category-item-title">${escapeHtml(cat)}</div><div class="category-item-count">${subs.length} subcategor${subs.length===1?'y':'ies'}</div></div>
@@ -5634,11 +5503,11 @@ function renderCategoryManager(){
           <button type="button" class="delete-cat" data-remove-cat="${escapeHtml(cat)}">Delete</button>
         </div>
       </div>
+      ${bucketRow}
       <div class="category-sub-list">
         ${subs.length ? subs.map(sub=>`<div class="category-sub-row">
           <div class="category-sub-name">${escapeHtml(sub)}</div>
           <div class="category-sub-actions">
-            ${categoryManagerType==='expense'?`<select class="category-bucket-select" data-bucket-cat="${escapeHtml(cat)}" data-bucket-sub="${escapeHtml(sub)}"><option value="">Unassigned</option>${bucketOptions(getCategoryBucket(cat,sub))}</select>`:''}
             <button type="button" class="edit-sub" data-edit-sub-cat="${escapeHtml(cat)}" data-edit-sub="${escapeHtml(sub)}">Edit</button>
             <button type="button" class="delete-sub" data-remove-sub-cat="${escapeHtml(cat)}" data-remove-sub="${escapeHtml(sub)}">Delete</button>
           </div>
@@ -5684,10 +5553,9 @@ function renderCategoryManager(){
     document.getElementById('newSubcategoryName').focus();
   }));
   tree.querySelectorAll('[data-bucket-cat]').forEach(sel=>sel.addEventListener('change',()=>{
-    const cat=sel.dataset.bucketCat, sub=sel.dataset.bucketSub;
-    setCategoryBucket(cat,sub,sel.value);
+    setCategoryBucket(sel.dataset.bucketCat,sel.value);
     renderAllocOverview();
-    showToast(sel.value?`${sub} assigned to ${ALLOC_BUCKETS.find(b=>b.key===sel.value)?.label||sel.value}`:`${sub} unassigned`);
+    showToast(sel.value?`${sel.dataset.bucketCat} assigned to ${ALLOC_BUCKETS.find(b=>b.key===sel.value)?.label||sel.value}`:`${sel.dataset.bucketCat} unassigned`);
   }));
 }
 function addManagedCategory(){
@@ -6078,7 +5946,7 @@ function mergeLocalWithCloudSources(sources){
   // is a single object; adopt a cloud copy only if this device still has the default.
   const mergedCategoryBucket={},mergedProjectedIncome={};
   all.forEach(src=>{ Object.assign(mergedCategoryBucket,src.categoryBucket||{}); Object.assign(mergedProjectedIncome,src.projectedIncome||{}); });
-  CATEGORY_BUCKETS=normalizeCategoryBuckets(mergedCategoryBucket); saveCategoryBuckets();
+  CATEGORY_BUCKETS=mergedCategoryBucket; saveCategoryBuckets();
   PROJECTED_INCOME=mergedProjectedIncome; saveProjectedIncome();
   const cloudRule=sources.map(s=>s.budgetRule).find(r=>r);
   if(cloudRule && JSON.stringify(ALLOC_RULE)===JSON.stringify({needs:40,wants:20,invest:40})){ ALLOC_RULE=cloudRule; saveAllocRule(); }
@@ -6172,7 +6040,7 @@ async function driveRestore(silent){
         if(data.categories){ loadCategoryConfig({...data.categories,categoryMeta:data.categoryMeta||{}}); localStorage.setItem(LS_CATEGORY_CONFIG,JSON.stringify(getCategoryConfig())); }
         if(data.categoryMeta) setCategoryMeta(data.categoryMeta);
         if(data.budgetRule){ ALLOC_RULE=data.budgetRule; localStorage.setItem(LS_ALLOC_RULE,JSON.stringify(ALLOC_RULE)); }
-        if(data.categoryBucket){ CATEGORY_BUCKETS=normalizeCategoryBuckets({...data.categoryBucket,...CATEGORY_BUCKETS}); localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS)); }
+        if(data.categoryBucket){ CATEGORY_BUCKETS={...data.categoryBucket,...CATEGORY_BUCKETS}; localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS)); }
         if(data.projectedIncome){ PROJECTED_INCOME={...data.projectedIncome,...PROJECTED_INCOME}; localStorage.setItem(LS_PROJECTED_INCOME,JSON.stringify(PROJECTED_INCOME)); }
         renderAllocRuleInputs(); renderAllocIncomeInputs(); renderAllocOverview();
         localStorage.setItem(LS_TXNS,JSON.stringify(TXNS)); localStorage.setItem(LS_PLANS,JSON.stringify(PLANS)); localStorage.setItem(LS_GOALS,JSON.stringify(GOALS)); localStorage.setItem(LS_DEBTS,JSON.stringify(DEBTS)); localStorage.setItem(LS_TASKS,JSON.stringify(TASKS)); localStorage.setItem(LS_SHOPPING,JSON.stringify(SHOPPING)); localStorage.setItem(LS_SHOPCOMMON,JSON.stringify(SHOPCOMMON)); localStorage.setItem(LS_BUDGETS,JSON.stringify(MONTHLY_BUDGETS));
