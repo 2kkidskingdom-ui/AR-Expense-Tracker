@@ -2327,7 +2327,7 @@ nav.tabs button.active{font-weight:700!important;}
         </div>
         <div class="alloc-pct-error" id="allocPctError" style="display:none;">Percentages must add up to 100%.</div>
         <button class="save-btn" id="allocSaveRuleBtn" type="button">Save Percentages</button>
-        <div class="field" style="margin:14px 0 0;"><label for="allocIncome">MONTHLY INCOME</label><input type="number" id="allocIncome" min="0" step="0.01" inputmode="decimal" placeholder="Enter income for this month"></div>
+        <div class="field" style="margin:14px 0 0;"><label for="allocIncome">MONTHLY INCOME</label><input type="number" id="allocIncome" min="0" step="0.01" inputmode="decimal" placeholder="Calculated from actual/projected income" readonly><div id="allocIncomeSource" class="budget-meta" style="margin-top:6px;"></div></div>
       </div>
       <div class="alloc-unassigned" id="allocUnassigned" style="display:none;"></div>
       <div class="alloc-buckets" id="allocBuckets"></div>
@@ -4802,31 +4802,94 @@ let CATEGORY_BUCKETS={};
 let PROJECTED_INCOME={};
 function loadAllocRule(){try{const raw=localStorage.getItem(LS_ALLOC_RULE);if(raw){const p=JSON.parse(raw);ALLOC_RULE={needs:Number(p.needs)||0,wants:Number(p.wants)||0,invest:Number(p.invest)||0};}}catch(e){}}
 function saveAllocRule(){localStorage.setItem(LS_ALLOC_RULE,JSON.stringify(ALLOC_RULE));markLocalDirty();if(accessToken)debouncedBackup();}
-function loadCategoryBuckets(){try{const raw=localStorage.getItem(LS_CATEGORY_BUCKET);CATEGORY_BUCKETS=raw?JSON.parse(raw):{};}catch(e){CATEGORY_BUCKETS={};}}
+function subcategoryBucketKey(cat,sub){return `${cat||''}|||${sub||''}`;}
+function loadCategoryBuckets(){
+  try{
+    const raw=localStorage.getItem(LS_CATEGORY_BUCKET);
+    CATEGORY_BUCKETS=raw?JSON.parse(raw):{};
+    // Migrate any older category-level bucket assignments to every existing subcategory.
+    // New assignments are always stored at category + subcategory level.
+    let migrated=false;
+    Object.entries({...CATEGORY_BUCKETS}).forEach(([key,bucket])=>{
+      if(key.includes('|||'))return;
+      const subs=EXPENSE_CATEGORY_SUBCATS[key];
+      if(subs && bucket){
+        [...subs].forEach(sub=>{CATEGORY_BUCKETS[subcategoryBucketKey(key,sub)]=bucket;});
+        delete CATEGORY_BUCKETS[key];
+        migrated=true;
+      }
+    });
+    if(migrated)localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS));
+  }catch(e){CATEGORY_BUCKETS={};}
+}
 function saveCategoryBuckets(){localStorage.setItem(LS_CATEGORY_BUCKET,JSON.stringify(CATEGORY_BUCKETS));markLocalDirty();if(accessToken)debouncedBackup();}
-function getCategoryBucket(cat){return CATEGORY_BUCKETS[cat]||'';}
-function setCategoryBucket(cat,bucket){if(bucket){CATEGORY_BUCKETS[cat]=bucket;}else{delete CATEGORY_BUCKETS[cat];}saveCategoryBuckets();}
+function getSubcategoryBucket(cat,sub){return CATEGORY_BUCKETS[subcategoryBucketKey(cat,sub)]||'';}
+function setSubcategoryBucket(cat,sub,bucket){
+  const key=subcategoryBucketKey(cat,sub);
+  if(bucket)CATEGORY_BUCKETS[key]=bucket; else delete CATEGORY_BUCKETS[key];
+  saveCategoryBuckets();
+}
+function renameSubcategoryBuckets(cat,oldSub,newSub){
+  const oldKey=subcategoryBucketKey(cat,oldSub),newKey=subcategoryBucketKey(cat,newSub);
+  if(CATEGORY_BUCKETS[oldKey]){CATEGORY_BUCKETS[newKey]=CATEGORY_BUCKETS[oldKey];delete CATEGORY_BUCKETS[oldKey];saveCategoryBuckets();}
+}
+function renameCategoryBuckets(oldCat,newCat){
+  let changed=false;
+  Object.entries({...CATEGORY_BUCKETS}).forEach(([key,bucket])=>{
+    const [cat,sub]=key.split('|||');
+    if(cat===oldCat){CATEGORY_BUCKETS[subcategoryBucketKey(newCat,sub)]=bucket;delete CATEGORY_BUCKETS[key];changed=true;}
+  });
+  if(changed)saveCategoryBuckets();
+}
+function removeCategoryBuckets(cat){
+  let changed=false;
+  Object.keys({...CATEGORY_BUCKETS}).forEach(key=>{if(key.startsWith(`${cat}|||`)){delete CATEGORY_BUCKETS[key];changed=true;}});
+  if(changed)saveCategoryBuckets();
+}
+function removeSubcategoryBucket(cat,sub){
+  const key=subcategoryBucketKey(cat,sub);
+  if(Object.prototype.hasOwnProperty.call(CATEGORY_BUCKETS,key)){delete CATEGORY_BUCKETS[key];saveCategoryBuckets();}
+}
 function loadProjectedIncome(){try{const raw=localStorage.getItem(LS_PROJECTED_INCOME);PROJECTED_INCOME=raw?JSON.parse(raw):{};}catch(e){PROJECTED_INCOME={};}}
 function saveProjectedIncome(){localStorage.setItem(LS_PROJECTED_INCOME,JSON.stringify(PROJECTED_INCOME));markLocalDirty();if(accessToken)debouncedBackup();}
-function getProjectedIncomeForMonth(m){return Number(PROJECTED_INCOME[m]||0);}
-function setProjectedIncomeForMonth(m,val){if(val>0)PROJECTED_INCOME[m]=val;else delete PROJECTED_INCOME[m];saveProjectedIncome();}
 function computeActualIncomeForMonth(m){return TXNS.filter(t=>t&&t.amount>0&&isRealIncome(t)&&reportMonth(t)===m).reduce((s,t)=>s+Number(t.amount||0),0);}
-// One income value per month: actual logged income if there is any, otherwise the projected figure entered for that month.
-function computeMonthIncomeInfo(m){const actual=computeActualIncomeForMonth(m);const projected=getProjectedIncomeForMonth(m);const used=actual>0?actual:projected;const source=actual>0?'actual':(projected>0?'projected':'none');return{actual,projected,used,source};}
-// Every expense category rolls up into exactly one of the three buckets above.
-// Uncategorized expense categories are surfaced as "unassigned" rather than silently dropped.
+function computeProjectedIncomeForMonth(m){
+  const [y,mo]=m.split('-').map(Number);
+  const lastDay=new Date(y,mo,0).getDate();
+  const from=`${m}-01`,to=`${m}-${String(lastDay).padStart(2,'0')}`;
+  return PLANS.flatMap(p=>expandPlanOccurrences(p,from,to,false))
+    .filter(p=>Number(p.credit||0)>0)
+    .reduce((s,p)=>s+Number(p.credit||0),0);
+}
+// One income value per month: total actual income if any exists; otherwise total planned income entries for that month.
+function computeMonthIncomeInfo(m){
+  const actual=computeActualIncomeForMonth(m);
+  const projected=computeProjectedIncomeForMonth(m);
+  const used=actual>0?actual:projected;
+  const source=actual>0?'actual':(projected>0?'projected':'none');
+  return{actual,projected,used,source};
+}
+// Every expense subcategory rolls up into exactly one of the three buckets above.
+// Uncategorized subcategories are surfaced as "unassigned" rather than silently dropped.
 function computeBucketSpend(m){
   const spend={needs:0,wants:0,invest:0};
   const unassignedMap={};
   TXNS.forEach(t=>{
     if(!(t&&t.amount<0&&isRealExpense(t)&&reportMonth(t)===m))return;
     const cat=t.category||'';
-    const bucket=getCategoryBucket(cat);
+    const sub=t.subcategory||'';
+    const bucket=getSubcategoryBucket(cat,sub);
     const amt=Math.abs(Number(t.amount||0));
     if(bucket&&spend.hasOwnProperty(bucket)){spend[bucket]+=amt;}
-    else{unassignedMap[cat]=(unassignedMap[cat]||0)+amt;}
+    else{
+      const key=subcategoryBucketKey(cat,sub);
+      unassignedMap[key]=(unassignedMap[key]||0)+amt;
+    }
   });
-  const unassigned=Object.entries(unassignedMap).map(([category,amount])=>({category,amount})).sort((a,b)=>b.amount-a.amount);
+  const unassigned=Object.entries(unassignedMap).map(([key,amount])=>{
+    const [category,subcategory]=key.split('|||');
+    return{category,subcategory,amount};
+  }).sort((a,b)=>b.amount-a.amount);
   return{spend,unassigned};
 }
 function allocRuleTotal(){return Number(ALLOC_RULE.needs||0)+Number(ALLOC_RULE.wants||0)+Number(ALLOC_RULE.invest||0);}
@@ -4848,16 +4911,18 @@ function renderAllocIncomeInputs(){
   const m=currentBudgetMonth();
   const info=computeMonthIncomeInfo(m);
   const el=document.getElementById('allocIncome');
+  const sourceEl=document.getElementById('allocIncomeSource');
   if(!el)return;
-  if(info.actual>0){ el.value=info.actual; el.readOnly=true; }
-  else{ el.readOnly=false; el.value=info.projected||''; }
-}
-function saveAllocIncomeFromInput(){
-  const el=document.getElementById('allocIncome');
-  if(!el||el.readOnly)return;
-  const m=currentBudgetMonth();
-  setProjectedIncomeForMonth(m,Number(el.value)||0);
-  renderAllocOverview();
+  el.value=info.used||'';
+  el.readOnly=true;
+  el.setAttribute('aria-readonly','true');
+  if(sourceEl){
+    sourceEl.textContent=info.source==='actual'
+      ? `Actual income total: ${fmtMoney(info.actual)} (all actual income entries for ${monthLabel(m)})`
+      : info.source==='projected'
+        ? `Projected income total: ${fmtMoney(info.projected)} (planned income entries for ${monthLabel(m)})`
+        : `No actual or projected income entries for ${monthLabel(m)}`;
+  }
 }
 function renderAllocOverview(){
   const m=currentBudgetMonth();
@@ -4867,7 +4932,7 @@ function renderAllocOverview(){
   if(unassigned.length){
     unassignedWrap.style.display='block';
     const total=unassigned.reduce((s,u)=>s+u.amount,0);
-    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Basic Needs / Advanced Needs / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.category)).join(', ')}.`;
+    unassignedWrap.innerHTML=`<b>${unassigned.length} subcategor${unassigned.length===1?'y is':'ies are'} not assigned to Basic Needs / Advanced Needs / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each subcategory in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(`${u.category} · ${u.subcategory||'Unspecified'}`)).join(', ')}.`;
   }else{
     unassignedWrap.style.display='none';unassignedWrap.innerHTML='';
   }
@@ -5471,8 +5536,6 @@ function renderCategoryManager(){
   document.getElementById('categoryModeIncome')?.classList.toggle('active',categoryManagerType==='income');
   document.getElementById('categoryModeExpense')?.classList.toggle('active',categoryManagerType==='expense');
   const cats=Object.keys(source).filter(cat=>cat!=='Income' && cat!=='Account Transfer' && cat!=='Initial Balance').sort((a,b)=>a.localeCompare(b));
-  // Initial Balance is a system entry, not a selectable category in the normal lists,
-  // but it must still be visible in Category Manager because it exists in the data.
   const hasInitialBalance=TXNS.some(t=>t && t.subcategory==='Initial Balance');
   const initialBalanceCard=hasInitialBalance ? `<div class="category-item category-system-item">
       <div class="category-item-head">
@@ -5490,20 +5553,19 @@ function renderCategoryManager(){
   const bucketOptions=b=>ALLOC_BUCKETS.map(x=>`<option value="${x.key}" ${b===x.key?'selected':''}>${x.label}</option>`).join('');
   tree.innerHTML=initialBalanceCard + cats.map(cat=>{
     const subs=[...(source[cat]||[])].filter(sub=>sub!=='Account Transfer' && sub!=='Initial Balance').sort((a,b)=>a.localeCompare(b));
-    const bucketRow=categoryManagerType==='expense'?`<div class="category-bucket-row"><label>ALLOCATION BUCKET</label><select class="category-bucket-select" data-bucket-cat="${escapeHtml(cat)}"><option value="">Unassigned</option>${bucketOptions(getCategoryBucket(cat))}</select></div>`:'';
     return `<div class="category-item">
       <div class="category-item-head">
-        <div><div class="category-item-title">${escapeHtml(cat)}</div><div class="category-item-count">${subs.length} subcategor${subs.length===1?'y':'ies'}</div></div>
+        <div><div class="category-item-title">${escapeHtml(cat)}</div><div class="category-item-count">${subs.length} subcategor${subs.length===1?'y':'ies'} · bucket set per subcategory</div></div>
         <div class="category-actions">
           <button type="button" class="edit-cat" data-edit-cat="${escapeHtml(cat)}">✎ Edit</button>
           <button type="button" class="delete-cat" data-remove-cat="${escapeHtml(cat)}">Delete</button>
         </div>
       </div>
-      ${bucketRow}
       <div class="category-sub-list">
         ${subs.length ? subs.map(sub=>`<div class="category-sub-row">
           <div class="category-sub-name">${escapeHtml(sub)}</div>
-          <div class="category-sub-actions">
+          <div class="category-sub-actions" style="align-items:center;">
+            ${categoryManagerType==='expense'?`<select class="category-bucket-select" data-bucket-cat="${escapeHtml(cat)}" data-bucket-sub="${escapeHtml(sub)}" aria-label="Allocation bucket for ${escapeHtml(sub)}"><option value="">Unassigned</option>${bucketOptions(getSubcategoryBucket(cat,sub))}</select>`:''}
             <button type="button" class="edit-sub" data-edit-sub-cat="${escapeHtml(cat)}" data-edit-sub="${escapeHtml(sub)}">Edit</button>
             <button type="button" class="delete-sub" data-remove-sub-cat="${escapeHtml(cat)}" data-remove-sub="${escapeHtml(sub)}">Delete</button>
           </div>
@@ -5517,13 +5579,19 @@ function renderCategoryManager(){
     const cat=btn.dataset.removeCat;
     const source=categoryManagerType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
     if(confirm(`Delete ${cat} category from the selectable list? Existing entries will not be deleted.`)){
-      delete source[cat]; saveCategoryConfig(); showToast('Category deleted');
+      delete source[cat];
+      if(categoryManagerType==='expense')removeCategoryBuckets(cat);
+      saveCategoryConfig(); showToast('Category deleted'); renderCategoryManager();
     }
   }));
   tree.querySelectorAll('[data-remove-sub]').forEach(btn=>btn.addEventListener('click',()=>{
     const source=categoryManagerType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
     const cat=btn.dataset.removeSubCat, sub=btn.dataset.removeSub;
-    if(source[cat]){ source[cat].delete(sub); saveCategoryConfig(); showToast('Subcategory deleted'); }
+    if(source[cat]){
+      source[cat].delete(sub);
+      if(categoryManagerType==='expense')removeSubcategoryBucket(cat,sub);
+      saveCategoryConfig(); showToast('Subcategory deleted'); renderCategoryManager();
+    }
   }));
   tree.querySelectorAll('[data-edit-cat]').forEach(btn=>btn.addEventListener('click',()=>{
     const source=categoryManagerType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
@@ -5531,7 +5599,9 @@ function renderCategoryManager(){
     const newCat=prompt('Edit category name:',oldCat)?.trim();
     if(!newCat || newCat===oldCat) return;
     if(source[newCat]){ showToast('That category already exists'); return; }
-    source[newCat]=source[oldCat]; delete source[oldCat]; saveCategoryConfig(); showToast('Category updated');
+    source[newCat]=source[oldCat]; delete source[oldCat];
+    if(categoryManagerType==='expense')renameCategoryBuckets(oldCat,newCat);
+    saveCategoryConfig(); showToast('Category updated'); renderCategoryManager();
   }));
   tree.querySelectorAll('[data-edit-sub]').forEach(btn=>btn.addEventListener('click',()=>{
     const source=categoryManagerType==='income'?INCOME_CATEGORY_SUBCATS:EXPENSE_CATEGORY_SUBCATS;
@@ -5540,7 +5610,9 @@ function renderCategoryManager(){
     const newSub=prompt('Edit subcategory name:',oldSub)?.trim();
     if(!newSub || newSub===oldSub) return;
     if(source[cat].has(newSub)){ showToast('That subcategory already exists'); return; }
-    source[cat].delete(oldSub); source[cat].add(newSub); saveCategoryConfig(); showToast('Subcategory updated');
+    source[cat].delete(oldSub); source[cat].add(newSub);
+    if(categoryManagerType==='expense')renameSubcategoryBuckets(cat,oldSub,newSub);
+    saveCategoryConfig(); showToast('Subcategory updated'); renderCategoryManager();
   }));
   tree.querySelectorAll('[data-add-sub-cat]').forEach(btn=>btn.addEventListener('click',()=>{
     const cat=btn.dataset.addSubCat;
@@ -5548,12 +5620,14 @@ function renderCategoryManager(){
     document.getElementById('newSubcategoryName').value='';
     document.getElementById('newSubcategoryName').focus();
   }));
-  tree.querySelectorAll('[data-bucket-cat]').forEach(sel=>sel.addEventListener('change',()=>{
-    setCategoryBucket(sel.dataset.bucketCat,sel.value);
+  tree.querySelectorAll('[data-bucket-sub]').forEach(sel=>sel.addEventListener('change',()=>{
+    const cat=sel.dataset.bucketCat, sub=sel.dataset.bucketSub;
+    setSubcategoryBucket(cat,sub,sel.value);
     renderAllocOverview();
-    showToast(sel.value?`${sel.dataset.bucketCat} assigned to ${ALLOC_BUCKETS.find(b=>b.key===sel.value)?.label||sel.value}`:`${sel.dataset.bucketCat} unassigned`);
+    showToast(sel.value?`${sub} assigned to ${ALLOC_BUCKETS.find(b=>b.key===sel.value)?.label||sel.value}`:`${sub} unassigned`);
   }));
 }
+
 function addManagedCategory(){
   const cat=document.getElementById('newCategoryName').value.trim();
   const sub=document.getElementById('newSubcategoryName').value.trim();
