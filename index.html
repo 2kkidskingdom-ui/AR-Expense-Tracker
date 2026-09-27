@@ -548,14 +548,10 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .budget-summary-card.over-budget .budget-spent-row{color:#D83D4A}
 .budget-summary-card.over-budget .budget-progress-fill{background:linear-gradient(90deg,#D83D4A,#EF6B76)}
 .budget-spent-row{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;color:var(--muted);margin-top:6px}.budget-delete{border:1px solid #F0A7AE;background:#fff0f2;color:#D83D4A;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer;margin-top:9px}.budget-empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);font-size:12px}@media(max-width:520px){.budget-month-row{flex-direction:column;align-items:stretch}.budget-total-box{text-align:left;min-width:0}}
-/* Income Allocation (Needs/Enjoyment/Investment rule) */
+/* Budget (Basic Needs / Advanced Needs / Investment rule) */
 .alloc-card{margin-top:14px}
-.alloc-desc{font-size:12px;line-height:1.55;color:var(--muted);margin:0 0 14px;}
 .alloc-pct-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 .alloc-pct-error{font-size:11.5px;color:#D83D4A;font-weight:600;margin-top:8px;}
-.alloc-income-row{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap;}
-.alloc-actual-income{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:16px;color:var(--green-dark);background:#F3FBF8;border:1px solid #B9D3DF;border-radius:12px;padding:10px 13px;}
-.alloc-income-used{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5;}
 .alloc-unassigned{background:#FFF7E6;border:1px solid #EFCB7A;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:12px;color:#7A5A0A;line-height:1.55;}
 .alloc-unassigned b{color:#5A4000;}
 .alloc-buckets{display:grid;gap:10px;margin-top:14px;}
@@ -2321,52 +2317,20 @@ nav.tabs button.active{font-weight:700!important;}
     </section>
 
     <section id="budget">
-      <div class="section-title">Income Allocation</div>
+      <div class="section-title">Budget</div>
       <div class="budget-card alloc-card">
-        <p class="alloc-desc" id="allocDesc">Every rupee of income is split across three buckets. Set your percentages and this month's income below — every expense category then counts against one of these three limits.</p>
+        <div class="field" style="margin:0 0 14px;"><label for="budgetMonth">VIEW MONTH</label><input type="month" id="budgetMonth"></div>
         <div class="alloc-pct-row">
-          <div class="field" style="margin:0;"><label for="allocPctNeeds">NEEDS %</label><input type="number" id="allocPctNeeds" min="0" max="100" step="1"></div>
-          <div class="field" style="margin:0;"><label for="allocPctWants">ENJOYMENT %</label><input type="number" id="allocPctWants" min="0" max="100" step="1"></div>
+          <div class="field" style="margin:0;"><label for="allocPctNeeds">BASIC NEEDS %</label><input type="number" id="allocPctNeeds" min="0" max="100" step="1"></div>
+          <div class="field" style="margin:0;"><label for="allocPctWants">ADVANCED NEEDS %</label><input type="number" id="allocPctWants" min="0" max="100" step="1"></div>
           <div class="field" style="margin:0;"><label for="allocPctInvest">INVESTMENT %</label><input type="number" id="allocPctInvest" min="0" max="100" step="1"></div>
         </div>
         <div class="alloc-pct-error" id="allocPctError" style="display:none;">Percentages must add up to 100%.</div>
         <button class="save-btn" id="allocSaveRuleBtn" type="button">Save Percentages</button>
-        <div class="alloc-income-row">
-          <div class="field" style="margin:0;flex:1;">
-            <label>ACTUAL INCOME THIS MONTH</label>
-            <div class="alloc-actual-income" id="allocActualIncome">₹0.00</div>
-          </div>
-          <div class="field" style="margin:0;flex:1;">
-            <label for="allocProjectedIncome">PROJECTED INCOME (if actual not final yet)</label>
-            <input type="number" id="allocProjectedIncome" min="0" step="0.01" inputmode="decimal" placeholder="Enter expected income">
-          </div>
-        </div>
-        <button class="save-btn" id="allocSaveIncomeBtn" type="button">Save Projected Income</button>
-        <div class="alloc-income-used" id="allocIncomeUsed"></div>
+        <div class="field" style="margin:14px 0 0;"><label for="allocIncome">MONTHLY INCOME</label><input type="number" id="allocIncome" min="0" step="0.01" inputmode="decimal" placeholder="Enter income for this month"></div>
       </div>
       <div class="alloc-unassigned" id="allocUnassigned" style="display:none;"></div>
       <div class="alloc-buckets" id="allocBuckets"></div>
-
-      <div class="section-title">Monthly Budget</div>
-      <div class="budget-card">
-        <div class="budget-month-row">
-          <div class="field" style="margin:0;flex:1;"><label for="budgetMonth">VIEW MONTH</label><input type="month" id="budgetMonth"></div>
-        </div>
-        <div class="field"><label>EXPENSE CATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetCategoryBtn">Select categories</button><div class="budget-dropdown" id="budgetCategoryDropdown"></div></div></div>
-        <div class="field"><label>EXPENSE SUBCATEGORIES</label><div class="budget-multi-select"><button type="button" class="budget-select-btn" id="budgetSubcategoryBtn">Select subcategories</button><div class="budget-dropdown" id="budgetSubcategoryDropdown"></div></div></div>
-        <div class="field"><label for="budgetAmount">MONTHLY BUDGET AMOUNT</label><input type="number" id="budgetAmount" min="0" step="0.01" inputmode="decimal" placeholder="Enter amount"></div>
-        <button class="save-btn" id="budgetSaveBtn">Add Budget</button><button type="button" class="budget-cancel-edit" id="budgetCancelEditBtn" style="display:none">Cancel Edit</button>
-      </div>
-      <div class="budget-overview-card" id="budgetOverviewCard" style="display:none;">
-        <div class="budget-overview-row">
-          <div class="budget-overview-col"><div class="budget-small-label">TOTAL BUDGET</div><div class="budget-overview-amt" id="budgetOverviewBudget">₹0.00</div></div>
-          <div class="budget-overview-col"><div class="budget-small-label">ACTUAL SPENT</div><div class="budget-overview-amt" id="budgetOverviewSpent">₹0.00</div></div>
-          <div class="budget-overview-col"><div class="budget-small-label" id="budgetOverviewDiffLabel">REMAINING</div><div class="budget-overview-amt" id="budgetOverviewDiff">₹0.00</div></div>
-        </div>
-        <div class="budget-progress"><div class="budget-progress-fill" id="budgetOverviewFill" style="width:0%"></div></div>
-        <div class="budget-overview-pct" id="budgetOverviewPct">0% of budget used</div>
-      </div>
-      <div class="budget-summary" id="budgetSummary"></div>
 
       <div class="section-title">Debts &amp; Loan EMIs</div>
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Keep a list of loans you owe. Enter this month's outstanding balance for each one and see how it's trending against last month.</p>
@@ -4828,11 +4792,11 @@ function renderAnalysis(range){
   if(cb&&!cb.dataset.bound){cb.dataset.bound='1';cb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='block';table.style.display='none';cb.classList.add('active');tb.classList.remove('active');});tb.addEventListener('click',()=>{document.getElementById('trendChartSvg').style.display='none';table.style.display='block';tb.classList.add('active');cb.classList.remove('active');});}
 }
 
-// ---------- Income Allocation (Needs/Enjoyment/Investment rule; additive) ----------
+// ---------- Budget (Basic Needs / Advanced Needs / Investment allocation rule; additive) ----------
 const LS_ALLOC_RULE='ledger.budgetRule.v1';
 const LS_CATEGORY_BUCKET='ledger.categoryBucket.v1';
 const LS_PROJECTED_INCOME='ledger.projectedIncome.v1';
-const ALLOC_BUCKETS=[{key:'needs',label:'Needs'},{key:'wants',label:'Enjoyment'},{key:'invest',label:'Investment'}];
+const ALLOC_BUCKETS=[{key:'needs',label:'Basic Needs'},{key:'wants',label:'Advanced Needs'},{key:'invest',label:'Investment'}];
 let ALLOC_RULE={needs:40,wants:20,invest:40};
 let CATEGORY_BUCKETS={};
 let PROJECTED_INCOME={};
@@ -4847,6 +4811,7 @@ function saveProjectedIncome(){localStorage.setItem(LS_PROJECTED_INCOME,JSON.str
 function getProjectedIncomeForMonth(m){return Number(PROJECTED_INCOME[m]||0);}
 function setProjectedIncomeForMonth(m,val){if(val>0)PROJECTED_INCOME[m]=val;else delete PROJECTED_INCOME[m];saveProjectedIncome();}
 function computeActualIncomeForMonth(m){return TXNS.filter(t=>t&&t.amount>0&&isRealIncome(t)&&reportMonth(t)===m).reduce((s,t)=>s+Number(t.amount||0),0);}
+// One income value per month: actual logged income if there is any, otherwise the projected figure entered for that month.
 function computeMonthIncomeInfo(m){const actual=computeActualIncomeForMonth(m);const projected=getProjectedIncomeForMonth(m);const used=actual>0?actual:projected;const source=actual>0?'actual':(projected>0?'projected':'none');return{actual,projected,used,source};}
 // Every expense category rolls up into exactly one of the three buckets above.
 // Uncategorized expense categories are surfaced as "unassigned" rather than silently dropped.
@@ -4865,15 +4830,9 @@ function computeBucketSpend(m){
   return{spend,unassigned};
 }
 function allocRuleTotal(){return Number(ALLOC_RULE.needs||0)+Number(ALLOC_RULE.wants||0)+Number(ALLOC_RULE.invest||0);}
-function renderAllocDescription(){
-  const el=document.getElementById('allocDesc');if(!el)return;
-  const n=Number(ALLOC_RULE.needs||0),w=Number(ALLOC_RULE.wants||0),i=Number(ALLOC_RULE.invest||0);
-  el.textContent=`Every ₹1,00,000 of income splits into ₹${(n*1000).toLocaleString('en-IN')} Needs (${n}%), ₹${(w*1000).toLocaleString('en-IN')} Enjoyment (${w}%) and ₹${(i*1000).toLocaleString('en-IN')} Investment (${i}%). Every expense category counts against one of these three limits.`;
-}
 function renderAllocRuleInputs(){
   const nEl=document.getElementById('allocPctNeeds'),wEl=document.getElementById('allocPctWants'),iEl=document.getElementById('allocPctInvest');
   if(nEl)nEl.value=ALLOC_RULE.needs; if(wEl)wEl.value=ALLOC_RULE.wants; if(iEl)iEl.value=ALLOC_RULE.invest;
-  renderAllocDescription();
 }
 function saveAllocRuleFromInputs(){
   const n=Number(document.getElementById('allocPctNeeds').value)||0;
@@ -4883,28 +4842,22 @@ function saveAllocRuleFromInputs(){
   if(n+w+i!==100){errEl.style.display='block';return;}
   errEl.style.display='none';
   ALLOC_RULE={needs:n,wants:w,invest:i};
-  saveAllocRule();renderAllocDescription();renderAllocOverview();showToast('Allocation percentages saved.');
+  saveAllocRule();renderAllocOverview();showToast('Allocation percentages saved.');
 }
 function renderAllocIncomeInputs(){
   const m=currentBudgetMonth();
   const info=computeMonthIncomeInfo(m);
-  const actualEl=document.getElementById('allocActualIncome');
-  if(actualEl)actualEl.textContent=fmtMoney(info.actual);
-  const projEl=document.getElementById('allocProjectedIncome');
-  if(projEl)projEl.value=getProjectedIncomeForMonth(m)||'';
-  const usedEl=document.getElementById('allocIncomeUsed');
-  if(usedEl){
-    if(info.source==='actual')usedEl.textContent=`Using actual income of ${fmtMoney(info.actual)} logged this month for the targets below.`;
-    else if(info.source==='projected')usedEl.textContent=`No income logged yet for ${monthLabel(m)} — using your projected ${fmtMoney(info.projected)} for the targets below. This updates automatically once you log actual income.`;
-    else usedEl.textContent='Enter a projected income, or log an income transaction, to see your allocation targets.';
-  }
+  const el=document.getElementById('allocIncome');
+  if(!el)return;
+  if(info.actual>0){ el.value=info.actual; el.readOnly=true; }
+  else{ el.readOnly=false; el.value=info.projected||''; }
 }
-function saveAllocProjectedIncomeFromInput(){
+function saveAllocIncomeFromInput(){
+  const el=document.getElementById('allocIncome');
+  if(!el||el.readOnly)return;
   const m=currentBudgetMonth();
-  const val=Number(document.getElementById('allocProjectedIncome').value)||0;
-  setProjectedIncomeForMonth(m,val);
-  renderAllocIncomeInputs();renderAllocOverview();
-  showToast('Projected income saved for '+monthLabel(m)+'.');
+  setProjectedIncomeForMonth(m,Number(el.value)||0);
+  renderAllocOverview();
 }
 function renderAllocOverview(){
   const m=currentBudgetMonth();
@@ -4914,14 +4867,14 @@ function renderAllocOverview(){
   if(unassigned.length){
     unassignedWrap.style.display='block';
     const total=unassigned.reduce((s,u)=>s+u.amount,0);
-    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Needs / Enjoyment / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.category)).join(', ')}.`;
+    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Basic Needs / Advanced Needs / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.category)).join(', ')}.`;
   }else{
     unassignedWrap.style.display='none';unassignedWrap.innerHTML='';
   }
   const bucketsWrap=document.getElementById('allocBuckets');
   if(!bucketsWrap)return;
   if(!info.used){
-    bucketsWrap.innerHTML='<div class="budget-empty">Enter this month\'s income above to see your Needs / Enjoyment / Investment targets.</div>';
+    bucketsWrap.innerHTML='<div class="budget-empty">Enter this month\'s income above to see your Basic Needs / Advanced Needs / Investment targets.</div>';
     return;
   }
   bucketsWrap.innerHTML=ALLOC_BUCKETS.map(b=>{
@@ -4943,7 +4896,7 @@ function initAllocUI(){
   loadAllocRule();loadCategoryBuckets();loadProjectedIncome();
   renderAllocRuleInputs();renderAllocIncomeInputs();renderAllocOverview();
   document.getElementById('allocSaveRuleBtn')?.addEventListener('click',saveAllocRuleFromInputs);
-  document.getElementById('allocSaveIncomeBtn')?.addEventListener('click',saveAllocProjectedIncomeFromInput);
+  document.getElementById('allocIncome')?.addEventListener('change',saveAllocIncomeFromInput);
 }
 function refreshAllocForMonthChange(){renderAllocIncomeInputs();renderAllocOverview();}
 
@@ -4983,7 +4936,8 @@ function saveMonthlyBudgets(){localStorage.setItem(LS_BUDGETS,JSON.stringify(MON
 function currentBudgetMonth(){const e=document.getElementById('budgetMonth');return e&&e.value?e.value:new Date().toISOString().slice(0,7)}
 function renderBudgetMultiSelects(){const cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');if(!cd||!sd)return;const cats=getCategories('expense');cd.innerHTML=cats.length?cats.map(c=>`<label class="budget-option"><input type="checkbox" data-budget-cat="${escapeHtml(c)}" ${budgetCategorySelections.has(c)?'checked':''}><span>${escapeHtml(c)}</span></label>`).join(''):'<div class="budget-empty">No expense categories available.</div>';const subs=[];Object.entries(EXPENSE_CATEGORY_SUBCATS).forEach(([cat,a])=>{if(budgetCategorySelections.has(cat))(a||[]).forEach(sub=>subs.push({cat,sub}))});sd.innerHTML=subs.length?subs.map(x=>{const k=x.cat+'|||'+x.sub;return `<label class="budget-option"><input type="checkbox" data-budget-sub="${escapeHtml(k)}" ${budgetSubcategorySelections.has(k)?'checked':''}><span>${escapeHtml(x.cat)} · ${escapeHtml(x.sub)}</span></label>`}).join(''):'<div class="budget-empty">Select one or more categories first.</div>';document.getElementById('budgetCategoryBtn').textContent=budgetCategorySelections.size?`${budgetCategorySelections.size} selected`:'Select categories';document.getElementById('budgetSubcategoryBtn').textContent=budgetSubcategorySelections.size?`${budgetSubcategorySelections.size} selected`:'Select subcategories';cd.querySelectorAll('[data-budget-cat]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetCat;if(cb.checked)budgetCategorySelections.add(v);else budgetCategorySelections.delete(v);for(const k of [...budgetSubcategorySelections])if(!budgetCategorySelections.has(k.split('|||')[0]))budgetSubcategorySelections.delete(k);renderBudgetMultiSelects()}));sd.querySelectorAll('[data-budget-sub]').forEach(cb=>cb.addEventListener('change',()=>{const v=cb.dataset.budgetSub;if(cb.checked)budgetSubcategorySelections.add(v);else budgetSubcategorySelections.delete(v);renderBudgetMultiSelects()}))}
 function renderBudgetSummary(){
-  const w=document.getElementById('budgetSummary'),m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
+  const w=document.getElementById('budgetSummary');if(!w)return;
+  const m=currentBudgetMonth(),list=Array.isArray(MONTHLY_BUDGETS)?MONTHLY_BUDGETS:[],tot=list.reduce((a,b)=>a+Number(b.amount||0),0);
   const overviewCard=document.getElementById('budgetOverviewCard');
   if(!list.length){
     w.innerHTML='<div class="budget-empty">No budget added yet.</div>';
@@ -5058,7 +5012,7 @@ function startBudgetEdit(id){
   editingBudgetId=id;document.getElementById('budgetAmount').value=found.amount;budgetCategorySelections=new Set(found.categories||[]);budgetSubcategorySelections=new Set(found.subcategories||[]);document.getElementById('budgetSaveBtn').textContent='Update Budget';document.getElementById('budgetCancelEditBtn').style.display='block';renderBudgetMultiSelects();document.querySelector('#budget .budget-card')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cancelBudgetEdit(){editingBudgetId=null;budgetCategorySelections=new Set();budgetSubcategorySelections=new Set();const amount=document.getElementById('budgetAmount');if(amount)amount.value='';const btn=document.getElementById('budgetSaveBtn');if(btn)btn.textContent='Add Budget';const cancel=document.getElementById('budgetCancelEditBtn');if(cancel)cancel.style.display='none';renderBudgetMultiSelects()}
-function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const dm=document.getElementById('debtMonth');if(dm&&!dm.value)dm.value=new Date().toISOString().slice(0,7);const cb=document.getElementById('budgetCategoryBtn'),sb=document.getElementById('budgetSubcategoryBtn'),cd=document.getElementById('budgetCategoryDropdown'),sd=document.getElementById('budgetSubcategoryDropdown');const cf=cb.closest('.field'),sf=sb.closest('.field');const closeBudgetMenus=()=>{cd.classList.remove('show');sd.classList.remove('show');cf?.classList.remove('budget-field-open');sf?.classList.remove('budget-field-open')};cb.addEventListener('click',e=>{e.stopPropagation();sd.classList.remove('show');sf?.classList.remove('budget-field-open');cd.classList.toggle('show');cf?.classList.toggle('budget-field-open',cd.classList.contains('show'))});sb.addEventListener('click',e=>{e.stopPropagation();cd.classList.remove('show');cf?.classList.remove('budget-field-open');sd.classList.toggle('show');sf?.classList.toggle('budget-field-open',sd.classList.contains('show'))});cd.addEventListener('click',e=>e.stopPropagation());sd.addEventListener('click',e=>e.stopPropagation());document.addEventListener('click',closeBudgetMenus);m.addEventListener('change',()=>{renderBudgetSummary();refreshAllocForMonthChange();});document.getElementById('budgetSaveBtn').addEventListener('click',addMonthlyBudget);document.getElementById('budgetCancelEditBtn').addEventListener('click',cancelBudgetEdit);renderBudgetMultiSelects();renderBudgetSummary();initAllocUI();}
+function initBudgetUI(){loadMonthlyBudgets();const m=document.getElementById('budgetMonth');if(m&&!m.value)m.value=new Date().toISOString().slice(0,7);const dm=document.getElementById('debtMonth');if(dm&&!dm.value)dm.value=new Date().toISOString().slice(0,7);m.addEventListener('change',refreshAllocForMonthChange);initAllocUI();}
 
 function getQuickAddItems(){
   const map=new Map();
@@ -5112,7 +5066,7 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
     if(b.dataset.tab==='analysis') renderAnalysis(document.querySelector('#rangeBtns button.active').dataset.range);
     if(b.dataset.tab==='calendar'){ populateCalAccountFilter(); renderCalendar(); }
     if(b.dataset.tab==='plan'){ populatePlanAccountList(); renderPlanList(); renderProjectionGraph(); populateGoalAccountSelect(); renderGoalList(); }
-    if(b.dataset.tab==='budget'){ renderBudgetMultiSelects(); renderBudgetSummary(); renderDebtList(); renderAllocIncomeInputs(); renderAllocOverview(); }
+    if(b.dataset.tab==='budget'){ renderDebtList(); renderAllocIncomeInputs(); renderAllocOverview(); }
     if(b.dataset.tab==='tasks'){ renderTaskList(); renderShopping(); }
   });
 });
