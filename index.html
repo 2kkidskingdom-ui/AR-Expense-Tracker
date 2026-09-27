@@ -223,12 +223,12 @@
   .tstat .sub{font-size:9px;color:var(--muted);margin-top:2px;white-space:nowrap;}
 
   .fab{
-    position:fixed; right:20px; bottom:22px; width:56px; height:56px; border-radius:50%;
+    position:fixed; right:20px; bottom:calc(82px + env(safe-area-inset-bottom)); width:56px; height:56px; border-radius:50%;
     background:var(--green); color:#fff; border:none; font-size:26px; box-shadow:0 4px 14px rgba(18,48,38,0.35);
-    cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:95; display:flex; align-items:center; justify-content:center;
   }
 
-  .overlay{ position:fixed; inset:0; background:rgba(20,18,12,0.4); display:none; align-items:flex-end; justify-content:center; z-index:20; }
+  .overlay{ position:fixed; inset:0; background:rgba(20,18,12,0.4); display:none; align-items:flex-end; justify-content:center; z-index:200; }
   .overlay.show{display:flex;}
   .sheet{
     background:var(--paper); width:100%; max-width:640px; border-radius:14px 14px 0 0; padding:18px 20px 22px;
@@ -260,7 +260,7 @@
   .toast{
     position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
     background:var(--green-dark); color:#fff; padding:9px 16px; border-radius:20px; font-size:12.5px;
-    z-index:40; opacity:0; pointer-events:none; transition:opacity .25s;
+    z-index:210; opacity:0; pointer-events:none; transition:opacity .25s;
   }
   .toast.show{opacity:1;}
   .settings-icon{ background:none; border:none; cursor:pointer; color:var(--muted); font-size:18px; padding:4px; }
@@ -412,7 +412,7 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .cal-title{font-size:18px;}.cal-grid{gap:2px;background:var(--line);border:0;border-radius:14px;box-shadow:var(--shadow);}
 .cal-dow{background:#EDF4F0;padding:7px 0;font-size:8.5px;}.cal-day{background:#fff;min-height:78px;padding:5px 3px;border-radius:0;}.cal-day.empty{background:#F1F5F3;}.cal-day.today{outline:2px solid var(--green);}.cal-day.projected{background:repeating-linear-gradient(135deg,#fff,#fff 7px,#F0F6F3 7px,#F0F6F3 8px);border:1px dashed #A9C8B9;}
 .cal-footer .tstat{padding:10px 7px;}
-.fab{width:60px;height:60px;right:20px;bottom:22px;background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 10px 25px rgba(11,76,58,.28);font-size:29px;}
+.fab{width:60px;height:60px;right:20px;bottom:calc(82px + env(safe-area-inset-bottom));background:linear-gradient(135deg,#0E4B3A,#0B8F62);box-shadow:0 10px 25px rgba(11,76,58,.28);font-size:29px;}
 .overlay{background:rgba(10,28,22,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 .sheet{
   width:min(100%,760px);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:24px 24px 0 0;
@@ -556,6 +556,11 @@ select:focus,input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0
 .alloc-pct-error{font-size:11.5px;color:#D83D4A;font-weight:600;margin-top:8px;}
 .alloc-unassigned{background:#FFF7E6;border:1px solid #EFCB7A;border-radius:14px;padding:12px 14px;margin-top:12px;font-size:12px;color:#7A5A0A;line-height:1.55;}
 .alloc-unassigned b{color:#5A4000;}
+.alloc-warning-title{font-weight:900;font-size:13px;color:#9A4A00;margin-bottom:4px;}
+.alloc-warning-text{font-size:12px;line-height:1.5;}
+.alloc-warning-list{display:grid;gap:3px;margin-top:7px;font-size:11.5px;color:#765000;}
+.alloc-warning-list span{display:block;}
+.alloc-warning-action{margin-top:7px;font-weight:800;font-size:11.5px;color:#7A4A00;}
 .alloc-buckets{display:grid;gap:10px;margin-top:14px;}
 .alloc-bucket-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow);}
 .alloc-bucket-card.over{border-left:4px solid #E04450;background:linear-gradient(135deg,#fff,#fff7f8)}
@@ -4980,12 +4985,15 @@ function renderAllocOverview(){
   const info=computeMonthIncomeInfo(m);
   const {spend,unassigned}=computeBucketSpend(m);
   const unassignedWrap=document.getElementById('allocUnassigned');
-  if(unassigned.length){
-    unassignedWrap.style.display='block';
-    const total=unassigned.reduce((s,u)=>s+u.amount,0);
-    unassignedWrap.innerHTML=`<b>${unassigned.length} categor${unassigned.length===1?'y is':'ies are'} not assigned to Basic Needs / Advanced Needs / Investment</b> (${fmtMoney(total)} spent in ${monthLabel(m)} not counted below). Assign a bucket to each in Settings → Category Manager: ${unassigned.map(u=>escapeHtml(u.subcategory ? u.category+' · '+u.subcategory : u.category)).join(', ')}.`;
-  }else{
-    unassignedWrap.style.display='none';unassignedWrap.innerHTML='';
+  if(unassignedWrap){
+    if(unassigned.length){
+      const total=unassigned.reduce((s,u)=>s+u.amount,0);
+      unassignedWrap.style.display='block';
+      unassignedWrap.innerHTML=`<div class="alloc-warning-title">⚠ Unassigned expense</div><div class="alloc-warning-text"><strong>${unassigned.length}</strong> unassigned ${unassigned.length===1?'subcategory':'subcategories'} with <strong>${fmtMoney(total)}</strong> spent in ${monthLabel(m)}. These expenses are <strong>not included</strong> in Basic Needs, Advanced Needs, or Investment.</div><div class="alloc-warning-list">${unassigned.map(u=>`<span>${escapeHtml(u.category||'Uncategorized')}${u.subcategory?' · '+escapeHtml(u.subcategory):''} — ${fmtMoney(u.amount)}</span>`).join('')}</div><div class="alloc-warning-action">Assign a bucket in Settings → Category Manager.</div>`;
+    }else{
+      unassignedWrap.style.display='none';
+      unassignedWrap.innerHTML='';
+    }
   }
   const bucketsWrap=document.getElementById('allocBuckets');
   if(!bucketsWrap)return;
