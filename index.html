@@ -2402,11 +2402,6 @@ body{padding-bottom:96px!important;}
       </div>
       <div class="alloc-unassigned" id="allocUnassigned" style="display:none;"></div>
       <div class="alloc-buckets" id="allocBuckets"></div>
-      <div class="budget-card" style="margin-top:12px;">
-        <div class="budget-name" style="margin-bottom:4px;">Investment accounts</div>
-        <p class="gate-hint" style="text-align:left;margin:0 0 10px;">Tick accounts like your RD. Money you <b>transfer into</b> them counts toward the Investment bucket above (still not income or expense).</p>
-        <div id="investAcctPicker"></div>
-      </div>
 
       <div class="section-title">Debts &amp; Loan EMIs</div>
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Keep a list of loans you owe. Enter this month's outstanding balance for each one and see how it's trending against last month.</p>
@@ -2829,6 +2824,7 @@ let ledgerFilterType = null; // 'income' | 'expense'
 let ledgerFilterFrom = null;
 let ledgerFilterTo = null;
 let editingId = null;
+let editingPartnerId = null; // other leg of a transfer being edited
 let convertingProjection = null; // {seriesId, occurrenceId, scheduledDate, plan}
 let currentType = 'expense';
 let accessToken = null;
@@ -3627,7 +3623,7 @@ function renderLedger(){
       return `<div class="txn" data-id="${t.id}">
         <div class="dot ${pos?'pos':'neg'}"></div>
         <div class="mid">
-          <div class="cat">${escapeHtml(t.category||'Uncategorized')}${t.subcategory?' · '+escapeHtml(t.subcategory):''}${t.refund?' <span style="font-size:10px;font-weight:700;color:var(--green);background:#E6F6EF;border-radius:6px;padding:2px 6px;vertical-align:middle;">↩ REFUND</span>':''}</div>
+          <div class="cat">${escapeHtml(t.category||'Uncategorized')}${t.subcategory?' · '+escapeHtml(t.subcategory):''}${t.budgetCategory?' <span style="font-size:10px;font-weight:700;color:#0B6E5A;background:#E6F6EF;border-radius:6px;padding:2px 6px;vertical-align:middle;">→ '+escapeHtml(t.budgetSubcategory||t.budgetCategory)+'</span>':''}${t.refund?' <span style="font-size:10px;font-weight:700;color:var(--green);background:#E6F6EF;border-radius:6px;padding:2px 6px;vertical-align:middle;">↩ REFUND</span>':''}</div>
           <div class="meta">${escapeHtml(t.account||'')}${t.payee?' · '+escapeHtml(t.payee):''}${t.description?' — '+escapeHtml(t.description):''}${t.appliedMonth?' · applies to '+escapeHtml(fmtMonthLabel(t.appliedMonth)):''}</div>
         </div>
         <div class="amt" style="color:${pos?'var(--green)':'var(--red)'}">${fmtMoney(t.amount)}</div>
@@ -4945,30 +4941,25 @@ function computeMonthIncomeInfo(m){
 }
 // Every expense subcategory rolls up into exactly one of the three buckets above.
 // Uncategorized expense subcategories are surfaced as "unassigned" rather than silently dropped.
-// ---- Investment accounts (e.g. RD): transfers INTO them count toward the Investment bucket ----
-// Stored inside CATEGORY_BUCKETS under the key '__acct__|||<account>' so it syncs with existing settings.
-const INVEST_ACCT_PREFIX='__acct__|||';
-function getInvestAccounts(){return Object.keys(CATEGORY_BUCKETS).filter(k=>k.startsWith(INVEST_ACCT_PREFIX)&&CATEGORY_BUCKETS[k]==='invest').map(k=>k.slice(INVEST_ACCT_PREFIX.length));}
-function isInvestTransferIn(t,set){return !!t&&t.amount>0&&t.subcategory==='Account Transfer'&&set.has(t.account||'');}
-function renderInvestAccountPicker(){
-  const wrap=document.getElementById('investAcctPicker'); if(!wrap)return;
-  const sel=new Set(getInvestAccounts());
-  const accts=[...new Set([...(typeof getAccounts==='function'?getAccounts():[]),...sel])].filter(Boolean);
-  wrap.innerHTML=accts.length?accts.map(a=>`<label class="budget-option" style="display:inline-flex;margin:0 6px 6px 0;border:1px solid var(--line);"><input type="checkbox" data-invest-acct="${escapeHtml(a)}" ${sel.has(a)?'checked':''}><span>${escapeHtml(a)}</span></label>`).join(''):'<div class="budget-empty">No accounts yet.</div>';
-  wrap.querySelectorAll('[data-invest-acct]').forEach(cb=>cb.addEventListener('change',()=>{
-    const key=INVEST_ACCT_PREFIX+cb.dataset.investAcct;
-    CATEGORY_BUCKETS[key]=cb.checked?'invest':'off'; // 'off' (not delete) so a sync merge can't resurrect it
-    saveCategoryBuckets();renderAllocOverview();
-  }));
+// A transfer can carry an optional budget category/subcategory (e.g. Investment > RD).
+// It stays OUT of income/expense totals, but Budget treats it like an expense in that category.
+function budgetSpendView(t){
+  if(!t) return null;
+  if(isRealExpense(t)){ const amount=expenseValue(t); return amount?{category:t.category||'',subcategory:t.subcategory||'',amount}:null; }
+  if(t.category==='Account Transfer' && Number(t.amount)<0 && t.budgetCategory){
+    return {category:t.budgetCategory,subcategory:t.budgetSubcategory||'',amount:Math.abs(Number(t.amount))};
+  }
+  return null;
 }
 function computeBucketSpend(m){
   const spend={needs:0,wants:0,invest:0};
   const unassignedMap={};
   TXNS.forEach(t=>{
-    if(!(t&&isRealExpense(t)&&reportMonth(t)===m))return;
-    const cat=t.category||'',sub=t.subcategory||'';
+    if(!(t&&reportMonth(t)===m))return;
+    const v=budgetSpendView(t); if(!v)return;
+    const cat=v.category,sub=v.subcategory;
     const bucket=getCategoryBucket(cat,sub);
-    const amt=expenseValue(t);
+    const amt=v.amount;
     if(bucket&&spend.hasOwnProperty(bucket)){spend[bucket]+=amt;}
     else{
       const key=cat+'|||'+sub;
@@ -4976,8 +4967,6 @@ function computeBucketSpend(m){
       unassignedMap[key].amount+=amt;
     }
   });
-  const investSet=new Set(getInvestAccounts());
-  if(investSet.size)TXNS.forEach(t=>{ if(isInvestTransferIn(t,investSet)&&reportMonth(t)===m) spend.invest+=Number(t.amount); });
   const unassigned=Object.values(unassignedMap).sort((a,b)=>b.amount-a.amount);
   return{spend,unassigned};
 }
@@ -5007,18 +4996,14 @@ function renderAllocIncomeInputs(){
 }
 function saveAllocIncomeFromInput(){renderAllocOverview();}
 function getBucketExpenses(m,bucket){
-  const investSet=new Set(getInvestAccounts());
-  const transferRows=(bucket==='invest'&&investSet.size)?TXNS.filter(t=>isInvestTransferIn(t,investSet)&&reportMonth(t)===m).map(t=>({date:t.date||'',category:'Transfer',subcategory:(t.account||'')+' (transfer)',description:t.description||'',amount:Number(t.amount)})):[];
-  return transferRows.concat(TXNS.filter(t=>{
-    if(!(t&&isRealExpense(t)&&reportMonth(t)===m))return false;
-    return getCategoryBucket(t.category||'',t.subcategory||'')===bucket;
-  }).map(t=>({
-    date:t.date||'',
-    category:t.category||'',
-    subcategory:t.subcategory||'',
-    description:t.description||'',
-    amount:expenseValue(t)
-  }))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const rows=[];
+  TXNS.forEach(t=>{
+    if(!t||reportMonth(t)!==m)return;
+    const v=budgetSpendView(t); if(!v)return;
+    if(getCategoryBucket(v.category,v.subcategory)!==bucket)return;
+    rows.push({date:t.date||'',category:v.category,subcategory:v.subcategory,description:t.description||'',amount:v.amount});
+  });
+  return rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 }
 function renderBucketExpenseDetails(m,bucket){
   const rows=getBucketExpenses(m,bucket);
@@ -5034,7 +5019,6 @@ function renderBucketExpenseDetails(m,bucket){
   ).join('')}</div>`;
 }
 function renderAllocOverview(){
-  renderInvestAccountPicker();
   const m=currentBudgetMonth();
   const info=computeMonthIncomeInfo(m);
   const {spend,unassigned}=computeBucketSpend(m);
@@ -5137,9 +5121,10 @@ function renderBudgetSummary(){
   const budgetRows=list.map((b,i)=>{
     let spent=0;
     TXNS.forEach(t=>{
-      if(isRealExpense(t)&&reportMonth(t)===m){
-        const cm=(b.categories||[]).includes(t.category),sk=(t.category||'')+'|||'+(t.subcategory||''),sm=(b.subcategories||[]).includes(sk);
-        if(cm&&((b.subcategories||[]).length?sm:true))spent+=expenseValue(t);
+      const v=(reportMonth(t)===m)?budgetSpendView(t):null;
+      if(v){
+        const cm=(b.categories||[]).includes(v.category),sk=v.category+'|||'+v.subcategory,sm=(b.subcategories||[]).includes(sk);
+        if(cm&&((b.subcategories||[]).length?sm:true))spent+=v.amount;
       }
     });
     const amt=Number(b.amount||0),rawPct=amt?(spent/amt*100):0,pct=Math.min(100,Math.max(0,rawPct)),over=spent>amt&&amt>0;
@@ -5331,10 +5316,11 @@ const fSubcategoryLabel = document.getElementById('fSubcategoryLabel');
 
 function updateCategoryFieldsForType(){
   const income = currentType === 'income';
-  if(fCategoryLabel) fCategoryLabel.textContent = income ? 'INCOME CATEGORY' : 'EXPENSE CATEGORY';
-  if(fSubcategoryLabel) fSubcategoryLabel.textContent = income ? 'INCOME SUBCATEGORY' : 'EXPENSE SUBCATEGORY';
-  fCategory.placeholder = income ? 'e.g. Salary' : 'e.g. Milk';
-  fSubcategory.placeholder = income ? 'e.g. Monthly' : 'e.g. Shop';
+  const xfer = currentType === 'transfer';
+  if(fCategoryLabel) fCategoryLabel.textContent = xfer ? 'BUDGET CATEGORY (OPTIONAL)' : income ? 'INCOME CATEGORY' : 'EXPENSE CATEGORY';
+  if(fSubcategoryLabel) fSubcategoryLabel.textContent = xfer ? 'BUDGET SUBCATEGORY (OPTIONAL)' : income ? 'INCOME SUBCATEGORY' : 'EXPENSE SUBCATEGORY';
+  fCategory.placeholder = income ? 'e.g. Salary' : (xfer ? 'e.g. Investment' : 'e.g. Milk');
+  fSubcategory.placeholder = income ? 'e.g. Monthly' : (xfer ? 'e.g. RD' : 'e.g. Shop');
 }
 
 function populateDatalists(){
@@ -5377,16 +5363,11 @@ function setType(type){
   fToAccountWrap.style.display = type==='transfer' ? 'block' : 'none';
   { const rh=document.getElementById('refundHint'); if(rh) rh.style.display = type==='expense' ? 'block' : 'none'; }
   try{ syncCalculatorDisplay(); }catch(e){}
-  fCatWrap.style.display = type==='transfer' ? 'none' : 'flex';
+  fCatWrap.style.display = 'flex';
   fSpanWrap.style.display = type==='transfer' ? 'none' : 'flex';
   fAccountLabel.textContent = type==='transfer' ? 'From account' : 'Account';
 
-  if(type !== 'transfer'){
-    refreshCategoryAndSubcategoryLists();
-  } else {
-    document.getElementById('categoryList').innerHTML = '';
-    document.getElementById('subcategoryList').innerHTML = '';
-  }
+  refreshCategoryAndSubcategoryLists();
 }
 document.querySelectorAll('#overlay .type-btn').forEach(b=> b.addEventListener('click', ()=> setType(b.dataset.type)));
 
@@ -5446,7 +5427,7 @@ function clearProjectionConversion(){
 }
 function openAddSheet(){
   clearProjectionConversion();
-  editingId = null;
+  editingId = null; editingPartnerId = null;
   sheetTitle.innerHTML = 'Add entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
   fAmount.value = ''; calcExpressionValue=''; calcJustEvaluated=false; syncCalculatorDisplay(); fDate.value = isoToDisplayDate(localDateIso());
@@ -5461,8 +5442,20 @@ function openAddSheet(){
 }
 function openEditSheet(id){
   clearProjectionConversion();
-  const t = TXNS.find(x=>x.id===id);
+  let t = TXNS.find(x=>x.id===id);
   if(!t) return;
+  // Transfers are two linked legs; open the pair as one Transfer entry.
+  let xferTo=null; editingPartnerId=null;
+  const isFromLeg=x=>x.category==='Account Transfer' && x.amount<0;
+  const isToLeg=x=>x.category==='Income' && x.subcategory==='Account Transfer' && x.amount>0;
+  if(isFromLeg(t) || isToLeg(t)){
+    const wantFrom=isToLeg(t);
+    const partner=TXNS.find(x=>x.id!==t.id && x.date===t.date && Math.abs(x.amount)===Math.abs(t.amount) && (wantFrom?isFromLeg(x):isToLeg(x)) && (x.description||'')===(t.description||''));
+    if(partner){
+      const from=isFromLeg(t)?t:partner, to=isFromLeg(t)?partner:t;
+      t=from; xferTo=to; editingPartnerId=to.id; id=from.id;
+    }
+  }
   editingId = id;
   sheetTitle.innerHTML = 'Edit entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
@@ -5474,10 +5467,18 @@ function openEditSheet(id){
   fApplicableMonth.value = t.appliedMonth || (t.date || localDateIso()).slice(0,7);
   fSpanMonths.value = 1;
   fSpanMonths.disabled = false;
-  setType((t.amount >= 0 && !t.refund) ? 'income' : 'expense');
-  fCategory.value = t.category || '';
-  populateSubcatFor(fCategory.value);
-  fSubcategory.value = t.subcategory || '';
+  if(xferTo){
+    setType('transfer');
+    fToAccount.value = xferTo.account || '';
+    fCategory.value = t.budgetCategory || '';
+    populateSubcatFor(fCategory.value);
+    fSubcategory.value = t.budgetSubcategory || '';
+  } else {
+    setType((t.amount >= 0 && !t.refund) ? 'income' : 'expense');
+    fCategory.value = t.category || '';
+    populateSubcatFor(fCategory.value);
+    fSubcategory.value = t.subcategory || '';
+  }
   delBtn.style.display = 'block';
   overlay.classList.add('show');
   bindCloseX();
@@ -5496,7 +5497,6 @@ function addMonths(ym, n){
 }
 
 function addCategoryFromEntryScreen(){
-  if(currentType==='transfer') return;
   const cat=fCategory.value.trim();
   if(!cat){ fCategory.focus(); showToast('Enter a category name first'); return; }
   if(cat==='Income' || cat==='Account Transfer' || cat==='Initial Balance'){
@@ -5516,7 +5516,6 @@ function addCategoryFromEntryScreen(){
 }
 
 function addSubcategoryFromEntryScreen(){
-  if(currentType==='transfer') return;
   const cat=fCategory.value.trim();
   const sub=fSubcategory.value.trim();
   if(!cat){ fCategory.focus(); showToast('Enter/select a category first'); return; }
@@ -5559,11 +5558,19 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     const toAcct = fToAccount.value.trim();
     if(!toAcct || toAcct===acct){ fToAccount.focus(); return; }
     if(editingId){
-      const old = TXNS.find(t=>t.id===editingId);
-      if(old){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [old.id]:Date.now()}; setSyncMeta(m); }
-      TXNS = TXNS.filter(t=>t.id!==editingId);
+      const removeIds=[editingId, editingPartnerId].filter(Boolean);
+      removeIds.forEach(rid=>{ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [rid]:Date.now()}; setSyncMeta(m); });
+      TXNS = TXNS.filter(t=>!removeIds.includes(t.id));
     }
-    TXNS.push({id:uid(), date, amount:-Math.abs(amt), category:'Account Transfer', subcategory:'', account:acct, description: fDesc.value.trim()});
+    const bCat = fCategory.value.trim(), bSub = fSubcategory.value.trim();
+    const bOk = bCat && !['Income','Account Transfer','Initial Balance'].includes(bCat);
+    if(bOk){
+      let changed=false;
+      if(!EXPENSE_CATEGORY_SUBCATS[bCat]){ EXPENSE_CATEGORY_SUBCATS[bCat]=new Set(); changed=true; }
+      if(bSub && !['Account Transfer','Initial Balance'].includes(bSub) && !EXPENSE_CATEGORY_SUBCATS[bCat].has(bSub)){ EXPENSE_CATEGORY_SUBCATS[bCat].add(bSub); changed=true; }
+      if(changed) saveCategoryConfig();
+    }
+    TXNS.push({id:uid(), date, amount:-Math.abs(amt), category:'Account Transfer', subcategory:'', account:acct, description: fDesc.value.trim(), budgetCategory: bOk?bCat:undefined, budgetSubcategory: bOk&&bSub?bSub:undefined});
     TXNS.push({id:uid(), date, amount:Math.abs(amt), category:'Income', subcategory:'Account Transfer', account:toAcct, description: fDesc.value.trim()});
   } else {
     const isRefundEntry = currentType==='expense' && amt<0; // negative expense = refund
@@ -5648,7 +5655,8 @@ delBtn.addEventListener('click', ()=>{
       if(uncompleteProjectionOccurrence(old.projectionSeriesId,old.projectionOccurrenceId)) savePlans();
     }
   }
-  TXNS = TXNS.filter(t=>t.id!==editingId);
+  if(editingPartnerId){ const m=getSyncMeta(); m.deleted={...(m.deleted||{}), [editingPartnerId]:Date.now()}; setSyncMeta(m); }
+  TXNS = TXNS.filter(t=>t.id!==editingId && t.id!==editingPartnerId);
   saveData(); closeSheet(); refreshAll();
   renderPlanList(); renderProjectionGraph();
 });
