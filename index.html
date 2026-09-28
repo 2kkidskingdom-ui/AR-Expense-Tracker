@@ -2402,6 +2402,11 @@ body{padding-bottom:96px!important;}
       </div>
       <div class="alloc-unassigned" id="allocUnassigned" style="display:none;"></div>
       <div class="alloc-buckets" id="allocBuckets"></div>
+      <div class="budget-card" style="margin-top:12px;">
+        <div class="budget-name" style="margin-bottom:4px;">Investment accounts</div>
+        <p class="gate-hint" style="text-align:left;margin:0 0 10px;">Tick accounts like your RD. Money you <b>transfer into</b> them counts toward the Investment bucket above (still not income or expense).</p>
+        <div id="investAcctPicker"></div>
+      </div>
 
       <div class="section-title">Debts &amp; Loan EMIs</div>
       <p class="gate-hint" style="text-align:left; margin:0 0 12px;">Keep a list of loans you owe. Enter this month's outstanding balance for each one and see how it's trending against last month.</p>
@@ -4940,6 +4945,22 @@ function computeMonthIncomeInfo(m){
 }
 // Every expense subcategory rolls up into exactly one of the three buckets above.
 // Uncategorized expense subcategories are surfaced as "unassigned" rather than silently dropped.
+// ---- Investment accounts (e.g. RD): transfers INTO them count toward the Investment bucket ----
+// Stored inside CATEGORY_BUCKETS under the key '__acct__|||<account>' so it syncs with existing settings.
+const INVEST_ACCT_PREFIX='__acct__|||';
+function getInvestAccounts(){return Object.keys(CATEGORY_BUCKETS).filter(k=>k.startsWith(INVEST_ACCT_PREFIX)&&CATEGORY_BUCKETS[k]==='invest').map(k=>k.slice(INVEST_ACCT_PREFIX.length));}
+function isInvestTransferIn(t,set){return !!t&&t.amount>0&&t.subcategory==='Account Transfer'&&set.has(t.account||'');}
+function renderInvestAccountPicker(){
+  const wrap=document.getElementById('investAcctPicker'); if(!wrap)return;
+  const sel=new Set(getInvestAccounts());
+  const accts=[...new Set([...(typeof getAccounts==='function'?getAccounts():[]),...sel])].filter(Boolean);
+  wrap.innerHTML=accts.length?accts.map(a=>`<label class="budget-option" style="display:inline-flex;margin:0 6px 6px 0;border:1px solid var(--line);"><input type="checkbox" data-invest-acct="${escapeHtml(a)}" ${sel.has(a)?'checked':''}><span>${escapeHtml(a)}</span></label>`).join(''):'<div class="budget-empty">No accounts yet.</div>';
+  wrap.querySelectorAll('[data-invest-acct]').forEach(cb=>cb.addEventListener('change',()=>{
+    const key=INVEST_ACCT_PREFIX+cb.dataset.investAcct;
+    CATEGORY_BUCKETS[key]=cb.checked?'invest':'off'; // 'off' (not delete) so a sync merge can't resurrect it
+    saveCategoryBuckets();renderAllocOverview();
+  }));
+}
 function computeBucketSpend(m){
   const spend={needs:0,wants:0,invest:0};
   const unassignedMap={};
@@ -4955,6 +4976,8 @@ function computeBucketSpend(m){
       unassignedMap[key].amount+=amt;
     }
   });
+  const investSet=new Set(getInvestAccounts());
+  if(investSet.size)TXNS.forEach(t=>{ if(isInvestTransferIn(t,investSet)&&reportMonth(t)===m) spend.invest+=Number(t.amount); });
   const unassigned=Object.values(unassignedMap).sort((a,b)=>b.amount-a.amount);
   return{spend,unassigned};
 }
@@ -4984,7 +5007,9 @@ function renderAllocIncomeInputs(){
 }
 function saveAllocIncomeFromInput(){renderAllocOverview();}
 function getBucketExpenses(m,bucket){
-  return TXNS.filter(t=>{
+  const investSet=new Set(getInvestAccounts());
+  const transferRows=(bucket==='invest'&&investSet.size)?TXNS.filter(t=>isInvestTransferIn(t,investSet)&&reportMonth(t)===m).map(t=>({date:t.date||'',category:'Transfer',subcategory:(t.account||'')+' (transfer)',description:t.description||'',amount:Number(t.amount)})):[];
+  return transferRows.concat(TXNS.filter(t=>{
     if(!(t&&isRealExpense(t)&&reportMonth(t)===m))return false;
     return getCategoryBucket(t.category||'',t.subcategory||'')===bucket;
   }).map(t=>({
@@ -4993,7 +5018,7 @@ function getBucketExpenses(m,bucket){
     subcategory:t.subcategory||'',
     description:t.description||'',
     amount:expenseValue(t)
-  })).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  }))).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 }
 function renderBucketExpenseDetails(m,bucket){
   const rows=getBucketExpenses(m,bucket);
@@ -5009,6 +5034,7 @@ function renderBucketExpenseDetails(m,bucket){
   ).join('')}</div>`;
 }
 function renderAllocOverview(){
+  renderInvestAccountPicker();
   const m=currentBudgetMonth();
   const info=computeMonthIncomeInfo(m);
   const {spend,unassigned}=computeBucketSpend(m);
