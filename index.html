@@ -2636,6 +2636,7 @@ body{padding-bottom:96px!important;}
           <button type="button" data-calc="digit" data-value=".">.</button><button type="button" data-calc="digit" data-value="0">0</button><button type="button" class="calc-ok" data-calc="ok">OK</button>
         </div>
       </div>
+      <div id="refundHint" style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;">Refund on an expense? Tap <b>−</b> first, then the amount (e.g. −100). It reduces your expenses; it is not counted as income.</div>
     </div>
     <div class="field-row">
       <div class="field"><label>Date</label><input type="text" id="fDate" placeholder="dd-MMM-yyyy" inputmode="numeric" autocomplete="off"></div>
@@ -3268,11 +3269,22 @@ function renderNetStamp(){
 function isRealFlow(t){
   return t.category!=='Account Transfer' && t.subcategory!=='Account Transfer' && t.subcategory!=='Initial Balance';
 }
+// Refund = positive-amount entry flagged refund:true. It raises the account balance but
+// is counted as a NEGATIVE expense (reduces expenses) instead of as income.
+function isRefund(t){
+  return !!t.refund && Number(t.amount)>0 && isRealFlow(t);
+}
 function isRealExpense(t){
-  return t.amount<0 && isRealFlow(t) && t.category!=='Income';
+  return (t.amount<0 && isRealFlow(t) && t.category!=='Income') || isRefund(t);
 }
 function isRealIncome(t){
-  return t.amount>0 && isRealFlow(t);
+  return t.amount>0 && isRealFlow(t) && !t.refund;
+}
+// Signed contribution of an entry to "expenses": +spent, -refunded, 0 if not an expense.
+function expenseValue(t){
+  if(isRefund(t)) return -Number(t.amount);
+  if(t.amount<0 && isRealFlow(t) && t.category!=='Income') return Math.abs(Number(t.amount));
+  return 0;
 }
 
 function buildChartBuckets(range, list, curYM, customFrom, customTo){
@@ -3282,16 +3294,16 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
     const daysInMonth = new Date(y,m,0).getDate();
     for(let d=1; d<=daysInMonth; d++){
       const dayTx = list.filter(t=> parseInt((t.date||'0').slice(8,10),10) === d && isRealFlow(t));
-      const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-      const expense = dayTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+      const income = dayTx.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+      const expense = dayTx.reduce((s,t)=>s+expenseValue(t),0);
       buckets.push({ label:String(d), income, expense, date:`${curYM}-${String(d).padStart(2,'0')}` });
     }
   } else if(range==='today'){
     const now = new Date();
     const ds = localDateIso(now);
     const flow = list.filter(isRealFlow);
-    const income = flow.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-    const expense = flow.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+    const income = flow.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+    const expense = flow.reduce((s,t)=>s+expenseValue(t),0);
     buckets.push({ label:'Today', income, expense, date: ds });
   } else if(range==='custom' && customFrom && customTo){
     const fromD = new Date(customFrom+'T00:00:00'), toD = new Date(customTo+'T00:00:00');
@@ -3301,8 +3313,8 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
         const d = new Date(fromD); d.setDate(d.getDate()+i);
         const ds = localDateIso(d);
         const dayTx = list.filter(t=>t.date===ds && isRealFlow(t));
-        const income = dayTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-        const expense = dayTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+        const income = dayTx.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+        const expense = dayTx.reduce((s,t)=>s+expenseValue(t),0);
         buckets.push({ label:String(d.getDate()), income, expense, date: ds });
       }
     } else if(spanDays>0){
@@ -3313,8 +3325,8 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
         guard++;
         const ym = `${cy}-${String(cm+1).padStart(2,'0')}`;
         const monthTx = list.filter(t=> reportMonth(t)===ym && isRealFlow(t));
-        const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-        const expense = monthTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+        const income = monthTx.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+        const expense = monthTx.reduce((s,t)=>s+expenseValue(t),0);
         buckets.push({ label:MONTH_ABBR[cm], income, expense, ym });
         cm++; if(cm>11){cm=0;cy++;}
       }
@@ -3326,8 +3338,8 @@ function buildChartBuckets(range, list, curYM, customFrom, customTo){
     const monthsSorted = [...monthsSet].filter(Boolean).sort();
     monthsSorted.forEach(ym=>{
       const monthTx = nonHidden.filter(t=> reportMonth(t)===ym && isRealFlow(t));
-      const income = monthTx.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-      const expense = monthTx.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+      const income = monthTx.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+      const expense = monthTx.reduce((s,t)=>s+expenseValue(t),0);
       const [y,m] = ym.split('-').map(Number);
       buckets.push({ label:MONTH_ABBR[m-1]+" '"+String(y).slice(2), income, expense, ym });
     });
@@ -3456,7 +3468,7 @@ function renderDashboard(){
   const ym=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const monthTx=TXNS.filter(t=>reportMonth(t)===ym && isRealFlow(t));
   const income=monthTx.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
-  const expense=monthTx.filter(isRealExpense).reduce((s,t)=>s+Math.abs(t.amount),0);
+  const expense=monthTx.reduce((s,t)=>s+expenseValue(t),0);
   const savings=income-expense;
   const stats=document.getElementById('dashboardStats');
   if(stats) stats.innerHTML=`
@@ -3592,8 +3604,8 @@ function renderLedger(){
     if(ledgerFilterDate && t.date!==ledgerFilterDate) return false;
     if(ledgerFilterFrom && (!t.date || t.date < ledgerFilterFrom)) return false;
     if(ledgerFilterTo && (!t.date || t.date > ledgerFilterTo)) return false;
-    if(ledgerFilterType==='income' && !(t.amount>0)) return false;
-    if(ledgerFilterType==='expense' && !(t.amount<0)) return false;
+    if(ledgerFilterType==='income' && !(t.amount>0 && !t.refund)) return false;
+    if(ledgerFilterType==='expense' && !(t.amount<0 || isRefund(t))) return false;
     return true;
   });
   renderDayFilterBanner();
@@ -3610,7 +3622,7 @@ function renderLedger(){
       return `<div class="txn" data-id="${t.id}">
         <div class="dot ${pos?'pos':'neg'}"></div>
         <div class="mid">
-          <div class="cat">${escapeHtml(t.category||'Uncategorized')}${t.subcategory?' · '+escapeHtml(t.subcategory):''}</div>
+          <div class="cat">${escapeHtml(t.category||'Uncategorized')}${t.subcategory?' · '+escapeHtml(t.subcategory):''}${t.refund?' <span style="font-size:10px;font-weight:700;color:var(--green);background:#E6F6EF;border-radius:6px;padding:2px 6px;vertical-align:middle;">↩ REFUND</span>':''}</div>
           <div class="meta">${escapeHtml(t.account||'')}${t.payee?' · '+escapeHtml(t.payee):''}${t.description?' — '+escapeHtml(t.description):''}${t.appliedMonth?' · applies to '+escapeHtml(fmtMonthLabel(t.appliedMonth)):''}</div>
         </div>
         <div class="amt" style="color:${pos?'var(--green)':'var(--red)'}">${fmtMoney(t.amount)}</div>
@@ -4698,8 +4710,8 @@ function renderCalendar(){
     let inAmt, outAmt, bal;
     if(!isFuture){
       const dayTxns = filtered.filter(t=>t.date===dateStr && isRealFlow(t));
-      inAmt = dayTxns.filter(t=>t.amount>0).reduce((s,t)=>s+t.amount,0);
-      outAmt = dayTxns.filter(t=>t.amount<0 && t.category!=='Income').reduce((s,t)=>s+Math.abs(t.amount),0);
+      inAmt = dayTxns.filter(t=>t.amount>0&&!t.refund).reduce((s,t)=>s+t.amount,0);
+      outAmt = dayTxns.reduce((s,t)=>s+expenseValue(t),0);
       bal = balanceThrough(dateStr);
     } else {
       const dayPlans = sortedPlans.filter(p=>p.date===dateStr);
@@ -4795,7 +4807,7 @@ function renderAnalysis(range){
   renderTrendChart(range,list,curYM,customFrom,customTo);
   const income=list.filter(isRealIncome).reduce((s,t)=>s+t.amount,0);
   const expense=list.filter(isRealExpense).reduce((s,t)=>s+t.amount,0);
-  const absExpense=Math.abs(expense), net=income+expense;
+  const absExpense=0-expense, net=income+expense;
   const expPct=income>0?(absExpense/income*100).toFixed(1)+'%':'';
   const netPct=income>0?(net/income*100).toFixed(1)+'%':'';
   document.getElementById('statIn').textContent=fmtMoney(income);
@@ -4822,8 +4834,8 @@ function renderAnalysis(range){
     txnsForType.forEach(t=>{
       const cat=(t.category||'Uncategorized').trim()||'Uncategorized';
       const sub=(t.subcategory||'').trim();
-      const amount=Math.abs(Number(t.amount)||0);
-      if(amount<=0) return;
+      const amount=isIncome?Math.abs(Number(t.amount)||0):expenseValue(t);
+      if(!amount) return;
       catTotals[cat]=(catTotals[cat]||0)+amount;
       if(sub){
         subTotals[sub]=(subTotals[sub]||0)+amount;
@@ -4932,10 +4944,10 @@ function computeBucketSpend(m){
   const spend={needs:0,wants:0,invest:0};
   const unassignedMap={};
   TXNS.forEach(t=>{
-    if(!(t&&t.amount<0&&isRealExpense(t)&&reportMonth(t)===m))return;
+    if(!(t&&isRealExpense(t)&&reportMonth(t)===m))return;
     const cat=t.category||'',sub=t.subcategory||'';
     const bucket=getCategoryBucket(cat,sub);
-    const amt=Math.abs(Number(t.amount||0));
+    const amt=expenseValue(t);
     if(bucket&&spend.hasOwnProperty(bucket)){spend[bucket]+=amt;}
     else{
       const key=cat+'|||'+sub;
@@ -4973,14 +4985,14 @@ function renderAllocIncomeInputs(){
 function saveAllocIncomeFromInput(){renderAllocOverview();}
 function getBucketExpenses(m,bucket){
   return TXNS.filter(t=>{
-    if(!(t&&Number(t.amount)<0&&isRealExpense(t)&&reportMonth(t)===m))return false;
+    if(!(t&&isRealExpense(t)&&reportMonth(t)===m))return false;
     return getCategoryBucket(t.category||'',t.subcategory||'')===bucket;
   }).map(t=>({
     date:t.date||'',
     category:t.category||'',
     subcategory:t.subcategory||'',
     description:t.description||'',
-    amount:Math.abs(Number(t.amount||0))
+    amount:expenseValue(t)
   })).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
 }
 function renderBucketExpenseDetails(m,bucket){
@@ -5099,9 +5111,9 @@ function renderBudgetSummary(){
   const budgetRows=list.map((b,i)=>{
     let spent=0;
     TXNS.forEach(t=>{
-      if(t.amount<0&&isRealExpense(t)&&reportMonth(t)===m){
+      if(isRealExpense(t)&&reportMonth(t)===m){
         const cm=(b.categories||[]).includes(t.category),sk=(t.category||'')+'|||'+(t.subcategory||''),sm=(b.subcategories||[]).includes(sk);
-        if(cm&&((b.subcategories||[]).length?sm:true))spent+=Math.abs(Number(t.amount||0));
+        if(cm&&((b.subcategories||[]).length?sm:true))spent+=expenseValue(t);
       }
     });
     const amt=Number(b.amount||0),rawPct=amt?(spent/amt*100):0,pct=Math.min(100,Math.max(0,rawPct)),over=spent>amt&&amt>0;
@@ -5337,6 +5349,8 @@ function setType(type){
     b.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
   fToAccountWrap.style.display = type==='transfer' ? 'block' : 'none';
+  { const rh=document.getElementById('refundHint'); if(rh) rh.style.display = type==='expense' ? 'block' : 'none'; }
+  try{ syncCalculatorDisplay(); }catch(e){}
   fCatWrap.style.display = type==='transfer' ? 'none' : 'flex';
   fSpanWrap.style.display = type==='transfer' ? 'none' : 'flex';
   fAccountLabel.textContent = type==='transfer' ? 'From account' : 'Account';
@@ -5363,10 +5377,10 @@ function safeCalculate(expr){
   for(let i=1;i<parts.length;i+=2){const op=parts[i],n=Number(parts[i+1]);if(!Number.isFinite(n))return null;if(op==='+')total+=n;else if(op==='-')total-=n;else if(op==='*')total*=n;else{if(n===0)return null;total/=n;}}
   return Number.isFinite(total)?total:null;
 }
-function syncCalculatorDisplay(){const expr=calcExpressionValue||'0';calcExpressionEl.textContent=expr;const result=safeCalculate(calcExpressionValue);calcResultEl.textContent=result===null?'—':`₹ ${result.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;if(result!==null&&calcExpressionValue)fAmount.value=String(result);else if(!calcExpressionValue)fAmount.value='';}
+function syncCalculatorDisplay(){const expr=calcExpressionValue||'0';calcExpressionEl.textContent=expr;const result=safeCalculate(calcExpressionValue);calcResultEl.textContent=result===null?'—':((currentType==='expense'&&result<0)?'↩ Refund ':'')+`₹ ${((currentType==='expense'&&result<0)?Math.abs(result):result).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;if(result!==null&&calcExpressionValue)fAmount.value=String(result);else if(!calcExpressionValue)fAmount.value='';}
 function openAmountCalculator(){amountCalculator.classList.add('show');syncCalculatorDisplay();}
 function appendCalcValue(v){if(calcJustEvaluated){calcExpressionValue='';calcJustEvaluated=false;}if(v==='.') {const part=calcExpressionValue.split(/[+\-*/]/).pop();if(part.includes('.'))return;if(!part)calcExpressionValue+='0';}calcExpressionValue+=v;syncCalculatorDisplay();}
-function appendCalcOperator(op){if(!calcExpressionValue)return;calcExpressionValue=/[+\-*/]$/.test(calcExpressionValue)?calcExpressionValue.slice(0,-1)+op:calcExpressionValue+op;calcJustEvaluated=false;syncCalculatorDisplay();}
+function appendCalcOperator(op){if(!calcExpressionValue){if(op==='-'&&currentType==='expense'){calcExpressionValue='-';calcJustEvaluated=false;syncCalculatorDisplay();}return;}calcExpressionValue=/[+\-*/]$/.test(calcExpressionValue)?calcExpressionValue.slice(0,-1)+op:calcExpressionValue+op;calcJustEvaluated=false;syncCalculatorDisplay();}
 function evaluateCalculator(){const result=safeCalculate(calcExpressionValue);if(result===null)return;calcExpressionValue=String(Math.round(result*100)/100);calcJustEvaluated=true;syncCalculatorDisplay();}
 amountCalculator.addEventListener('click',(e)=>{const btn=e.target.closest('button[data-calc]');if(!btn)return;const a=btn.dataset.calc;if(a==='digit')appendCalcValue(btn.dataset.value);else if(a==='operator')appendCalcOperator(btn.dataset.value);else if(a==='clear'){calcExpressionValue='';calcJustEvaluated=false;syncCalculatorDisplay();}else if(a==='backspace'){calcExpressionValue=calcExpressionValue.slice(0,-1);calcJustEvaluated=false;syncCalculatorDisplay();}else if(a==='equals'||a==='ok')evaluateCalculator();});
 fAmount.addEventListener('focus',openAmountCalculator);
@@ -5426,7 +5440,7 @@ function openEditSheet(id){
   editingId = id;
   sheetTitle.innerHTML = 'Edit entry <button class="x" id="closeSheet2">×</button>';
   populateDatalists();
-  fAmount.value = Math.abs(t.amount); calcExpressionValue=String(Math.abs(t.amount)); calcJustEvaluated=true; syncCalculatorDisplay(); fDate.value = isoToDisplayDate(t.date || '');
+  fAmount.value = t.refund ? -Math.abs(t.amount) : Math.abs(t.amount); calcExpressionValue=t.refund ? String(-Math.abs(t.amount)) : String(Math.abs(t.amount)); calcJustEvaluated=true; syncCalculatorDisplay(); fDate.value = isoToDisplayDate(t.date || '');
   fAccount.value = t.account || ''; fToAccount.value='';
   fCategory.value = '';
   fSubcategory.value = '';
@@ -5434,7 +5448,7 @@ function openEditSheet(id){
   fApplicableMonth.value = t.appliedMonth || (t.date || localDateIso()).slice(0,7);
   fSpanMonths.value = 1;
   fSpanMonths.disabled = false;
-  setType(t.amount >= 0 ? 'income' : 'expense');
+  setType((t.amount >= 0 && !t.refund) ? 'income' : 'expense');
   fCategory.value = t.category || '';
   populateSubcatFor(fCategory.value);
   fSubcategory.value = t.subcategory || '';
@@ -5526,6 +5540,7 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     TXNS.push({id:uid(), date, amount:-Math.abs(amt), category:'Account Transfer', subcategory:'', account:acct, description: fDesc.value.trim()});
     TXNS.push({id:uid(), date, amount:Math.abs(amt), category:'Income', subcategory:'Account Transfer', account:toAcct, description: fDesc.value.trim()});
   } else {
+    const isRefundEntry = currentType==='expense' && amt<0; // negative expense = refund
     const spanMonths = Math.max(1, parseInt(fSpanMonths.value,10) || 1);
     const applicableStart = fApplicableMonth.value || date.slice(0,7);
     const baseDesc = fDesc.value.trim();
@@ -5552,10 +5567,11 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
     }
 
     if(spanMonths <= 1){
-      const signedAmt = currentType==='income' ? Math.abs(amt) : -Math.abs(amt);
+      const signedAmt = currentType==='income' ? Math.abs(amt) : (isRefundEntry ? Math.abs(amt) : -Math.abs(amt));
       const txn={
         id: uid(), date, amount: signedAmt, category, subcategory, account: acct,
         description: baseDesc,
+        refund: isRefundEntry ? true : undefined,
         appliedMonth: applicableStart !== date.slice(0,7) ? applicableStart : undefined
       };
       if(convertingProjection){
@@ -5576,9 +5592,10 @@ document.getElementById('saveBtn').addEventListener('click', ()=>{
         const share = isLast ? Math.round((amt-allocated)*100)/100 : per;
         allocated += share;
         const ym = addMonths(applicableStart, i);
-        const signedShare = currentType==='income' ? Math.abs(share) : -Math.abs(share);
+        const signedShare = currentType==='income' ? Math.abs(share) : (isRefundEntry ? Math.abs(share) : -Math.abs(share));
         TXNS.push({
           id: uid(), date, amount: signedShare, category, subcategory, account: acct,
+          refund: isRefundEntry ? true : undefined,
           description: baseDesc ? `${baseDesc} (${i+1}/${spanMonths})` : `(${i+1}/${spanMonths})`,
           appliedMonth: ym
         });
