@@ -2249,6 +2249,22 @@ nav.tabs button.active{border-top-color:var(--green)!important;border-bottom:0!i
 }
 body{padding-bottom:96px!important;}
 </style>
+
+<style id="popup-above-nav-fix">
+/* Popups (Add/Edit entry, Settings, Quick add) must sit ABOVE the bottom nav (z-index:1000),
+   otherwise the nav covers the bottom of the sheet and hides Delete/Save buttons. */
+.overlay{ z-index:1100!important; }
+.toast{ z-index:1200!important; }
+.sheet{
+  max-height:92vh!important;
+  max-height:92dvh!important;
+  overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding-bottom:calc(28px + env(safe-area-inset-bottom))!important;
+}
+.sheet .save-btn,.sheet .del-btn,.sheet .ghost-btn{ flex-shrink:0; }
+</style>
 </head>
 <body>
 <div id="authGate">
